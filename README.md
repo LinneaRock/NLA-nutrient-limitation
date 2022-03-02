@@ -1,4 +1,4 @@
-# STOICH-NARS
+# STOICH_NARSchallenge
 ## Linnea Rock 
 PhD Student at University of Wyoming 
 
