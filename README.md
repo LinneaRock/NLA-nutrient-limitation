@@ -2,4 +2,4 @@
 ## Linnea Rock 
 PhD Student at University of Wyoming 
 
-National Aquatic Resource Surveys Data Analysis Innovation Challenge 2022
+Repository for the National Aquatic Resource Surveys Data Analysis Innovation Challenge 2022
