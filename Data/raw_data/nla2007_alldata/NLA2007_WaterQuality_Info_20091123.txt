@@ -1,0 +1,159 @@
+VARNUM	NAME	LABEL	TYPE	LENGTH
+1	SITE_ID	ID assigned to each site	2	25
+2	YEAR	Sample Year	1	
+3	VISIT_NO	Sequential visit number within year	1	
+4	SITE_TYPE	PROB_Samp: Lake is from probability sample and can be used for population estimation.  REF_Lake: Lake is not from probability sample and was selected as a candidate reference lake	2	9
+5	LAKE_SAMP	Evaluation status	2	20
+6	SAMPLED	Was lake sampled? (Yes/No) drop no3_diff	2	30
+7	DATE_COL	Date of site visit	1	
+8	SAMPLE_CATEGORY	(P)rimary or Field (D)uplicate	2	1
+9	DATECHEM	Date water chemistry sample collected	1	
+10	SAMPLED_CHEM	Site Sampled Code for Water Chemistry Data	2	20
+11	INDXSAMP_CHEM	Index chhemistry sample for site (YES/NO)-typically the Visit 1 Primary sample	2	3
+12	PH_FIELD	Field pH from Profile DO data (pH measured at first non-zero depth unless only depth was zero)	1	
+13	PH_FIELD_DEPTH	Depth at which Field pH was Measured (m)	1	
+14	SAMPLE_DEPTH	Depth of integrated sample (typically 2 m)	1	
+15	SAMPLE_ID_CHEM	Sample ID number	1	
+16	LAB_ID_CHEM	Laboratory Sample Identification Number	2	10
+17	PH_LAB	pH measured at laboratory	1	
+18	PHLAB_FLAG	Flag for PH_LAB	2	30
+19	COND	Conductivity (uS/cm @ 25 C)	1	
+20	COND_FLAG	Flag for COND	2	30
+21	COND_RL_ALERT	COND Value Below Reporting Limit of 2.0 uS/cm @ 25 C (Y/N)	2	1
+22	ANC	Gran ANC (ueq/L)	1	
+23	ANC_FLAG	Flag for ANC	2	30
+24	TURB	Turbidity (NTU)	1	
+25	TURB_FLAG	Flag for TURB	2	30
+26	TURB_RL_ALERT	TURB Value Below Reporting Limit of 2.0 NTU (Y/N)	2	1
+27	TOC	Total Organic Carbon (mg/L)	1	
+28	TOC_FLAG	Flag for TOC	2	30
+29	TOC_RL_ALERT	TOC Value Below Reporting Limit of 0.20 mg/L (Y/N)	2	1
+30	DOC	Dissolved Organic Carbon (mg/L)	1	
+31	DOC_FLAG	Flag for DOC	2	30
+32	DOC_RL_ALERT	DOC Value Below Reporting Limit of 0.20 mg/L (Y/N)	2	1
+33	NH4N_PPM	Ammonium (mg/L)	1	
+34	NH4	Ammonium (ueq/L)	1	
+35	NH4_FLAG	Flag for NH4	2	30
+36	NH4_RL_ALERT	NH4 Value Below Reporting Limit of 1.43 ueq/L (Y/N)	2	1
+37	NO3_NO2	Nitrate + Nitrite by Flow Injection Analysis (mg N/L)	1	
+38	NO3NO2_FLAG	Flag for NO3_NO2	2	30
+39	NO3NO2_RL_ALERT	NO3NO2 Value Below Reporting Limit of 0.02 mg N/L (Y/N)	2	1
+40	NTL_PPM	Total Nitrogen (mg/L)	1	
+41	NTL	Total Nitrogen (ug/L)	1	
+42	NTL_FLAG	Flag for NTL	2	30
+43	NTL_RL_ALERT	NTL Value Below Reporting Limit of 20.00 ug/L (Y/N)	2	1
+44	PTL	Total Phosphorus (ug/L)	1	
+45	PTL_FLAG	Flag for PTL	2	30
+46	PTL_RL_ALERT	PTL Value Below Reporting Limit of 4.00 ug/L (Y/N)	2	1
+47	CL_PPM	Chloride (mg/L)	1	
+48	CL	Chloride (ueq/L)	1	
+49	CL_FLAG	Flag for CL	2	30
+50	CL_RL_ALERT	CL Value Below Reporting Limit of 5.64 ueq/L (Y/N)	2	1
+51	NO3N_PPM	Nitrate (mg/L)	1	
+52	NO3	Nitrate (ueq/L)	1	
+53	NO3_FLAG	Flag for NO3	2	30
+54	NO3_RL_ALERT	NO3 Value Below Reporting Limit of 1.43 ueq/L (Y/N)	2	1
+55	SO4_PPM	Sulfate (mg/L)	1	
+56	SO4	Sulfate (ueq/L)	1	
+57	SO4_FLAG	Flag for SO4	2	30
+58	SO4_RL_ALERT	SO4 Value Below Reporting Limit of 10.41 ueq/L (Y/N)	2	1
+59	CA_PPM	Calcium (mg/L)	1	
+60	CA	Calcium (ueq/L)	1	
+61	CA_FLAG	Flag for CA	2	30
+62	CA_RL_ALERT	CA Value Below Reporting Limit of 4.99 ueq/L (Y/N)	2	1
+63	MG_PPM	Magnesium (mg/L)	1	
+64	MG	Magnesium (ueq/L)	1	
+65	MG_FLAG	Flag for MG	2	30
+66	MG_RL_ALERT	MG Value Below Reporting Limit of 8.23 ueq/L (Y/N)	2	1
+67	NA_PPM	Sodium (mg/L)	1	
+68	NA	Sodium (ueq/L)	1	
+69	NA_FLAG	Flag for NA	2	30
+70	NA_RL_ALERT	NA Value Below Reporting Limit of 4.35 ueq/L (Y/N)	2	1
+71	K_PPM	Potassium (mg/L)	1	
+72	K	Potassium (ueq/L)	1	
+73	K_FLAG	Flag for K	2	30
+74	K_RL_ALERT	K Value Below Reporting Limit of 2.56 ueq/L (Y/N)	2	1
+75	COLOR	Color (PCU)	1	
+76	COLOR_FLAG	Flag for COLOR	2	30
+77	COLOR_RL_ALERT	COLOR Value Below Reporting Limit of 5.0 PCU (Y/N)	2	1
+78	SIO2	Silica (mg/L SiO2)	1	
+79	SIO2_FLAG	Flag for SIO2	2	30
+80	SIO2_RL_ALERT	SIO2 Value Below Reporting Limit of 0.10 mg/L SiO2 (Y/N)	2	1
+81	H	H+ from PH_LAB (ueq/L)	1	
+82	OH	Hydroxide from PH_LAB (ueq/L)	1	
+83	NH4ION	Calculated NH4+ protolyte (ueq/L)	1	
+84	CATSUM	Sum of Cations (ueq/L)	1	
+85	ANSUM2	Sum of Anions using ANC (ueq/L)	1	
+86	ANDEF2	Anion Deficit using ANC [C-A] (ueq/L)	1	
+87	SOBC	Sum of Base Cations (ueq/L)	1	
+88	BALANCE2	Ion Balance using ANC (%)	1	
+89	ORGION	Est. Organic Anion (ueq/L)	1	
+90	CONCAL2	Calculated Conductivity w/ANC (uS/cm)	1	
+91	CONDHO2	D-H-O Calc. Cond. w/ANC (uS/cm)	1	
+92	DAY_SHIP	Number of Days between Sample Collection (DATECHEM) and Sample Filtering at Lab (DATE_FILTERED)	1	
+93	DAYSHIP_ALERT	Number of Days between Sample Collection (DATECHEM) and Sample Filtering at Lab (DATE_FILTERED) Exceeded 2 Days (Y/N)	2	1
+94	DATE_RECEIVED	Date Sample was Received by Lab (from tracking data or WRS lab file '2007 Plan 0331081.xls')	1	
+95	DATE_FILTERED	Date Sample was Filtered at Lab	1	
+96	DATEFILT_ALERT	Sample Filtered at Lab Date (DATE_FILTERED) is AFTER Sample Received by Lab Date (DATE_RECEIVED) (Y/N)	2	1
+97	PHLAB_HT	Number of Days between Sample Collection and Lab Analysis for PH_LAB	1	
+98	PHLAB_HT_ALERT	PH_LAB Holding Time Exceeded Limit of 3 Days (Y/N)	2	1
+99	COND_HT	Number of Days between Sample Collection and Lab Analysis for COND	1	
+100	COND_HT_ALERT	COND Holding Time Exceeded Limit of 7 Days (Y/N)	2	1
+101	ANC_HT	Number of Days between Sample Collection and Lab Analysis for ANC	1	
+102	ANC_HT_ALERT	ANC Holding Time Exceeded Limit of 7 Days (Y/N)	2	1
+103	TURB_HT	Number of Days between Sample Collection and Lab Analysis for TURB	1	
+104	TURB_HT_ALERT	TURB Holding Time Exceeded Limit of 3 Days (Y/N)	2	1
+105	TOC_HT	Number of Days between Sample Collection and Lab Analysis for TOC	1	
+106	TOC_HT_ALERT	TOC Holding Time Exceeded Limit of 14 Days (Y/N)	2	1
+107	DOC_HT	Number of Days between Sample Collection and Lab Analysis for DOC	1	
+108	DOC_HT_ALERT	DOC Holding Time Exceeded Limit of 14 Days (Y/N)	2	1
+109	NH4_HT	Number of Days between Sample Collection and Lab Analysis for NH4	1	
+110	NH4_HT_ALERT	NH4 Holding Time Exceeded Limit of 28 Days (Y/N)	2	1
+111	NO3NO2_HT	Number of Days between Sample Collection and Lab Analysis for NO3NO2	1	
+112	NO3NO2_HT_ALERT	NO3NO2 Holding Time Exceeded Limit of 7 Days (Y/N)	2	1
+113	NTL_HT	Number of Days between Sample Collection and Lab Analysis for NTL	1	
+114	NTL_HT_ALERT	NTL Holding Time Exceeded Limit of 28 Days (Y/N)	2	1
+115	PTL_HT	Number of Days between Sample Collection and Lab Analysis for PTL	1	
+116	PTL_HT_ALERT	PTL Holding Time Exceeded Limit of 28 Days (Y/N)	2	1
+117	CL_HT	Number of Days between Sample Collection and Lab Analysis for CL	1	
+118	CL_HT_ALERT	CL Holding Time Exceeded Limit of 7 Days (Y/N)	2	1
+119	NO3_HT	Number of Days between Sample Collection and Lab Analysis for NO3	1	
+120	NO3_HT_ALERT	NO3 Holding Time Exceeded Limit of 7 Days (Y/N)	2	1
+121	SO4_HT	Number of Days between Sample Collection and Lab Analysis for SO4	1	
+122	SO4_HT_ALERT	SO4 Holding Time Exceeded Limit of 7 Days (Y/N)	2	1
+123	CA_HT	Number of Days between Sample Collection and Lab Analysis for CA	1	
+124	CA_HT_ALERT	CA Holding Time Exceeded Limit of 180 Days (Y/N)	2	1
+125	MG_HT	Number of Days between Sample Collection and Lab Analysis for MG	1	
+126	MG_HT_ALERT	MG Holding Time Exceeded Limit of 180 Days (Y/N)	2	1
+127	NA_HT	Number of Days between Sample Collection and Lab Analysis for NA	1	
+128	NA_HT_ALERT	NA Holding Time Exceeded Limit of 180 Days (Y/N)	2	1
+129	K_HT	Number of Days between Sample Collection and Lab Analysis for K	1	
+130	K_HT_ALERT	K Holding Time Exceeded Limit of 180 Days (Y/N)	2	1
+131	COLOR_HT	Number of Days between Sample Collection and Lab Analysis for COLOR	1	
+132	COLOR_HT_ALERT	COLOR Holding Time Exceeded Limit of 3 Days (Y/N)	2	1
+133	SIO2_HT	Number of Days between Sample Collection and Lab Analysis for SIO2	1	
+134	SIO2_HT_ALERT	SIO2 Holding Time Exceeded Limit of 7 Days (Y/N)	2	1
+135	COM_FIELD_PH	Field pH comment from Profile_do_com data	2	1000
+136	COMMENT_FLD_CHEM	Field Sampling Comments	2	1000
+137	COMMENT_LAB_CHEM	Laboratory Analysis Comments	2	150
+138	COMMENT_IM_CHEM	IM Data Validation Comments	2	300
+139	INDXSAMP_CHLA	Index chlorophyll sample for site (YES/NO)-typically the Visit 1 Primary sample	2	3
+140	DATECHLA	Date chlorophyll a sample collected	1	
+141	SAMPLED_CHLA	CHLA SAMPLE COLLECTED/ANALYZED?	2	20
+142	CHLA	Chlorophyll a concentration (µg/L).  Calculated as CHLA_ADJ*(40/VOL_FILTERED)	1	
+143	SAMPLE_ID_CHLA	Sample ID number	1	
+144	LAB_ID_CHLA	Laboratory sample ID	2	7
+145	CHLA_RL_ALERT	CHLA REPORTING LIMIT (< 0.1 ug/L) ALERT (Y/N)	2	1
+146	FLAG_FLD_CHLA	Data qualifier (Field Crew) (K=Value could not be determined U=nonstandard measurement Fn=other comment	2	8
+147	COMMENT_FLD_CHLA	CHLA comments recorded by field crew	2	1000
+148	FLAG_LAB_CHLA	Data qualifier (laboratory) (K=Value could not be determined S=value changed [orig. value in parentheses] B=below reporting level [3 µg/L])	2	12
+149	COMMENT_LAB_CHLA	CHLA comments recorded by lab personnel	2	120
+150	CHLA_HT_ALERT	CHLA HOLDING TIME (> 28 days) ALERT (Y/N)	2	1
+151	CHLA_HT	CHLA HOLDING TIME (days)	1	
+152	DATESECCHI	Date of Secchi transparency determination	1	
+153	SAMPLED_SECCHI	Secchi transparency determined?	2	24
+154	SECMEAN	Secchi transparency (m)(=avg. of disk disappearance and reappearance depths)	1	
+155	CLEAR_TO_BOTTOM	Clear all the way to the bottom (Y/blank)	2	4
+156	COMMENT_SECCHI	Comments and flag explanations for Secchi determination	2	140
+157	VISIT_ID	ID of site visit	1	
+158	FLAG_SECCHI	Data Qualifier flag for Secchi determination	2	12

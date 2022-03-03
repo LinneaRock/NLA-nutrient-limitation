@@ -1,0 +1,49 @@
+VARNUM	NAME	LABEL	TYPE	LENGTH
+1	SITE_ID	ID Assigned to Each Site	2	25
+2	VISIT_NO	Sequential Visit Number Within Year	1	
+3	SITE_TYPE	PROB_Samp: Lake is from probability sample and can be used for population estimation.  REF_Lake: Lake is not from probability sample and was selected as a candidate reference lake	2	10
+4	LAKE_SAMP	"Eval. status. _Denied (access denied). _Inaccess (physically inaccessible). _Other. _LT_4ha (< 4ha). _Shallow (< 1m deep). _Vegetated (< 1000 m2 open H2O). _Saline (tidal). Special_Purpose (aquacult., disposal, WWT, or evap.). Not_Lake (other)"	2	20
+5	TNT	Target:Non-target evaluation status derived from LAKE_SAMP	2	10
+6	LAT_DD	Latitude (decimal degrees) obtained from NHD (NAD83)	1	
+7	LON_DD	Longitude (decimal degrees) obtained from NHD (NAD83)	1	
+8	ST	State two letter code	2	2
+9	EPA_REG	EPA Region	2	9
+10	AREA_CAT7	Lake area unequal probability category (7 categories)	2	10
+11	NESLAKE	NESLake-Lake was included in 1970s National Eutrophication Survey	2	7
+12	STRATUM	Probability survey design stratum. NLALake is single stratum	2	8
+13	PANEL	Panel_1-lake was included in base design. OverSamp-Lake was part of over sample of lakes used for replacing lakes in base design if they could not be sampled	2	8
+14	DSGN_CAT	Probability survey design categories used to assign unequal probability of selection	2	15
+15	MDCATY	Unequal selection probability for lake	1	
+16	WGT	Initial site weight based on base design. DO NOT USE for population estimation	1	
+17	WGT_NLA	Adjusted site weight. USE for population estimation	1	
+18	ADJWGT_CAT	Categories used to adjust initial design weight (WGT) to account for use of over sample lakes.	2	5
+19	URBAN	URBAN LAKE? (YES/NO)	2	3
+20	WSA_ECO3	Wadeable Stream Assessment three aggregrated Omernik level 3 ecoregions	2	6
+21	WSA_ECO9	Wadeable Stream Assessment nine aggregrated Omernik level 3 ecoregions	2	3
+22	ECO_LEV_3	Omernik level 3 ecoregion number	2	2
+23	NUT_REG	"Nutrient ecoregion, based on EPA nutrient criteria documents for lakes & reservoirs)"	2	4
+24	NUTREG_NAME	Nutrient ecoregion name	2	60
+25	ECO_NUTA	NLA Aggregate Nutrient Ecoregion	2	5
+26	LAKE_ORIGIN	"Lake origin (MAN-MADE, NATURAL [which includes natural lakes augmented by dams])"	2	9
+27	ECO3_X_ORIGIN	WSA_ECO3 x LAKE_ORIGIN CLASS	2	20
+28	REF_CLUSTER	NLA Reference Site Cluster (A-G)	2	1
+29	RT_NLA	"NLA Reference Class Assignment (REF=reference, SO-SO=intermediate, TRASH=impacted)"	2	8
+30	HUC_2	Hydrologic region (2-digit)	2	2
+31	HUC_8	Hydrologic region (8-digit)	2	8
+32	FLAG_INFO	Data qualifier flag for lake info data	2	12
+33	COMMENT_INFO	Comments and flag explanations for lake info data	2	160
+34	SAMPLED	Site Sampled Code	2	30
+35	SAMPLED_PHYT	Phytoplankton sample collected?	2	16
+36	INDXSAMP_PHYT	Index phytoplankton sample for site (YES/NO)-typically the Visit 1 Primary sample	2	3
+37	SAMPLED_CHLA	CHLA SAMPLE COLLECTED/ANALYZED?	2	20
+38	INDXSAMP_CHLA	Index chlorophyll sample for site (YES/NO)-typically the Visit 1 Primary sample	2	3
+39	CHLA	Chlorophyll a concentration (µg/L).  Calculated as CHLA_ADJ*(40/VOL_FILTERED)	1	
+40	SAMPLED_MICR	Microcystin sample collected?	2	16
+41	INDXSAMP_MICR	Index microcystin sample for site (YES/NO)-typically the Visit 1 Primary sample	2	3
+42	MCYST_TL_UGL	Total microcystin concentration (ug/L)	1	
+43	CYANDENS	Cyanophyta Density (#/cm2)	1	
+44	REC_CHLA_COND	RECREATIONAL CONDITION CLASS (CHL A)	2	30
+45	MCYST_PRES	RECREATIONAL CONDITION CLASS (MICROCYSTIN PRESENCE > RL)	2	30
+46	MCYST_COND	RECREATIONAL CONDITION CLASS (MICROCYSTIN)	2	30
+47	MCYST_COND_HI	RECREATIONAL CONDITION CLASS (MICROCYSTIN)  High vs. Low+Moderate Risk	2	30
+48	CYANO_COND	RECREATIONAL CONDITION CLASS (CYANOBACTERIA DENSITY)	2	40

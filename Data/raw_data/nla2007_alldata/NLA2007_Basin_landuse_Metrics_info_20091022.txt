@@ -1,0 +1,62 @@
+VARNUM	NAME	LABEL	TYPE	LENGTH
+1	SITE_ID	Unique site identification number	2	25
+2	VISIT_NO	Lake visit number. 1-1st field sampling visit; 2-2nd field sampling visit	1	
+3	SITE_TYPE	PROB_Samp: Lake is from probability sample and can be used for population estimation.  REF_Lake: Lake is not from probability sample and was selected as a candidate reference lake	2	10
+4	LAKE_SAMP	Evaluation status	2	20
+5	BASINAREA_KM2	Basin area (km2) from basin metric file	1	
+6	BASINAREA_HA	Basin area (hectares)	1	
+7	BASINAREA_LU_KM2	Basin area (km2) from landuse file	1	
+8	MISSDATA_KM2_BSN	Basin area having missing data (km2)	1	
+9	NLCD11_KM2_BSN	Basin area as open water (km2)	1	
+10	NLCD12_KM2_BSN	Basin area as Perennial Ice/Snow (km2)	1	
+11	NLCD21_KM2_BSN	"Basin area as Developed, Open Space (km2)"	1	
+12	NLCD22_KM2_BSN	"Basin area as Developed, Low Intensity (km2)"	1	
+13	NLCD23_KM2_BSN	"Basin area as Developed, Medium Intensity (km2)"	1	
+14	NLCD24_KM2_BSN	"Basin area as Developed, High Intensity (km2)"	1	
+15	NLCD31_KM2_BSN	Basin area as Barren Land (km2)	1	
+16	NLCD32_KM2_BSN	Basin area as Unconsolidated Shore (km2)	1
+17	NLCD41_KM2_BSN	Basin area as Deciduous Forest (km2)	1
+18	NLCD42_KM2_BSN	Basin area as Evergreen Forest (km2)	1
+19	NLCD43_KM2_BSN	Basin area as Mixed Forest (km2)	1
+20	NLCD51_KM2_BSN	Basin area as Dwarf Scrub (km2)	1
+21	NLCD52_KM2_BSN	Basin area as Dwarf Scrub (km2)	1
+22	NLCD71_KM2_BSN	Basin area as Grassland/Herbaceous (km2)	1
+23	NLCD72_KM2_BSN	Basin area as Sedge Herbaceous (km2)	1
+24	NLCD73_KM2_BSN	Basin area as Lichens (km2)	1
+25	NLCD74_KM2_BSN	Basin area as Moss (km2)	1
+26	NLCD81_KM2_BSN	Basin area as Pasture/Hay (km2)	1
+27	NLCD82_KM2_BSN	Basin area as Cultivated Crops (km2)	1
+28	NLCD90_KM2_BSN	Basin area as Woody Wetlands (km2)	1
+29	NLCD91_KM2_BSN	Basin area as Palustrine Forested Wetland (km2)	1
+30	NLCD92_KM2_BSN	Basin area as Palustrine Scrub/Shrub (km2)	1
+31	NLCD93_KM2_BSN	Basin area as Estuarine Forested Wetlands (km2)	1
+32	NLCD94_KM2_BSN	Basin area as Estuarine Scrub/Shrub (km2)	1
+33	NLCD95_KM2_BSN	Basin area as Emergent Herbaceoous Wetland (km2)	1
+34	NLCD96_KM2_BSN	Basin area as Palustrine Emergent Wetland (Persistent) (km2)	1
+35	NLCD97_KM2_BSN	Basin area as Palustrine Emergent Wetland (km2)	1
+36	NLCD98_KM2_BSN	Basin area as Palustrine Aquatic Bed (km2)	1
+37	NLCD99_KM2_BSN	Basin area as Estuarine Aquatic Bed (km2)	1
+38	LANDUSE_KM2_BSN	"Total basin area with an Assigned NLCD Class (km2), including missing data"	1
+39	PCT_OPENH20_BSN	Percent of basin area as NLCD11 (Open water)	1
+40	PCT_ICESNOW_BSN	Percent of basin area as NLCD12 (Perennial ice or snow)	1
+41	PCT_WATER_BSN	Percent of basin area as Water (NLCD11+NLCD12)	1
+42	PCT_DEVOPEN_BSN	"Percent of basin area as NLCD21 (Developed, open space)"	1
+43	PCT_DEVLOW_BSN	"Percent of basin area as NLCD22 (Developed, low intensity)"	1
+44	PCT_DEVMED_BSN	"Percent of basin area as NLCD23 (Developed, medium intensity)"	1
+45	PCT_DEVHIGH_BSN	"Percent of basin area as NLCD24 (Developed, high intensity)"	1
+46	PCT_DEVELOPED_BSN	Percent of basin area as Developed (NLCD21+NLCD22+NLCD23+NLCD24)	1
+47	PCT_BARREN_BSN	Percent of basin area as NLCD31 (Barren land)	1
+48	PCT_DECID_BSN	Percent of basin area as NLCD41 (Deciduous forest)	1	
+49	PCT_CONIF_BSN	Percent of basin area as NLCD42 (Evergreen forest)	1	
+50	PCT_MIXED_BSN	Percent of basin area as NLCD42 (Mixed forest)	1	
+51	PCT_FOREST_BSN	Percent of basin area as Forested Upland (NLCD41+NLCD42+NLCD43)	1	
+52	PCT_SHRUBLAND_BSN	Percent of basin area as NLCD52 (Shrub/Scrub)	1	
+53	PCT_GRASS_BSN	Percent of basin area as NLCD71 (Grassland/Herbaceous)	1	
+54	PCT_PASTURE_BSN	Percent of basin area as NLCD81 (Pasture/Hay)	1	
+55	PCT_CROPS_BSN	Percent of basin area as NLCD82 (Cultivated crops)	1	
+56	PCT_AGRIC_BSN	Percent of basin area as Planted/Cultivated (NLCD81+NLCD82)	1	
+57	PCT_WDYWET_BSN	Percent of basin area as NLCD90 (Woody wetland)	1	
+58	PCT_EMHERBWET_BSN	Percent of basin area as NLCD95 (Emergent Herbaceous Wetland)	1	
+59	PCT_WETLAND_BSN	Percent of basin area as Wetlands (Woody + Herbaceous)	1	
+60	FLAG_LU_BASIN	Data qualifier flag for basin landuse data	2	12
+61	COMMENT_LU_BASIN	Comments and flag explanations for basin landuse data	2	160

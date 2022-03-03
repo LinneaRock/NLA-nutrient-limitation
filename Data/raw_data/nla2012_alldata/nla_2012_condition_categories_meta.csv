@@ -1,0 +1,53 @@
+PARAMETER,LABEL,LEGAL_VALUES,RANGE_HIGH,RANGE_LOW,UNITS
+ACID_CLS,Acidity condition class,Good|Fair-lowancdep|Poor-acidmine|Naturalorganicacid,NA,NA,NONE
+AGGR_ECO3_2015,"NARS 3-level reporting region (2015), based on aggregating AGGR_ECO9_2015 reporting regions",EHIGH|PLNLOW|WMTNS,NA,NA,NA
+AGGR_ECO9_2015,"NARS 9-level reporting region (2015), based on aggregated Omernik Level III ecoregions",CPL|NAP|NPL|SAP|SPL|TPL|UMW|WMT|XER,NA,NA,NA
+ATZ_DETECT,Atrazine detection class,Detect|Non_detect|Not Assessed,NA,NA,NONE
+ATZ_LOC04,Atrazine condition class based on the 2012 EPA Level of Concern,Blw_04ppb|Abv_04ppb|Non_detect|Not Assessed,NA,NA,NONE
+ATZ_LOC10,Atrazine condition class based on the former EPA Level of Concern,Blw_10ppb|Abv_10ppb|Non_detect|Not Assessed,NA,NA,NONE
+BENT_COND,Benthic macroinvertebrate MMI condition class ,Good|Fair|Poor|Not Assessed,NA,NA,NONE
+CHLA_COND,"Condition for Chlorophyll a indicator, based on CHLX",NA,NA,NA,NA
+CHLL_REC,WHO chlorophyll-a concentration recreational risk condition class for littoral site,Low|Moderate|High|Not Assessed|No Detect,NA,NA,NONE
+CHLX_REC,WHO chlorophyll-a concentration recreational risk condition class for index site,Low|Moderate|High|Not Assessed|No Detect,NA,NA,NONE
+CYNL_REC,WHO cyanobacteria cell density recreational risk condition classes for littoral site,Low|Moderate|High|Not Assessed|No Detect,NA,NA,NONE
+CYNX_REC,WHO cyanobacteria cell density recreational risk condition classes for index site,Low|Moderate|High|Not Assessed|No Detect,NA,NA,NONE
+DESIGN_YR,Design year of site,NA,NA,NA,NONE
+DIS_O2_CLS,Dissolved oxygen condition class,High (>=5 Ppm)|Moderate (>3-<5 Ppm)|Low (<=3 Ppm)|Not Assessed,NA,NA,NONE
+DRAWDOWN_COND,Lake level drawdown exposure condition,Small|Medium|Large|Not Assessed,NA,NA,NONE
+EPA_REG,EPA Region,NA,NA,NA,NA
+FS_EW,Eastern or western US Forest Service land,NA,NA,NA,NA
+INDEX_NLA,"Index visit for lake (used in population estimates).  For sites visited, VISIT_NO=1 is designated as the index visit (even if no samples were collected).  Blank= not assigned (sites not evaluated or not needed). Y=Index visit, N=Not index visit",Y|N|,NA,NA,NA
+LAKE_ORIGIN,"Lake origin based on codes used in NLA 2007:MAN-MADE=includes LAKE-ORIGIN12= MAN_MADE, MAN_MADE_AB, and RESERVOIR; NATURAL=includes LAKE_ORIGIN12=NATURAL and NATURAL_ENH; UNCERTAIN= Includes LAKE_ORIGIN12=UNCERTAIN",MAN-MADE|NATURAL|UNCERTAIN,NA,NA,NA
+LAKE_ORIGIN12,"Lake origin as determined during the 2012 site evaluation process, or from the sampling visit: MAN_MADE=Impoundment created by humans with current use for purpose of water storage, wildlife/fishing, and recreation.  Not used for active irrigation or power generation.  Includes lakes that were historically used for other purposes (e.g. mining pit pond, mill pond) but currently not a ‘working” impoundment; MAN_MADE_AB=Lakes have been abandoned from their man-made function for many decades (or a century).  These are still called  man-made but function 'naturally'; NATURAL=Naturally occurring impoundment; NATURAL_ENH=Lake was originally a natural open water shallow lake that has been ‘enhanced’ with flow diversions to form larger/deeper lake to support recreational uses; RESERVOIR=Man-made impoundment for hydropower, flood control, and/or active irrigation storage; UNCERTAIN=Origin could not be determined from either site evaluation or sampling visit",MAN_MADE|MAN_MADE_AB|NATURAL|NATURAL_ENH|RESERVOIR|UNCERTAIN,NA,NA,NA
+LAT_DD83,"Latitude (based on NAD83 datum) assigned to lake during site selection from NHD-based sample frame. Generally, but not always, represents centriod of lake polygon in NHD.",NA,NA,NA,NA
+LITCVR_COND,Shallow water habitat condition class,Good|Fair|Poor|Not Assessed,NA,NA,NONE
+LITRIPCVR_COND,Lake habitat complexity condition class,Good|Fair|Poor|Not Assessed,NA,NA,NONE
+LON_DD83,"Longitude (based on NAD83 datum) assigned to lake during site selection from NHD-based sample frame. Generally, but not always represents centriod of lake polygon in NHD.",NA,NA,NA,NA
+MAJ_BASIN,Major USGS Hydrologic Basins derived from NHDPlus,NA,NA,NA,NA
+MICL_REC,WHO microcystin recreational risk condition class for littoral site,No Detect|Low|Moderate|High|Not Assessed,NA,NA,NONE
+MICX_DETECT,Microcystin detection for index site,Detect|No Detect|Not Assessed,NA,NA,NONE
+MICX_REC,WHO microcystin recreational risk condition class for index site,No Detect|Low|Moderate|High|Not Assessed,NA,NA,NONE
+MISS_BASIN,"Within Mississippi basin, yes or no",NA,NA,NA,NA
+NTL_COND,Condition class based on total nitrogen,Good|Fair|Poor|Not Assessed,NA,NA,NONE
+OWN_TYPE,Federal Agency land ownership category based on most current spatial land records from federal agencies,NA,NA,NA,NA
+PTL_COND,Condition class based on total phosphorus,Good|Fair|Poor|Not Assessed,NA,NA,NONE
+RDIS_COND,Lakeshore disturbance condition class,Low|Medium|High|Not Assessed,NA,NA,NONE
+RVEG_COND,Riparian vegetation condition class,Good|Fair|Poor|Not Assessed,NA,NA,NONE
+SEDHG_MTH_TOP_COND,Sediment methylmercury condition class for top sediment sample,Low|Medium|High|Not Assessed,NA,NA,NONE
+SEDHG_TOT_BTM_COND,Sediment total mercury condition class for bottom sediment sample,Low|Medium|High|Not Assessed,NA,NA,NONE
+SEDHG_TOT_TOP_COND,Sediment total mercury condition class for top sediment sample,Low|Medium|High|Not Assessed,NA,NA,NONE
+SITE_ID,Identification code for site,NA,NA,NA,NA
+SIZE_CLASS,Lake area class,NA,NA,NA,NA
+STATUS,"Site status based on EVALSTAT and codes used for 2007 NLA, for use in national-scale population estimates: Target_Sampled=TargetSampled; Target_Denied=AccessDenied; Target_Inacc=Inaccessible-Barrier/Safety or Inaccessible-Effort; Target_Other=TargetOther.  Target lakes that wer not sampled.; Lake_LT_1 ha=Nontarget-TooSmall; Lake_Saline=Coastal_Saline; Lake_Shallow=Nontarget-TooShallow; Lake_Vegetated=Nontarget-Vegetated; Lake-Special_Purpose=Nontarget-NoRecAquatUse; Non_Target=Nontarget-Ephemeral or Nontarget-Other; Unknown=Lake was not evaluated or visited.  Generally applicable to additional State-specific sites that can be included in the national assessment.",Target_Sampled|Target_Denied|Target_Inacc|Target_Other|Lake_LT_1ha|Lake_Saline|Lake_Shallow|Lake_Vegetated|Lake-Special_Purpose|Non_Target|Unknown,NA,NA,NA
+TNT,"NLA target status assigned based on lake evaluation for use in national assessments. Target_Presumed= Assigned to lakes evaluated as target but were not sampled (e.g., access denials or physically inaccessible). Uncertain-Final target status cannot be determined because open water and depth criteria could not be evaluated. NotNeeded=Not needed for national level assessments (includes sites selected as part of individual state-level designs. Blank=represent errors or changes in design file, such as lakes selected &gt; 1 time or lakes whose polygons have been combined with other lakes.",Target|NonTarget|Target_Presumed|Uncertain|NotNeeded,NA,NA,NA
+TROPHIC_STATE,Trophic state (Oligotrophic/Mesotrophic/Eutrophic/Hypereutrophic),|OLIGOTROPHIC|MESOTROPHIC|EUTROPHIC|HYPEREUTROPHIC,NA,NA,NA
+TROPHIC_STATE,Trophic state (Oligotrophic/Mesotrophic/Eutrophic/Hypereutrophic),Oligotrophic|Mesotrophic|Eutrophic|Hypereutrophic|Not Assessed,NA,NA,NONE
+TURB_COND,Condition of site based on turbidity,NA,NA,NA,NA
+UID,Unique identifier for sampling event,NA,NA,NA,NONE
+VISIT_NO,Sequential number of visit to site,|1|2,NA,NA,NA
+WGT_ALL,Adjusted weight for site. To be used for NLA national population estimation,NA,NA,NA,NA
+WSA3_LO,AGGR_ECO3_2015 region and lake origin combination,NA,NA,NA,NONE
+WSA9_LO,AGGR_ECO9_2015 region and lake origin combination,NA,NA,NA,NONE
+XCOORD,x-coordinate from US Contiguous Albers Equal Area Conic projection EXCEPT Hawaii sites which are calculated from Hawaii Albers Equal Area Conic projection,NA,NA,NA,NA
+YCOORD,"Longitude (based on NAD83 datum) assigned to lake during site selection from NHD-based sample frame. Generally, but not always represents centriod of lake polygon in NHD.",NA,NA,NA,NA
+ZOOP_COND,Zooplankton MMI condition class,Good|Fair|Poor|Not Assessed,NA,NA,NONE
