@@ -13,20 +13,25 @@ nla2007_chemcondition <- read.csv('Data/raw_data/nla2007_alldata/NLA2007_Chemica
 
 #filter for N & P
 nla2007_wq1 <- nla2007_wq |>
-  select(SITE_ID, VISIT_ID, DATE_COL, 33, 40, 44, 51, 142) |> #filter for TP, TN, nitrate, ammonium, and chlorophyll a
+  select(SITE_ID, VISIT_ID, VISIT_NO, DATE_COL, 33, 37, 40, 44, 51, 142) |> #filter for TP, TN, nitrate, ammonium, and chlorophyll a
   rename(CHLA_PPB = CHLA,
-          PTL_PPB = PTL) |>
+          PTL_PPB = PTL,
+         NO3NO2_PPM = NO3_NO2) |>
   group_by(SITE_ID, VISIT_ID, DATE_COL) |>
   summarise(NH4N_PPM = mean(NH4N_PPM), #There are some duplicates in the data, this averages duplicate analyses
            NO3N_PPM = mean(NO3N_PPM), 
+           #NO3NO2_PPM = mean(NO3NO2_PPM), #this is collected using a different method.It is sometimes less than NO3, which doesn't make sense
            NTL_PPM = mean(NTL_PPM),
            PTL_PPB = mean(PTL_PPB),
            CHLA_PPB = mean(CHLA_PPB)) |>
-  ungroup()
+  ungroup() 
+  #mutate(check = NO3NO2_PPM >= NO3N_PPM)
+ 
 
 #filter for useful site informaiton
 nla2007_siteinfo1 <- nla2007_siteinfo |>
-  select(SITE_ID, VISIT_ID, VISIT_NO, DATE_COL, SITE_TYPE, LON_DD, LAT_DD, EPA_REG, WGT_NLA, URBAN, NUT_REG, NUTREG_NAME, LAKE_ORIGIN, AREA_HA, SLD, DEPTHMAX, ELEV_PT, HUC_8)
+  select(SITE_ID, VISIT_ID, VISIT_NO, DATE_COL, SITE_TYPE, LON_DD, LAT_DD, EPA_REG, WGT_NLA, URBAN, NUT_REG, NUTREG_NAME, LAKE_ORIGIN, AREA_HA, SLD, DEPTHMAX, ELEV_PT, HUC_8) |>
+  mutate(VISIT_ID = ifelse(SITE_ID == "NLA06608-3846", 8844, VISIT_ID)) # for some reason this is missing in the original dataset and messes up joining later.
 
 #filterfor trophic information
 nla2007_trophicstatus1 <- nla2007_trophicstatus |>
@@ -41,7 +46,7 @@ nla2007_chemcondition1 <- nla2007_chemcondition |>
   select(SITE_ID, VISIT_NO, 46:48) # chemical condition based on TN, TP, and chlorophyll 
 
 #combine the informaiton 
-nla2007 <- left_join(nla2007_wq1, nla2007_siteinfo1) |>
+nla2007 <- left_join(nla2007_wq1, nla2007_siteinfo1, by = c("SITE_ID", "VISIT_ID")) |>
   left_join(nla2007_trophicstatus1) |>
   left_join(nla2007_reccondition1) |>
   left_join(nla2007_chemcondition1)
@@ -54,13 +59,13 @@ Nmol <- molMass("N") * 1000 #mg/mol
 nla2007_tntp <- nla2007 |>
   mutate(tn.tp = (NTL_PPM/Nmol)/(PTL_PPB/Pmol),
          no3.tp = (NO3N_PPM/Nmol)/(PTL_PPB/Pmol),
-         nh4.tp = (NH4N_PPM/Nmol)/(PTL_PPB/Pmol))
+         nh4.tp = (NH4N_PPM/Nmol)/(PTL_PPB/Pmol),
+         `nh4+no3.tp` = ((NH4N_PPM + NO3N_PPM)/Nmol)/(PTL_PPB/Pmol))
 
 #quick view - raw
 ggplot(nla2007_tntp) +
   geom_point(aes((PTL_PPB/Pmol), (NTL_PPM/Nmol))) +
-  geom_abline(slope = 16, intercept = 0) +
-  geom_abline(slope = 1, intercept = 0, color = 'red')
+  geom_abline(slope = 16, intercept = 0) 
 
 #quick view - log10
 ggplot(nla2007_tntp) +
