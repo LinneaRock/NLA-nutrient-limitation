@@ -3,6 +3,11 @@
 library(tidyverse)
 library(biogas) #gets molar masses 
 
+uniques <- readxl::read_xlsx('Data/raw_data/crosswalk_ID.xlsx', sheet = 'LONG_NARS_ALLSurvey_SITE_ID_CRO')
+uniques1 <- uniques |>
+  filter(SURVEY %in% c('NLA', 'NRSA')) |>
+  select(UNIQUE_ID, SITE_ID)
+
 
 nla2007_wq <- read.csv('Data/raw_data/nla2007_alldata/NLA2007_WaterQuality_20091123.csv') 
 nla2007_siteinfo <- read.csv('Data/raw_data/nla2007_alldata/NLA2007_sampledlakeinformation_20091113.csv')
@@ -31,8 +36,9 @@ nla2007_wq1 <- nla2007_wq |>
 #filter for useful site informaiton
 nla2007_siteinfo1 <- nla2007_siteinfo |>
   select(SITE_ID, VISIT_ID, VISIT_NO, DATE_COL, SITE_TYPE, LON_DD, LAT_DD, EPA_REG, WGT_NLA, URBAN, NUT_REG, NUTREG_NAME, LAKE_ORIGIN, AREA_HA, SLD, DEPTHMAX, ELEV_PT, HUC_8) |>
-  mutate(VISIT_ID = ifelse(SITE_ID == "NLA06608-3846", 8844, VISIT_ID)) # for some reason this is missing in the original dataset and messes up joining later.
-
+  mutate(VISIT_ID = ifelse(SITE_ID == "NLA06608-3846", 8844, VISIT_ID)) |> # for some reason this is missing in the original dataset and messes up joining later.
+  left_join(uniques1)
+  
 #filterfor trophic information
 nla2007_trophicstatus1 <- nla2007_trophicstatus |>
   select(SITE_ID, VISIT_NO, 45:47) # trophic status based on TN, TP, and chlorophyll 
