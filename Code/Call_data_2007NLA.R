@@ -1,4 +1,4 @@
-#Organizing data 
+# Organizing data  - NLA 2007
 
 library(tidyverse)
 library(biogas) #gets molar masses 
