@@ -32,17 +32,24 @@ nla2017_wq1 <- nla2017_wq |>
 
 # filter for useful site informaiton
 nla2017_siteinfo1 <- nla2017_siteinfo |>
-  select(SITE_ID, UID, VISIT_NO, DATE_COL, SITETYPE, LON_DD83, LAT_DD83, EPA_REG, WGT_ALL, URBAN, LAKE_ORIGIN, AREA_HA, ELEVATION, HUC8) |>
-  left_join(uniques1) |> # join with uniques dataset
-  rename(VISIT_ID = UID,
-         SITE_TYPE = SITETYPE,
-         LON_DD = LON_DD83,
-         LAT_DD = LAT_DD83,
-         WGT_NLA = WGT_ALL,
-         ELEV_PT = ELEVATION,
-         HUC_8 = HUC8) |>
-  filter(!is.na(VISIT_ID)) |>
-  mutate(UNIQUE_ID = ifelse(is.na(UNIQUE_ID), SITE_ID, UNIQUE_ID))
+   select(SITE_ID, UID, VISIT_NO, SITETYPE, AG_ECO9, AG_ECO9_NM, LON_DD83, LAT_DD83, EPA_REG, WGT_TP_EXTENT, URBN_NLA17, LAKE_ORGN, AREA_HA, ELEVATION, HUC8) |>
+   left_join(uniques1) |> # join with uniques dataset
+   rename(VISIT_ID = UID,
+          SITE_TYPE = SITETYPE,
+          LON_DD = LON_DD83,
+          LAT_DD = LAT_DD83,
+          WGT_NLA = WGT_TP_EXTENT,
+          ELEV_PT = ELEVATION,
+          HUC_8 = HUC8,
+          ECO_REG = AG_ECO9,
+          ECO_REG_NAME = AG_ECO9_NM,
+          URBAN = URBN_NLA17,
+          LAKE_ORIGIN = LAKE_ORGN) |>
+   filter(!is.na(VISIT_ID)) |>
+   mutate(UNIQUE_ID = ifelse(is.na(UNIQUE_ID), SITE_ID, UNIQUE_ID))
+
+
+nla2017 <- left_join(nla2017_wq1, nla2017_siteinfo1)
 
 
 
