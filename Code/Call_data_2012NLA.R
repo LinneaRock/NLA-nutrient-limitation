@@ -18,9 +18,8 @@ nla2012_condition <- read.csv('Data/raw_data/nla2012_alldata/nla_2012_condition_
 
 # filter for N & P
 nla2012_wq1 <- nla2012_wq |>
-  select(UID, NITRATE_N_UNITS, NITRATE_N_RESULT, NTL_UNITS, NTL_RESULT, PTL_UNITS, PTL_RESULT) |> # filter for TP, TN, nitrate
-  rename(NO3N_PPM = NITRATE_N_RESULT,
-         NTL_PPM = NTL_RESULT,
+  select(UID, NTL_UNITS, NTL_RESULT, PTL_UNITS, PTL_RESULT) |> # filter for TP, TN
+  rename(NTL_PPM = NTL_RESULT,
          PTL_PPB = PTL_RESULT,
          VISIT_ID = UID) |>
   select(-contains("UNITS")) 
