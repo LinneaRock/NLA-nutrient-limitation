@@ -44,7 +44,8 @@ nla2012_siteinfo1 <- nla2012_siteinfo |>
 # filter for condition information
 nla2012_condition1 <- nla2012_condition |>
   select(SITE_ID, UID, AGGR_ECO9_2015, CHLA_COND, NTL_COND, PTL_COND, TROPHIC_STATE) |>
-  rename(VISIT_ID = UID)
+  rename(VISIT_ID = UID,
+         ECO_REG = AGGR_ECO9_2015)
 
 
 nla2012 <- left_join(nla2012_wq1, nla2012_siteinfo1) |>
@@ -64,4 +65,5 @@ nla2012.tntp <- nla2012 |>
 
 
 write.csv(nla2012.tntp, "Data/NLA_2012.csv")
+
 

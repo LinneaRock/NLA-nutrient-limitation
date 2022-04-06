@@ -3,17 +3,17 @@
 library(tidyverse)
 library(biogas) #gets molar masses 
 
-uniques <- readxl::read_xlsx('Data/raw_data/crosswalk_ID.xlsx', sheet = 'LONG_NARS_ALLSurvey_SITE_ID_CRO')
+uniques <- readxl::read_xlsx('C:/Users/linne/OneDrive/Desktop/raw_data/crosswalk_ID.xlsx', sheet = 'LONG_NARS_ALLSurvey_SITE_ID_CRO')
 uniques1 <- uniques |>
   filter(SURVEY %in% c('NLA', 'NRSA')) |>
   select(UNIQUE_ID, SITE_ID)
 
 
-nla2007_wq <- read.csv('Data/raw_data/nla2007_alldata/NLA2007_WaterQuality_20091123.csv') 
-nla2007_siteinfo <- read.csv('Data/raw_data/nla2007_alldata/NLA2007_sampledlakeinformation_20091113.csv')
-nla2007_trophicstatus <- read.csv('Data/raw_data/nla2007_alldata/NLA2007_Trophic_ConditionEstimate_20091123.csv')
-nla2007_reccondition <- read.csv('Data/raw_data/nla2007_alldata/NLA2007_Recreational_ConditionEstimates_20091123.csv')
-nla2007_chemcondition <- read.csv('Data/raw_data/nla2007_alldata/NLA2007_Chemical_ConditionEstimates_20091123.csv')
+nla2007_wq <- read.csv('C:/Users/linne/OneDrive/Desktop/raw_data/nla2007_alldata/NLA2007_WaterQuality_20091123.csv') 
+nla2007_siteinfo <- read.csv('C:/Users/linne/OneDrive/Desktop/raw_data/nla2007_alldata/NLA2007_sampledlakeinformation_20091113.csv')
+nla2007_trophicstatus <- read.csv('C:/Users/linne/OneDrive/Desktop/raw_data/nla2007_alldata/NLA2007_Trophic_ConditionEstimate_20091123.csv')
+nla2007_reccondition <- read.csv('C:/Users/linne/OneDrive/Desktop/raw_data/nla2007_alldata/NLA2007_Recreational_ConditionEstimates_20091123.csv')
+nla2007_chemcondition <- read.csv('C:/Users/linne/OneDrive/Desktop/raw_data/nla2007_alldata/NLA2007_Chemical_ConditionEstimates_20091123.csv')
 
 
 #filter for N & P
@@ -29,23 +29,25 @@ nla2007_wq1 <- nla2007_wq |>
            NTL_PPM = mean(NTL_PPM),
            PTL_PPB = mean(PTL_PPB),
            CHLA_PPB = mean(CHLA_PPB)) |>
-  ungroup() 
+  ungroup() |> 
   #mutate(check = NO3NO2_PPM >= NO3N_PPM)
+  select(-NH4N_PPM, -NO3N_PPM, -CHLA_PPB)# get rid of nitrate, ammonium, and chlorophyll a -- not going to use
  
 
 #filter for useful site informaiton
 nla2007_siteinfo1 <- nla2007_siteinfo |>
-  select(SITE_ID, VISIT_ID, VISIT_NO, DATE_COL, SITE_TYPE, LON_DD, LAT_DD, EPA_REG, WGT_NLA, URBAN, NUT_REG, NUTREG_NAME, LAKE_ORIGIN, AREA_HA, SLD, DEPTHMAX, ELEV_PT, HUC_8) |>
+  select(SITE_ID, VISIT_ID, VISIT_NO, DATE_COL, SITE_TYPE, LON_DD, LAT_DD, EPA_REG, WGT_NLA, URBAN, WSA_ECO9, LAKE_ORIGIN, AREA_HA, ELEV_PT, HUC_8) |>
   mutate(VISIT_ID = ifelse(SITE_ID == "NLA06608-3846", 8844, VISIT_ID)) |> # for some reason this is missing in the original dataset and messes up joining later.
-  left_join(uniques1)
+  left_join(uniques1) |>
+  rename(ECO_REG = WSA_ECO9)
   
 #filterfor trophic information
 nla2007_trophicstatus1 <- nla2007_trophicstatus |>
   select(SITE_ID, VISIT_NO, 45:47) # trophic status based on TN, TP, and chlorophyll 
 
-#filterfor condition - recreation
-nla2007_reccondition1 <- nla2007_reccondition |>
-  select(SITE_ID, VISIT_NO, 44, 48) # recreation condition based on chlorophyll and cyanobacteria 
+# #filterfor condition - recreation
+# nla2007_reccondition1 <- nla2007_reccondition |>
+#   select(SITE_ID, VISIT_NO, 44, 48) # recreation condition based on chlorophyll and cyanobacteria 
 
 #filter for condition - chemical
 nla2007_chemcondition1 <- nla2007_chemcondition |>
@@ -54,7 +56,7 @@ nla2007_chemcondition1 <- nla2007_chemcondition |>
 #combine the informaiton 
 nla2007 <- left_join(nla2007_wq1, nla2007_siteinfo1, by = c("SITE_ID", "VISIT_ID")) |>
   left_join(nla2007_trophicstatus1) |>
-  left_join(nla2007_reccondition1) |>
+ # left_join(nla2007_reccondition1) |>
   left_join(nla2007_chemcondition1)
 
 
@@ -64,9 +66,8 @@ Nmol <- molMass("N") * 1000 #mg/mol
 
 nla2007_tntp <- nla2007 |>
   mutate(tn.tp = (NTL_PPM/Nmol)/(PTL_PPB/Pmol),
-         no3.tp = (NO3N_PPM/Nmol)/(PTL_PPB/Pmol),
-         nh4.tp = (NH4N_PPM/Nmol)/(PTL_PPB/Pmol),
-         `nh4+no3.tp` = ((NH4N_PPM + NO3N_PPM)/Nmol)/(PTL_PPB/Pmol))
+         TN_mol = (NTL_PPM)/Nmol,
+         TP_mol = (PTL_PPB)/Pmol)
 
 #quick view - raw
 ggplot(nla2007_tntp) +
