@@ -86,7 +86,15 @@ ggplot(nla2007_tntp) +
 # get rid of extra date column and save dataset
 nla2007_tntp1 <-nla2007_tntp |>
   select(-DATE_COL.y) |>
-  rename(DATE_COL =  DATE_COL.x)
+  rename(DATE_COL =  DATE_COL.x) |>
+  mutate(UNIQUE_ID = ifelse(is.na(UNIQUE_ID), SITE_ID, UNIQUE_ID)) # this resolves missing data problem :)
+
+
 
 write.csv(nla2007_tntp1, "Data/NLA_2007.csv")
+
+
+
+
+
              

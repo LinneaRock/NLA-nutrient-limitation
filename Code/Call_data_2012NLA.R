@@ -5,16 +5,21 @@ library(biogas) # gets molar masses
 
 
 # unique site id crosswalk
-uniques <- readxl::read_xlsx('Data/raw_data/crosswalk_ID.xlsx', sheet = 'LONG_NARS_ALLSurvey_SITE_ID_CRO')
+uniques <- readxl::read_xlsx('C:/Users/linne/OneDrive/Desktop/raw_data/crosswalk_ID.xlsx', sheet = 'LONG_NARS_ALLSurvey_SITE_ID_CRO')
 uniques1 <- uniques |>
   filter(SURVEY %in% c('NLA', 'NRSA')) |>
   select(UNIQUE_ID, SITE_ID)
 
 # call in relevant datasets
-nla2012_wq <- read.csv("C:/Users/linne/OneDrive/Desktop/nla2012_waterchem_wide.csv") 
-nla2012_siteinfo <- read.csv('Data/raw_data/nla2012_alldata/NLA2012_wide_siteinfo_08232016.csv')
-nla2012_condition <- read.csv('Data/raw_data/nla2012_alldata/nla_2012_condition_categories.csv')
+nla2012_wq <- read.csv("C:/Users/linne/OneDrive/Desktop/raw_data/nla2012_alldata/nla2012_waterchem_wide.csv") 
+nla2012_siteinfo <- read.csv('C:/Users/linne/OneDrive/Desktop/raw_data/nla2012_alldata/NLA2012_wide_siteinfo_08232016.csv')
+nla2012_condition <- read.csv('C:/Users/linne/OneDrive/Desktop/raw_data/nla2012_alldata/nla_2012_condition_categories.csv')
+nla2012_keyinfo <- read.csv('C:/Users/linne/OneDrive/Desktop/raw_data/nla2012_alldata/nla12_keyvariables_data.csv') 
 
+key <- nla2012_keyinfo |>
+  mutate(keeprow = "YES") |>
+  select(SITE_ID, UID, PTL_RESULT, NTL_RESULT, keeprow) |>
+  rename(VISIT_ID = UID)
 
 # filter for N & P
 nla2012_wq1 <- nla2012_wq |>
@@ -47,8 +52,7 @@ nla2012_condition1 <- nla2012_condition |>
          ECO_REG = AGGR_ECO9_2015)
 
 
-nla2012 <- left_join(nla2012_wq1, nla2012_siteinfo1) |>
-  select(-NO3N_PPM)
+nla2012 <- left_join(nla2012_wq1, nla2012_siteinfo1) 
 
 nla2012 <- left_join(nla2012, nla2012_condition1)
 
@@ -63,6 +67,92 @@ nla2012.tntp <- nla2012 |>
          TP_mol = (PTL_PPB)/Pmol)
 
 
-write.csv(nla2012.tntp, "Data/NLA_2012.csv")
+# delete rows not in key information? - yes. these data were not included here so I'm chucking them
+check <- nla2012.tntp |>
+  full_join(key) 
+
+nla2012.tntp1 <- nla2012.tntp |>
+  drop_na(WGT_NLA) # exactly 92 rows less than my original. See "looking_for_missingdata.R" commented out section
 
 
+
+write.csv(nla2012.tntp1, "Data/NLA_2012.csv")
+
+
+
+
+###missing data resolved using this code (from "looking_for_missingdata.R":
+# ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+# This issue has been resolved using the key variables dataset !!
+missing12 <- NLA_2012 |>
+  filter(is.na(ECO_REG)) |> # total of 192 observations are missing this information
+  select(UNIQUE_ID) |>
+  distinct()
+
+
+# can I get this information from other unique IDs from 2012?
+
+missinginfo <- NLA_2012 |>
+  select(UNIQUE_ID, WGT_NLA, ECO_REG, CHLA_COND, NTL_COND, PTL_COND, TROPHIC_STATE)
+
+## weights -- nope.
+
+all_wgt <- missinginfo |>
+  select(UNIQUE_ID, WGT_NLA) |>
+  #drop_na() |>
+  distinct()
+
+miss_wgt <- missinginfo |>
+  select(UNIQUE_ID, WGT_NLA) |>
+  filter(is.na(WGT_NLA)) |>
+  distinct() |> # 92 ids are missing weights
+  select(UNIQUE_ID)
+
+
+fill_wgt <- left_join(miss_wgt, all_wgt) # this fixes nothing
+
+
+## other info
+
+all_info <- missinginfo |>
+  # select(-WGT_NLA) |>
+  drop_na() |>
+  distinct()
+
+
+miss_info <- missinginfo |>
+  # select(-WGT_NLA) |>
+  filter(is.na(ECO_REG)) |>
+  distinct() |> # 100 ids are missing this information
+  select(UNIQUE_ID)
+
+fill_info <- left_join(miss_info, all_info) # filled in all of the data!!
+fill_info <- fill_info |>
+  rename(WGT2 = WGT_NLA,
+         ECO2 = ECO_REG,
+         chcond2 = CHLA_COND,
+         tpcond2 = PTL_COND,
+         tncond2 = NTL_COND,
+         tstate = TROPHIC_STATE)
+
+
+# how many leftover that need information?
+
+leftover <- fill_info |>
+  filter(is.na(ECO_REG)) # none are leftover.
+
+
+# add fill info and resave :) -- copy code into "Call_data_2012NLA.R"
+
+NLA_2012_1 <- NLA_2012 |>
+  left_join(fill_info) |>
+  mutate(WGT_NLA = ifelse(is.na(WGT_NLA), WGT2, WGT_NLA),
+         ECO_REG = ifelse(is.na(ECO_REG), ECO2, ECO_REG),
+         CHLA_COND = ifelse(is.na(CHLA_COND), chcond2, CHLA_COND),
+         PTL_COND = ifelse(is.na(PTL_COND), tpcond2, PTL_COND),
+         NTL_COND = ifelse(is.na(NTL_COND), tncond2, NTL_COND),
+         TROPHIC_STATE = ifelse(is.na(TROPHIC_STATE), tstate, TROPHIC_STATE)) |>
+  select(-WGT2, -ECO2, -chcond2, -tpcond2, -tncond2, -tstate)
+
+
+write.csv(NLA_2012_1, "Data/NLA_2012.csv")
