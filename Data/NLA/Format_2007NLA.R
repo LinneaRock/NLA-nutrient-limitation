@@ -3,36 +3,39 @@
 library(tidyverse)
 library(biogas) #gets molar masses 
 
-uniques <- readxl::read_xlsx('C:/Users/linne/OneDrive/Desktop/raw_data/crosswalk_ID.xlsx', sheet = 'LONG_NARS_ALLSurvey_SITE_ID_CRO')
+uniques <- readxl::read_xlsx('C:/Users/lrock1/OneDrive/Desktop/raw_data/crosswalk_ID.xlsx', sheet = 'LONG_NARS_ALLSurvey_SITE_ID_CRO')
 uniques1 <- uniques |>
   filter(SURVEY %in% c('NLA', 'NRSA')) |>
   select(UNIQUE_ID, SITE_ID)
 
 
-nla2007_wq <- read.csv('C:/Users/linne/OneDrive/Desktop/raw_data/nla2007_alldata/NLA2007_WaterQuality_20091123.csv') 
-nla2007_siteinfo <- read.csv('C:/Users/linne/OneDrive/Desktop/raw_data/nla2007_alldata/NLA2007_sampledlakeinformation_20091113.csv')
-nla2007_trophicstatus <- read.csv('C:/Users/linne/OneDrive/Desktop/raw_data/nla2007_alldata/NLA2007_Trophic_ConditionEstimate_20091123.csv')
-nla2007_reccondition <- read.csv('C:/Users/linne/OneDrive/Desktop/raw_data/nla2007_alldata/NLA2007_Recreational_ConditionEstimates_20091123.csv')
-nla2007_chemcondition <- read.csv('C:/Users/linne/OneDrive/Desktop/raw_data/nla2007_alldata/NLA2007_Chemical_ConditionEstimates_20091123.csv')
+nla2007_wq <- read.csv('C:/Users/lrock1/OneDrive/Desktop/raw_data/nla2007_alldata/NLA2007_WaterQuality_20091123.csv') 
+nla2007_siteinfo <- read.csv('C:/Users/lrock1/OneDrive/Desktop/raw_data/nla2007_alldata/NLA2007_sampledlakeinformation_20091113.csv')
+nla2007_trophicstatus <- read.csv('C:/Users/lrock1/OneDrive/Desktop/raw_data/nla2007_alldata/NLA2007_Trophic_ConditionEstimate_20091123.csv')
+nla2007_reccondition <- read.csv('C:/Users/lrock1/OneDrive/Desktop/raw_data/nla2007_alldata/NLA2007_Recreational_ConditionEstimates_20091123.csv')
+nla2007_chemcondition <- read.csv('C:/Users/lrock1/OneDrive/Desktop/raw_data/nla2007_alldata/NLA2007_Chemical_ConditionEstimates_20091123.csv')
 
 
 #filter for N & P
 nla2007_wq1 <- nla2007_wq |>
-  select(SITE_ID, VISIT_ID, VISIT_NO, DATE_COL, 33, 37, 40, 44, 51, 142) |> #filter for TP, TN, nitrate, ammonium, and chlorophyll a
+  select(SITE_ID, VISIT_ID, VISIT_NO, DATE_COL, 27, 30, 33, 37, 40, 44, 51, 142) |> #filter for TP, TN, nitrate, ammonium, and chlorophyll a
   rename(CHLA_PPB = CHLA,
-          PTL_PPB = PTL,
-         NO3NO2_PPM = NO3_NO2) |>
+         PTL_PPB = PTL,
+         #NO3NO2_PPM = NO3_NO2,
+         #TOC_PPM = TOC, # don't keep TOC -- it is minimally collected and not collected at all in 2017
+         DOC_PPM = DOC) |>
   group_by(SITE_ID, VISIT_ID, DATE_COL) |>
   summarise(NH4N_PPM = mean(NH4N_PPM), #There are some duplicates in the data, this averages duplicate analyses
            NO3N_PPM = mean(NO3N_PPM), 
            #NO3NO2_PPM = mean(NO3NO2_PPM), #this is collected using a different method.It is sometimes less than NO3, which doesn't make sense
            NTL_PPM = mean(NTL_PPM),
            PTL_PPB = mean(PTL_PPB),
-           CHLA_PPB = mean(CHLA_PPB)) |>
+           CHLA_PPB = mean(CHLA_PPB),
+           #TOC_PPM = mean(TOC_PPM),
+           DOC_PPM = mean(DOC_PPM)) |>
   ungroup() |> 
   #mutate(check = NO3NO2_PPM >= NO3N_PPM)
-  select(-NH4N_PPM, -NO3N_PPM, -CHLA_PPB)# get rid of nitrate, ammonium, and chlorophyll a -- not going to use
- 
+  mutate(DIN_PPM = NH4N_PPM + NO3N_PPM) 
 
 #filter for useful site informaiton
 nla2007_siteinfo1 <- nla2007_siteinfo |>
@@ -63,11 +66,17 @@ nla2007 <- left_join(nla2007_wq1, nla2007_siteinfo1, by = c("SITE_ID", "VISIT_ID
 #add column for molar TN:TP, NH4:TP, NO3:TP
 Pmol <- molMass("P") * 1000000 #ug/mol
 Nmol <- molMass("N") * 1000 #mg/mol
+Cmol <- molMass("C") * 1000 #mg/mol
 
 nla2007_tntp <- nla2007 |>
   mutate(tn.tp = (NTL_PPM/Nmol)/(PTL_PPB/Pmol),
          TN_mol = (NTL_PPM)/Nmol,
-         TP_mol = (PTL_PPB)/Pmol)
+         NH4N_mol = (NH4N_PPM)/Nmol,
+         NO3N_mol = (NO3N_PPM)/Nmol,
+         TP_mol = (PTL_PPB)/Pmol,
+         #TOC_mol = TOC_PPM/Cmol,
+         DOC_mol = DOC_PPM/Cmol,
+         DIN_mol = DIN_PPM/Nmol)
 
 #quick view - raw
 ggplot(nla2007_tntp) +
@@ -91,7 +100,7 @@ nla2007_tntp1 <-nla2007_tntp |>
 
 
 
-write.csv(nla2007_tntp1, "Data/NLA_2007.csv")
+write.csv(nla2007_tntp1, "Data/NLA/NLA_2007.csv")
 
 
 

@@ -3,9 +3,9 @@
 
 library(tidyverse)
 
-NLA_2007 <- read.csv("Data/NLA_2007.csv")
-NLA_2012 <- read.csv("Data/NLA_2012.csv")
-NLA_2017 <- read.csv("Data/NLA_2017.csv")
+NLA_2007 <- read.csv("Data/NLA/NLA_2007.csv")
+NLA_2012 <- read.csv("Data/NLA/NLA_2012.csv")
+NLA_2017 <- read.csv("Data/NLA/NLA_2017.csv")
 
 
 

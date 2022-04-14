@@ -5,16 +5,16 @@ library(biogas) # gets molar masses
 
 
 # unique site id crosswalk
-uniques <- readxl::read_xlsx('C:/Users/linne/OneDrive/Desktop/raw_data/crosswalk_ID.xlsx', sheet = 'LONG_NARS_ALLSurvey_SITE_ID_CRO')
+uniques <- readxl::read_xlsx('C:/Users/lrock1/OneDrive/Desktop/raw_data/crosswalk_ID.xlsx', sheet = 'LONG_NARS_ALLSurvey_SITE_ID_CRO')
 uniques1 <- uniques |>
   filter(SURVEY %in% c('NLA', 'NRSA')) |>
   select(UNIQUE_ID, SITE_ID)
 
 # call in relevant datasets
-nla2012_wq <- read.csv("C:/Users/linne/OneDrive/Desktop/raw_data/nla2012_alldata/nla2012_waterchem_wide.csv") 
-nla2012_siteinfo <- read.csv('C:/Users/linne/OneDrive/Desktop/raw_data/nla2012_alldata/NLA2012_wide_siteinfo_08232016.csv')
-nla2012_condition <- read.csv('C:/Users/linne/OneDrive/Desktop/raw_data/nla2012_alldata/nla_2012_condition_categories.csv')
-nla2012_keyinfo <- read.csv('C:/Users/linne/OneDrive/Desktop/raw_data/nla2012_alldata/nla12_keyvariables_data.csv') 
+nla2012_wq <- read.csv("C:/Users/lrock1/OneDrive/Desktop/raw_data/nla2012_alldata/nla2012_waterchem_wide.csv") 
+nla2012_siteinfo <- read.csv('C:/Users/lrock1/OneDrive/Desktop/raw_data/nla2012_alldata/NLA2012_wide_siteinfo_08232016.csv')
+nla2012_condition <- read.csv('C:/Users/lrock1/OneDrive/Desktop/raw_data/nla2012_alldata/nla_2012_condition_categories.csv')
+nla2012_keyinfo <- read.csv('C:/Users/lrock1/OneDrive/Desktop/raw_data/nla2012_alldata/nla12_keyvariables_data.csv') 
 
 key <- nla2012_keyinfo |>
   mutate(keeprow = "YES") |>
@@ -23,11 +23,15 @@ key <- nla2012_keyinfo |>
 
 # filter for N & P
 nla2012_wq1 <- nla2012_wq |>
-  select(UID, NTL_UNITS, NTL_RESULT, PTL_UNITS, PTL_RESULT) |> # filter for TP, TN
+  select(UID, NTL_UNITS, NTL_RESULT, PTL_UNITS, PTL_RESULT, AMMONIA_N_RESULT, AMMONIA_N_UNITS, NITRATE_N_RESULT, NITRATE_N_UNITS, DOC_RESULT, DOC_UNITS) |> # filter for TP, TN
   rename(NTL_PPM = NTL_RESULT,
+         NH4N_PPM = AMMONIA_N_RESULT,
+         NO3N_PPM = NITRATE_N_RESULT,
          PTL_PPB = PTL_RESULT,
+         DOC_PPM = DOC_RESULT,
          VISIT_ID = UID) |>
-  select(-contains("UNITS")) 
+  select(-contains("UNITS")) |>
+  mutate(DIN_PPM = NH4N_PPM + NO3N_PPM)
 
 
 # filter for useful site informaiton
@@ -60,11 +64,16 @@ nla2012 <- left_join(nla2012, nla2012_condition1)
 #add column for molar TN:TP, TN, TP
 Pmol <- molMass("P") * 1000000 #ug/mol 
 Nmol <- molMass("N") * 1000 #mg/mol
+Cmol <- molMass("C") * 1000 #mg/mol
 
 nla2012.tntp <- nla2012 |>
   mutate(tn.tp = (NTL_PPM/Nmol)/(PTL_PPB/Pmol),
          TN_mol = (NTL_PPM)/Nmol,
-         TP_mol = (PTL_PPB)/Pmol)
+         NH4N_mol = (NH4N_PPM)/Nmol,
+         NO3N_mol = (NO3N_PPM)/Nmol,
+         TP_mol = (PTL_PPB)/Pmol,
+         DOC_mol = DOC_PPM/Cmol,
+         DIN_mol = DIN_PPM/Nmol)
 
 
 # delete rows not in key information? - yes. these data were not included here so I'm chucking them
@@ -76,7 +85,7 @@ nla2012.tntp1 <- nla2012.tntp |>
 
 
 
-write.csv(nla2012.tntp1, "Data/NLA_2012.csv")
+## write.csv(nla2012.tntp1, "Data/NLA/NLA_2012.csv")
 
 
 
@@ -84,6 +93,9 @@ write.csv(nla2012.tntp1, "Data/NLA_2012.csv")
 ###missing data resolved using this code (from "looking_for_missingdata.R":
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 # This issue has been resolved using the key variables dataset !!
+NLA_2012 <- nla2012.tntp1
+
+
 missing12 <- NLA_2012 |>
   filter(is.na(ECO_REG)) |> # total of 192 observations are missing this information
   select(UNIQUE_ID) |>
@@ -139,7 +151,7 @@ fill_info <- fill_info |>
 # how many leftover that need information?
 
 leftover <- fill_info |>
-  filter(is.na(ECO_REG)) # none are leftover.
+  filter(is.na(ECO2)) # none are leftover.
 
 
 # add fill info and resave :) -- copy code into "Call_data_2012NLA.R"
@@ -151,8 +163,8 @@ NLA_2012_1 <- NLA_2012 |>
          CHLA_COND = ifelse(is.na(CHLA_COND), chcond2, CHLA_COND),
          PTL_COND = ifelse(is.na(PTL_COND), tpcond2, PTL_COND),
          NTL_COND = ifelse(is.na(NTL_COND), tncond2, NTL_COND),
-         TROPHIC_STATE = ifelse(is.na(TROPHIC_STATE), tstate, TROPHIC_STATE)) |>
+         TROPHIC_STATE = ifelse(is.na(TROPHIC_STATE), tstate, TROPHIC_STATE))  |>
   select(-WGT2, -ECO2, -chcond2, -tpcond2, -tncond2, -tstate)
 
 
-write.csv(NLA_2012_1, "Data/NLA_2012.csv")
+write.csv(NLA_2012_1, "Data/NLA/NLA_2012.csv")
