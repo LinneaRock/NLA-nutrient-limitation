@@ -1,0 +1,57 @@
+---
+title: "NARS Data Innovation Challenge"
+author: "Linnea Rock"
+date: "`r Sys.Date()`"
+output: html_document
+editor_options: 
+  chunk_output_type: inline
+---
+
+```{r setup, include=FALSE}
+library(tidyverse)
+library(colorblindr)
+source("C:/Users/linne/Downloads/PhD_code/STOICH_NARSchallenge/Data/NLA/Call_NLA_data.R")
+```
+
+
+# What are the sizes of lakes sampled during the NLA? 
+```{r, echo=FALSE, warning=FALSE, message=FALSE, include = FALSE}
+lake_size <- all_NLA |>
+  select(UNIQUE_ID, AREA_HA, year) |>
+  distinct() |>
+  mutate(size = NA) |>
+  mutate(size = ifelse(AREA_HA <= 4, "<=4 ha",
+                      ifelse(between(AREA_HA, 4, 10), "4-10 ha",
+                             ifelse(between(AREA_HA, 10, 20), "10-20 ha",
+                                    ifelse(between(AREA_HA, 20, 50), "20-50 ha",
+                                    ifelse(between(AREA_HA, 50, 100), "50-100 ha", 
+                                    ifelse(between(AREA_HA, 100, 1000), "100-1000 ha",
+                                           ifelse(AREA_HA > 1000, ">1000 ha", size))))))))
+lake_size$size = factor(lake_size$size,
+                        levels = c("<=4 ha", "4-10 ha", "10-20 ha", "20-50 ha", "50-100 ha", "100-1000 ha", ">1000 ha"))
+
+lake_size_plot <- ggplot(lake_size) +
+  geom_bar(aes(size, fill = year)) +
+  theme_light() +
+  scale_fill_manual("Year", values = palette_OkabeIto[]) +
+  labs(x = "Lake Size",
+       y = "# Lakes Sampled")
+
+```
+
+```{r, echo=FALSE, warning=FALSE, message=FALSE, fig.width=6.5, fig.height=4.5}
+lake_size_plot
+
+#Minimum lake size is:
+min <- round(min(lake_size$AREA_HA), 2)
+
+#Maximum lake size is:
+max <- round(max(lake_size$AREA_HA), 2)
+
+#Median lake size is:
+median <- round(median(lake_size$AREA_HA),2)
+
+#Mean lake size is:
+mean <- round(mean(lake_size$AREA_HA), 2)
+```
+The minimum lake size is `r min` ha. The maximum lake size is `r max` ha. The median lake size is `r median` ha. And the mean lake size is `r mean` ha. 
