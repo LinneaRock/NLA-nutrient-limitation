@@ -13,8 +13,10 @@ library(colorblindr)
 source("C:/Users/linne/Downloads/PhD_code/STOICH_NARSchallenge/Data/NLA/Call_NLA_data.R")
 ```
 
+## Some basics about the NLA datasets
 
-# What are the sizes of lakes sampled during the NLA? 
+
+### What are the sizes of lakes sampled during the NLA? 
 ```{r, echo=FALSE, warning=FALSE, message=FALSE, include = FALSE}
 lake_size <- all_NLA |>
   select(UNIQUE_ID, AREA_HA, year) |>
@@ -54,4 +56,45 @@ median <- round(median(lake_size$AREA_HA),2)
 #Mean lake size is:
 mean <- round(mean(lake_size$AREA_HA), 2)
 ```
-The minimum lake size is `r min` ha. The maximum lake size is `r max` ha. The median lake size is `r median` ha. And the mean lake size is `r mean` ha. 
+
+
+- minimum lake size is `r min` ha
+- maximum lake size is `r max` ha
+- median lake size is `r median` ha
+- mean lake size is `r mean` ha
+
+
+### Various N and P limitations from the literature.
+
+#### Looking at the NLA data with N and P limits from Bergström, 2010. The predicted limitations are above/below the dotted lines. The red line is the Redfield 16:1 line. 
+
+```{r, echo=FALSE, warning=FALSE, message=FALSE, fig.width=6.5, fig.height=4.5}
+ggplot(all_NLA) +
+  geom_point(aes(log(PTL_PPB, base = 10), log(tn.tp, base = 10), fill = year), size = 2.5, shape = 21, alpha = 0.8) +
+  geom_abline(slope = 0, intercept = log(19, base = 10), linetype = "dashed") +
+  geom_abline(slope = 0, intercept = log(28, base = 10)) +
+  geom_abline(slope = 0, intercept = log(41, base = 10), linetype = "dashed") +
+  geom_abline(slope = 0, intercept = log(16, base = 10), color = "red") +
+  theme_light() +
+  scale_fill_manual("Year",values = palette_OkabeIto[]) +
+  labs(y = "Log TN:TP", x = "Log TP"~(mu~g~L^-1)) +
+  annotate('text', label = 'Redfield 16:1 line', x = 3.5, y = 1.1, hjust = 0, size = 3, color = "red") +
+  annotate('text', label = 'Predicted N limitation \n (Bergström, 2010)', x = -1, y = 1, hjust = 0, size = 3) +
+  annotate('text', label = 'Predicted P limitation \n (Bergström, 2010)', x = 3, y = 2, hjust = 0, size = 3) 
+```
+
+
+#### From Downing and McCauley, 1992. N limitation commonly occurs when TN:TP <= 14 *and* when TP > 30 ug/L
+
+```{r, echo=FALSE, warning=FALSE, message=FALSE, fig.width=6.5, fig.height=4.5}
+ggplot(all_NLA) +
+  geom_point(aes(log(PTL_PPB, base = 10), log(tn.tp, base = 10), fill = year), size = 2.5, shape = 21, alpha = 0.8) +
+  geom_vline(xintercept = log(30, base = 10)) +
+  geom_abline(slope = 0, intercept = log(14, base = 10)) +
+  theme_light() +
+  scale_fill_manual("Year",values = palette_OkabeIto[]) +
+  labs(y = "Log TN:TP", x = "Log TP"~(mu~g~L^-1)) +
+  annotate('text', label = 'Predicted N limitation \n (Dodds & McCauley, 1992)', x = 2.5, y = -0.25, hjust = 0, size = 3) +
+  annotate('text', label = 'TP = 30'~(mu~g~L^-1), x = 0.9, y = -0.25, hjust = 0, size = 3) +
+  annotate('text', label = 'TN:TP = 14', x = -0.5, y = 1, hjust = 0, size = 3) 
+```
