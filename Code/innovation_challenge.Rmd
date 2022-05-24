@@ -10,6 +10,7 @@ editor_options:
 ```{r setup, include=FALSE}
 library(tidyverse)
 library(colorblindr)
+library(biogas)
 source("C:/Users/linne/Downloads/PhD_code/STOICH_NARSchallenge/Data/NLA/Call_NLA_data.R")
 ```
 
@@ -64,7 +65,7 @@ mean <- round(mean(lake_size$AREA_HA), 2)
 - mean lake size is `r mean` ha
 
 
-### Various N and P limitations from the literature.
+### N and P limitations from the literature.
 
 #### Looking at the NLA data with N and P limits from Bergström, 2010. The predicted limitations are above/below the dotted lines. The red line is the Redfield 16:1 line. 
 
@@ -84,7 +85,7 @@ ggplot(all_NLA) +
 ```
 
 
-#### From Downing and McCauley, 1992. N limitation commonly occurs when TN:TP <= 14 *and* when TP > 30 ug/L
+#### From Downing and McCauley, 1992. N limitation singificantly occurs when TN:TP <= 14 and when TP > 30 ug/L
 
 ```{r, echo=FALSE, warning=FALSE, message=FALSE, fig.width=6.5, fig.height=4.5}
 ggplot(all_NLA) +
@@ -94,7 +95,58 @@ ggplot(all_NLA) +
   theme_light() +
   scale_fill_manual("Year",values = palette_OkabeIto[]) +
   labs(y = "Log TN:TP", x = "Log TP"~(mu~g~L^-1)) +
-  annotate('text', label = 'Predicted N limitation \n (Dodds & McCauley, 1992)', x = 2.5, y = -0.25, hjust = 0, size = 3) +
+  annotate('text', label = 'N limitation likely \n (Dodds & McCauley, 1992)', x = 2.5, y = -0.25, hjust = 0, size = 3) +
   annotate('text', label = 'TP = 30'~(mu~g~L^-1), x = 0.9, y = -0.25, hjust = 0, size = 3) +
   annotate('text', label = 'TN:TP = 14', x = -0.5, y = 1, hjust = 0, size = 3) 
 ```
+
+
+### Nitrogen vs. Phosphorus and Trophic Status
+
+
+Note: the axes are logged in these figures
+
+```{r, echo=FALSE, warning=FALSE, message=FALSE, fig.width=6.5, fig.height=4.5}
+ggplot(all_NLA) +
+  geom_point(aes(TP_mol, TN_mol, fill = TSTATE_CHL), size = 2.5, shape = 21, alpha = 0.8) +
+ # geom_abline(slope = 16, intercept = 0) +
+  theme_light() +
+  scale_fill_manual(values = palette_OkabeIto[]) +
+  theme(legend.title = element_blank()) +
+        #legend.position = 'bottom') +
+  labs(x = "TP (molar)", y = "TN (molar)", title = "Trophic Status based on Chlorophyll") +
+  #annotate('text', label = 'Redfield 16:1 line', x = 0.0001, y = 0.0015, hjust = 0, size = 4) +
+  scale_y_log10() +
+  scale_x_log10() 
+```
+
+```{r, echo=FALSE, warning=FALSE, message=FALSE, fig.width=6.5, fig.height=4.5}
+# conversions for concentration to molar N, P
+Pmol <- molMass("P") * 1000000 #ug/mol
+Nmol <- molMass("N") * 1000 #mg/mol
+
+ggplot(all_NLA) +
+  geom_point(aes(TP_mol, TN_mol, fill = year), size = 2.5, shape = 21, alpha = 0.3) +
+  geom_vline(xintercept = 10/Pmol, base = 10) + # oligotrophic under 10 ug/L TP
+  geom_vline(xintercept = 25/Pmol, base = 10) + # mesotrophic 10-25 ug/L TP
+  geom_vline(xintercept = 100/Pmol, base = 10) + # eutrophic 25-100 ug/L TP, hypereutrophic greater than 100 ug/L TP
+  geom_hline(yintercept = 0.35/Nmol, base = 10, color = "#cc79a7") +# oligotrophic under 0.35 mg/L TN
+  geom_hline(yintercept = 0.75/Nmol, base = 10, color = "#cc79a7") +# mesotrophic 0.35-0.75 mg/L TN
+  geom_hline(yintercept = 1.4/Nmol, base = 10, color = "#cc79a7") +# eutrophic 0.75-1.4 mg/L TN, hypereutrophic greater than 1.4 mg/L TN
+  theme_light() +
+  scale_fill_manual(values = palette_OkabeIto[]) +
+  theme(legend.title = element_blank(),
+        legend.position = 'bottom') +
+  labs(x = "TP (molar)", y = "TN (molar)", title = "Trophic Status based on TN and TP") +
+  annotate('text', label = 'TP<10 ug/L', x = 0.0000001, y = 0.005, hjust = 0, size = 3) +
+  annotate('text', label = '25>\nTP\n>10', x = 0.0000004, y = 0.004, hjust = 0, size = 3) +
+  annotate('text', label = '100>TP>25', x = 0.0000009, y = 0.005, hjust = 0, size = 3) +
+  annotate('text', label = 'TP>100 ug/L', x = 0.000004, y = 0.005, hjust = 0, size = 3) +
+  annotate('text', label = 'TN>1.4 mg/L', x = 0.7e-08, y = 0.00015, hjust = 0, size = 3, color = "#cc79a7") +
+  annotate('text', label = '1.4>TN>0.75', x = 0.7e-08, y = 0.00008, hjust = 0, size = 3, color = "#cc79a7") +
+  annotate('text', label = '0.75>TN>0.35', x = 0.7e-08, y = 0.00004, hjust = 0, size = 3, color = "#cc79a7") +
+  annotate('text', label = 'TN<0.35 mg/L', x = 0.7e-08, y = 0.00002, hjust = 0, size = 3, color = "#cc79a7") +
+  scale_y_log10() +
+  scale_x_log10() 
+```
+

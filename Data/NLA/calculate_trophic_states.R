@@ -18,23 +18,24 @@ get_tstate <- function(data) {
     mutate(TSTATE_TP = ifelse(PTL_PPB <= 10, "OLIGOTROPHIC (<= 10 ug/L)", # total P trophic states
                               ifelse(between(PTL_PPB, 10, 25), "MESOTROPHIC (10-25 ug/L)",
                                      ifelse(between(PTL_PPB, 25, 100), "EUTROPHIC (25-100 ug/L)",
-                                            ifelse(PTL_PPB > 100, "HYPEREUTROPHIC (>100 ug/L)", TSTATE_TP))))) |>
+                                            ifelse(PTL_PPB > 100, "HYPEREUTROPHIC (> 100 ug/L)", TSTATE_TP))))) |>
     mutate(TSTATE_TN = ifelse(NTL_PPM <= 0.35, "OLIGOTROPHIC (<= 0.35 mg/L)", # total N trophic states
                               ifelse(between(NTL_PPM, 0.35, 0.75), "MESOTROPHIC (0.35-0.75 mg/L)",
-                                     ifelse(between(NTL_PPM, 0.75, 1.4), "EUTROPHIC (0.75 to 1.4 mg/L)",
-                                            ifelse(NTL_PPM > 1.4, "HYPEREUTROPHIC (> 1.4 ug/L)", TSTATE_TN))))) |>
+                                     ifelse(between(NTL_PPM, 0.75, 1.4), "EUTROPHIC (0.75-1.4 mg/L)",
+                                            ifelse(NTL_PPM > 1.4, "HYPEREUTROPHIC (> 1.4 mg/L)", TSTATE_TN))))) |>
     mutate(TSTATE_CHL = ifelse(CHLA_PPB <= 2, "OLIGOTROPHIC (<= 2 ug/L)", # chlorophyll-a trophic states
-                               ifelse(between(CHLA_PPB, 2, 7), "MESOTROPHIC (2-7 ug/L))",
-                                      ifelse(between(CHLA_PPB, 7, 30), "EUTROPHIC (7 to 30 ug/L)",
+                               ifelse(between(CHLA_PPB, 2, 7), "MESOTROPHIC (2-7 ug/L)",
+                                      ifelse(between(CHLA_PPB, 7, 30), "EUTROPHIC (7-30 ug/L)",
                                              ifelse(CHLA_PPB > 30, "HYPEREUTROPHIC (> 30 ug/L)", TSTATE_CHL)))))
 }
 
 
 
-# NLA 2007 just needs eco reg names
+# NLA 2007 just needs eco reg names and to standardize trophic status names
 nla07 <- NLA07 |>
-  left_join(ecoregs)
- 
+  left_join(ecoregs) |>
+  get_tstate()
+
 write.csv(nla07, "Data/NLA/NLA_2007.csv")
 
 
