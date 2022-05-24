@@ -150,3 +150,66 @@ ggplot(all_NLA) +
   scale_x_log10() 
 ```
 
+
+### Nutrient relationships with Chlorophyll
+
+
+Note: axes are logged in these figures
+
+```{r, echo=FALSE, warning=FALSE, message=FALSE, fig.width=6.5, fig.height=4.5}
+ggplot(all_NLA) +
+  geom_point(aes(PTL_PPB, CHLA_PPB, fill = year), size = 2.5, shape = 21, alpha = 0.8) +
+  theme_light() +
+  scale_fill_manual(values = palette_OkabeIto[]) +
+  theme(legend.title = element_blank(),
+        legend.position = 'bottom') +
+  labs(x = "TP"~(mu~g~L^-1), y = "Chlorophyll"~(mu~g~L^-1), title = "Chl vs TP") +
+  scale_y_log10() +
+  scale_x_log10() 
+
+
+ggplot(all_NLA) +
+  geom_point(aes(NTL_PPM, CHLA_PPB, fill = year), size = 2.5, shape = 21, alpha = 0.8) +
+  theme_light() +
+  scale_fill_manual(values = palette_OkabeIto[]) +
+  theme(legend.title = element_blank(),
+        legend.position = 'bottom') +
+  labs(x = "TN"~(mg~L^-1), y = "Chlorophyll"~(mu~g~L^-1), title = "Chl vs TN") +
+  scale_y_log10() +
+  scale_x_log10() 
+
+
+ggplot(all_NLA) +
+  geom_point(aes(DIN_PPM, CHLA_PPB, fill = year), size = 2.5, shape = 21, alpha = 0.8) +
+  theme_light() +
+  scale_fill_manual(values = palette_OkabeIto[]) +
+  theme(legend.title = element_blank(),
+        legend.position = 'bottom') +
+  labs(x = "DIN"~(mg~L^-1), y = "Chlorophyll"~(mu~g~L^-1), title = "Chl vs DIN") +
+  scale_y_log10() +
+  scale_x_log10() 
+
+
+ggplot(all_NLA) +
+  geom_point(aes(tn.tp, CHLA_PPB, fill = year), size = 2.5, shape = 21, alpha = 0.8) +
+  theme_light() +
+  scale_fill_manual(values = palette_OkabeIto[]) +
+  theme(legend.title = element_blank(),
+        legend.position = 'bottom') +
+  labs(x = "TN:TP (molar)", y = "Chlorophyll"~(mu~g~L^-1), title = "Chl vs TN:TP") +
+  scale_y_log10() +
+  scale_x_log10() 
+
+
+ggplot(all_NLA) +
+  geom_point(aes(DIN_mol/TP_mol, CHLA_PPB, fill = year), size = 2.5, shape = 21, alpha = 0.8) +
+  theme_light() +
+  scale_fill_manual(values = palette_OkabeIto[]) +
+  theme(legend.title = element_blank(),
+        legend.position = 'bottom') +
+  labs(x = "DIN:TP (molar)", y = "Chlorophyll"~(mu~g~L^-1), title = "Chl vs DIN:TP") +
+  scale_y_log10() +
+  scale_x_log10() 
+```
+
+
