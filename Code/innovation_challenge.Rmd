@@ -254,11 +254,20 @@ chla_national.1 <- chla_national|>
          Subpopulation = "National")
 
 chla_trophic_states <- rbind(chla_national.1, chla_2007_ecoreg.1, chla_2012_ecoreg.1, chla_2017_ecoreg.1) |>
-  filter(Category != "Total")
+  filter(Category != "Total") |>
+  mutate(fill_column = paste(nResp, "(", round(Estimate.P, 1), "±", round(StdError.P, 1), ")")) |>
+  pivot_wider(id_cols = c(Subpopulation, Category), names_from = "year", values_from = "fill_column")
 
 
 #make the table
 library(gt)
+
+chla_tbl <- gt(chla_trophic_states)
+chla_ts_table <- chla_tbl |>
+  cols_label(
+    Subpopulation = "Ecoregion"
+    ) |>
+  tab_spanner(label = "Oligotrophic", columns = vars(`2007`, `2012`, `2017`));chla_ts_table
 
 ```
 
