@@ -213,3 +213,129 @@ ggplot(all_NLA) +
 ```
 
 
+### Number of lakes in each trophic category (according to Chlorophyll status)
+
+
+```{r, echo=FALSE, warning=FALSE, message=FALSE, fig.width=6.5, fig.height=4.5}
+ts <- all_NLA |>
+  select(UNIQUE_ID, year, WGT_NLA, ECO_REG_NAME, TSTATE_CHL, TSTATE_TP, TSTATE_TN, LAT_DD, LON_DD) |>
+  mutate(WGT_NLA = ifelse(WGT_NLA == 0, 1, WGT_NLA)) # the package I'm using to analyze number of lakes in each category along with the percent of lakes represented requires weights to be all positive numbers. I'm not sure why there are zeros here at all... they should be representative of at least themselves. 
+
+# use the SpSurvey package from EPA
+library(spsurvey)
+citation("spsurvey")
+
+# 2007
+chla_2007_ecoreg <- cat_analysis(ts |> filter(year == 2007), subpop = "ECO_REG_NAME", vars = "TSTATE_CHL", weight = "WGT_NLA", xcoord = "LON_DD", ycoord = "LAT_DD")
+
+chla_2007_ecoreg.1 <- chla_2007_ecoreg |>
+  select(Subpopulation, Category, nResp, Estimate.P, StdError.P) |>
+  mutate(year = 2007)
+
+# 2012
+chla_2012_ecoreg <- cat_analysis(ts |> filter(year == 2012), subpop = "ECO_REG_NAME", vars = "TSTATE_CHL", weight = "WGT_NLA", xcoord = "LON_DD", ycoord = "LAT_DD")
+
+chla_2012_ecoreg.1 <- chla_2012_ecoreg |>
+  select(Subpopulation, Category, nResp, Estimate.P, StdError.P) |>
+  mutate(year = 2012)
+
+# 2017
+chla_2017_ecoreg <- cat_analysis(ts |> filter(year == 2017), subpop = "ECO_REG_NAME", vars = "TSTATE_CHL", weight = "WGT_NLA", xcoord = "LON_DD", ycoord = "LAT_DD")
+
+chla_2017_ecoreg.1 <- chla_2017_ecoreg |>
+  select(Subpopulation, Category, nResp, Estimate.P, StdError.P) |>
+  mutate(year = 2017)
+
+chla_national <- cat_analysis(ts, vars = "TSTATE_CHL", subpop = "year", weight = "WGT_NLA", xcoord = "LON_DD", ycoord = "LAT_DD")
+
+chla_national.1 <- chla_national|>
+  select(Subpopulation, Category, nResp, Estimate.P, StdError.P) |>
+  mutate(year = Subpopulation,
+         Subpopulation = "National")
+
+chla_trophic_states <- rbind(chla_national.1, chla_2007_ecoreg.1, chla_2012_ecoreg.1, chla_2017_ecoreg.1) |>
+  filter(Category != "Total")
+
+
+#make the table
+library(gt)
+
+```
+
+
+
+### Number of lakes in each trophic category (according to TP status)
+
+```{r, echo=FALSE, warning=FALSE, message=FALSE, fig.width=6.5, fig.height=4.5}
+# 2007
+TP_2007_ecoreg <- cat_analysis(ts |> filter(year == 2007), subpop = "ECO_REG_NAME", vars = "TSTATE_TP", weight = "WGT_NLA", xcoord = "LON_DD", ycoord = "LAT_DD")
+
+TP_2007_ecoreg.1 <- TP_2007_ecoreg |>
+  select(Subpopulation, Category, nResp, Estimate.P, StdError.P) |>
+  mutate(year = 2007)
+
+# 2012
+TP_2012_ecoreg <- cat_analysis(ts |> filter(year == 2012), subpop = "ECO_REG_NAME", vars = "TSTATE_TP", weight = "WGT_NLA", xcoord = "LON_DD", ycoord = "LAT_DD")
+
+TP_2012_ecoreg.1 <- TP_2012_ecoreg |>
+  select(Subpopulation, Category, nResp, Estimate.P, StdError.P) |>
+  mutate(year = 2012)
+
+# 2017
+TP_2017_ecoreg <- cat_analysis(ts |> filter(year == 2017), subpop = "ECO_REG_NAME", vars = "TSTATE_TP", weight = "WGT_NLA", xcoord = "LON_DD", ycoord = "LAT_DD")
+
+TP_2017_ecoreg.1 <- TP_2017_ecoreg |>
+  select(Subpopulation, Category, nResp, Estimate.P, StdError.P) |>
+  mutate(year = 2017)
+
+TP_national <- cat_analysis(ts, vars = "TSTATE_TP", subpop = "year", weight = "WGT_NLA", xcoord = "LON_DD", ycoord = "LAT_DD")
+
+TP_national.1 <- TP_national|>
+  select(Subpopulation, Category, nResp, Estimate.P, StdError.P) |>
+  mutate(year = Subpopulation,
+         Subpopulation = "National")
+
+TP_trophic_states <- rbind(TP_national.1, TP_2007_ecoreg.1, TP_2012_ecoreg.1, TP_2017_ecoreg.1) |>
+  filter(Category != "Total")
+
+```
+
+
+
+
+### Number of lakes in each trophic category (according to TN status)
+```{r, echo=FALSE, warning=FALSE, message=FALSE, fig.width=6.5, fig.height=4.5}
+# 2007
+TN_2007_ecoreg <- cat_analysis(ts |> filter(year == 2007), subpop = "ECO_REG_NAME", vars = "TSTATE_TN", weight = "WGT_NLA", xcoord = "LON_DD", ycoord = "LAT_DD")
+
+TN_2007_ecoreg.1 <- TN_2007_ecoreg |>
+  select(Subpopulation, Category, nResp, Estimate.P, StdError.P) |>
+  mutate(year = 2007)
+
+# 2012
+TN_2012_ecoreg <- cat_analysis(ts |> filter(year == 2012), subpop = "ECO_REG_NAME", vars = "TSTATE_TN", weight = "WGT_NLA", xcoord = "LON_DD", ycoord = "LAT_DD")
+
+TN_2012_ecoreg.1 <- TN_2012_ecoreg |>
+  select(Subpopulation, Category, nResp, Estimate.P, StdError.P) |>
+  mutate(year = 2012)
+
+# 2017
+TN_2017_ecoreg <- cat_analysis(ts |> filter(year == 2017), subpop = "ECO_REG_NAME", vars = "TSTATE_TN", weight = "WGT_NLA", xcoord = "LON_DD", ycoord = "LAT_DD")
+
+TN_2017_ecoreg.1 <- TN_2017_ecoreg |>
+  select(Subpopulation, Category, nResp, Estimate.P, StdError.P) |>
+  mutate(year = 2017)
+
+TN_national <- cat_analysis(ts, vars = "TSTATE_TN", subpop = "year", weight = "WGT_NLA", xcoord = "LON_DD", ycoord = "LAT_DD")
+
+TN_national.1 <- TN_national|>
+  select(Subpopulation, Category, nResp, Estimate.P, StdError.P) |>
+  mutate(year = Subpopulation,
+         Subpopulation = "National")
+
+TN_trophic_states <- rbind(TN_national.1, TN_2007_ecoreg.1, TN_2012_ecoreg.1, TN_2017_ecoreg.1) |>
+  filter(Category != "Total")
+
+```
+
+
