@@ -11,7 +11,9 @@ editor_options:
 library(tidyverse)
 library(colorblindr)
 library(biogas)
-source("C:/Users/linne/Downloads/PhD_code/STOICH_NARSchallenge/Data/NLA/Call_NLA_data.R")
+library(patchwork)
+library(gt)
+source("C:/Users/lrock1/Downloads/PhD_code/STOICH_NARSchallenge/Data/NLA/Call_NLA_data.R")
 ```
 
 ## Some basics about the NLA datasets
@@ -279,6 +281,45 @@ chla_trophic_states |>
 ```
 
 
+### How have the lakes changed trophic category (according to Chlorophyll status) over the years?
+Looking at the difference between 2017 and 2007
+
+```{r, echo=FALSE, warning=FALSE, message=FALSE, fig.width=6.5, fig.height=4.5}
+
+chla_change_ecoreg <- change_analysis(ts |> filter(year %in% c("2007", "2017")), siteID = "UNIQUE_ID", subpop = "ECO_REG_NAME", vars_cat = "TSTATE_CHL", surveyID = "year", weight = "WGT_NLA", xcoord = "LON_DD", ycoord = "LAT_DD")
+
+chla_change_ecoreg.1 <- chla_change_ecoreg[["catsum"]]  |>
+  select(Subpopulation, Category, Indicator, DiffEst.P, StdError.P)
+
+
+chla_change_national <- change_analysis(ts |> filter(year %in% c("2007", "2017")), siteID = "UNIQUE_ID", vars_cat = "TSTATE_CHL", surveyID = "year", weight = "WGT_NLA", xcoord = "LON_DD", ycoord = "LAT_DD")
+
+chla_change_national.1 <- chla_change_national[["catsum"]] |>
+  select(Subpopulation, Category, Indicator, DiffEst.P, StdError.P) |>
+  mutate(Subpopulation = "National") 
+
+
+chla_total_change0717 <- rbind(chla_change_national.1, chla_change_ecoreg.1) 
+
+#nat.plot.chla <-
+ggplot(chla_total_change0717 |> filter(Subpopulation == "National")) +
+  geom_point(aes(Category, DiffEst.P, fill = Category), color = "black", pch = 21, size = 3) +
+  geom_errorbar(aes(Category, DiffEst.P, ymin = DiffEst.P-StdError.P, ymax = DiffEst.P+StdError.P, color = Category), width = 0.2)  + 
+  theme_light() +
+  scale_fill_manual(values = palette_OkabeIto[]) +
+  scale_color_manual(values = palette_OkabeIto[]) +
+  geom_hline(yintercept = 0) +
+  theme(legend.position = "none") +
+  labs(x = "",
+       y = "% Difference 2007, 2017 Lakes") +
+  scale_x_discrete(limits = rev(levels(as.factor(chla_total_change0717$Category)))) 
+  
+  
+  
+
+
+```
+
 
 ### Number of lakes in each trophic category (according to TP status)
 
@@ -377,5 +418,6 @@ TN_trophic_states |>
   tab_spanner_delim(delim = ".")
 
 ```
+
 
 
