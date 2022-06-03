@@ -12,8 +12,11 @@ library(tidyverse)
 library(colorblindr)
 library(biogas)
 library(patchwork)
+library(spsurvey)
 library(gt)
 source("C:/Users/lrock1/Downloads/PhD_code/STOICH_NARSchallenge/Data/NLA/Call_NLA_data.R")
+source("C:/Users/lrock1/Downloads/PhD_code/STOICH_NARSchallenge/Code/Functions/no_lakes_ts.R")
+source("C:/Users/lrock1/Downloads/PhD_code/STOICH_NARSchallenge/Code/Functions/percent_change_lakes_ts.R")
 ```
 
 ## Some basics about the NLA datasets
@@ -223,39 +226,7 @@ ts <- all_NLA |>
   select(UNIQUE_ID, year, WGT_NLA, ECO_REG_NAME, TSTATE_CHL, TSTATE_TP, TSTATE_TN, LAT_DD, LON_DD) |>
   mutate(WGT_NLA = ifelse(WGT_NLA == 0, 1, WGT_NLA)) # the package I'm using to analyze number of lakes in each category along with the percent of lakes represented requires weights to be all positive numbers. I'm not sure why there are zeros here at all... they should be representative of at least themselves. 
 
-# use the SpSurvey package from EPA
-library(spsurvey)
-## citation("spsurvey")
-
-# 2007
-chla_2007_ecoreg <- cat_analysis(ts |> filter(year == 2007), subpop = "ECO_REG_NAME", vars = "TSTATE_CHL", weight = "WGT_NLA", xcoord = "LON_DD", ycoord = "LAT_DD")
-
-chla_2007_ecoreg.1 <- chla_2007_ecoreg |>
-  select(Subpopulation, Category, nResp, Estimate.P, StdError.P) |>
-  mutate(year = 2007)
-
-# 2012
-chla_2012_ecoreg <- cat_analysis(ts |> filter(year == 2012), subpop = "ECO_REG_NAME", vars = "TSTATE_CHL", weight = "WGT_NLA", xcoord = "LON_DD", ycoord = "LAT_DD")
-
-chla_2012_ecoreg.1 <- chla_2012_ecoreg |>
-  select(Subpopulation, Category, nResp, Estimate.P, StdError.P) |>
-  mutate(year = 2012)
-
-# 2017
-chla_2017_ecoreg <- cat_analysis(ts |> filter(year == 2017), subpop = "ECO_REG_NAME", vars = "TSTATE_CHL", weight = "WGT_NLA", xcoord = "LON_DD", ycoord = "LAT_DD")
-
-chla_2017_ecoreg.1 <- chla_2017_ecoreg |>
-  select(Subpopulation, Category, nResp, Estimate.P, StdError.P) |>
-  mutate(year = 2017)
-
-chla_national <- cat_analysis(ts, vars = "TSTATE_CHL", subpop = "year", weight = "WGT_NLA", xcoord = "LON_DD", ycoord = "LAT_DD")
-
-chla_national.1 <- chla_national|>
-  select(Subpopulation, Category, nResp, Estimate.P, StdError.P) |>
-  mutate(year = Subpopulation,
-         Subpopulation = "National")
-
-chla_trophic_states <- rbind(chla_national.1, chla_2007_ecoreg.1, chla_2012_ecoreg.1, chla_2017_ecoreg.1) |>
+chla_trophic_states <- no_lakes_ts(ts, "TSTATE_CHL") |> # And do all this dumb formatting
   filter(Category != "Total") |>
   mutate(fill_column = paste(nResp, "(", round(Estimate.P, 1), "±", round(StdError.P, 1), ")")) |>
   mutate(column_names = paste(Category, ".", year)) |>
@@ -263,7 +234,6 @@ chla_trophic_states <- rbind(chla_national.1, chla_2007_ecoreg.1, chla_2012_ecor
 
 
 #make the table
-library(gt)
 
 #this is not exactly what I want for my table, but it is close enough for now
 chla_trophic_states |>
@@ -284,38 +254,16 @@ chla_trophic_states |>
 ### How have the lakes changed trophic category (according to Chlorophyll status) over the years?
 Looking at the difference between 2017 and 2007
 
-```{r, echo=FALSE, warning=FALSE, message=FALSE, fig.width=6.5, fig.height=4.5}
+```{r, echo=FALSE, warning=FALSE, message=FALSE, fig.width=6.5, fig.height= 8.5}
 
-chla_change_ecoreg <- change_analysis(ts |> filter(year %in% c("2007", "2017")), siteID = "UNIQUE_ID", subpop = "ECO_REG_NAME", vars_cat = "TSTATE_CHL", surveyID = "year", weight = "WGT_NLA", xcoord = "LON_DD", ycoord = "LAT_DD")
+chla_total_change0717 <- change_lakes_ts(ts, "TSTATE_CHL", "2007", "2017")
 
-chla_change_ecoreg.1 <- chla_change_ecoreg[["catsum"]]  |>
-  select(Subpopulation, Category, Indicator, DiffEst.P, StdError.P)
-
-
-chla_change_national <- change_analysis(ts |> filter(year %in% c("2007", "2017")), siteID = "UNIQUE_ID", vars_cat = "TSTATE_CHL", surveyID = "year", weight = "WGT_NLA", xcoord = "LON_DD", ycoord = "LAT_DD")
-
-chla_change_national.1 <- chla_change_national[["catsum"]] |>
-  select(Subpopulation, Category, Indicator, DiffEst.P, StdError.P) |>
-  mutate(Subpopulation = "National") 
-
-
-chla_total_change0717 <- rbind(chla_change_national.1, chla_change_ecoreg.1) 
-
-#nat.plot.chla <-
-ggplot(chla_total_change0717 |> filter(Subpopulation == "National")) +
-  geom_point(aes(Category, DiffEst.P, fill = Category), color = "black", pch = 21, size = 3) +
-  geom_errorbar(aes(Category, DiffEst.P, ymin = DiffEst.P-StdError.P, ymax = DiffEst.P+StdError.P, color = Category), width = 0.2)  + 
-  theme_light() +
-  scale_fill_manual(values = palette_OkabeIto[]) +
-  scale_color_manual(values = palette_OkabeIto[]) +
-  geom_hline(yintercept = 0) +
-  theme(legend.position = "none") +
-  labs(x = "",
-       y = "% Difference 2007, 2017 Lakes") +
-  scale_x_discrete(limits = rev(levels(as.factor(chla_total_change0717$Category)))) 
+nat.plot.chla <- plot_change_national(chla_total_change0717, "2007", "2017")
   
-  
-  
+regional.plot.chla <- plot_change_regional(chla_total_change0717, "2007", "2017")
+
+
+nat.plot.chla / regional.plot.chla
 
 
 ```
@@ -324,40 +272,12 @@ ggplot(chla_total_change0717 |> filter(Subpopulation == "National")) +
 ### Number of lakes in each trophic category (according to TP status)
 
 ```{r, echo=FALSE, warning=FALSE, message=FALSE, fig.width=6.5, fig.height=4.5}
-# 2007
-TP_2007_ecoreg <- cat_analysis(ts |> filter(year == 2007), subpop = "ECO_REG_NAME", vars = "TSTATE_TP", weight = "WGT_NLA", xcoord = "LON_DD", ycoord = "LAT_DD")
 
-TP_2007_ecoreg.1 <- TP_2007_ecoreg |>
-  select(Subpopulation, Category, nResp, Estimate.P, StdError.P) |>
-  mutate(year = 2007)
-
-# 2012
-TP_2012_ecoreg <- cat_analysis(ts |> filter(year == 2012), subpop = "ECO_REG_NAME", vars = "TSTATE_TP", weight = "WGT_NLA", xcoord = "LON_DD", ycoord = "LAT_DD")
-
-TP_2012_ecoreg.1 <- TP_2012_ecoreg |>
-  select(Subpopulation, Category, nResp, Estimate.P, StdError.P) |>
-  mutate(year = 2012)
-
-# 2017
-TP_2017_ecoreg <- cat_analysis(ts |> filter(year == 2017), subpop = "ECO_REG_NAME", vars = "TSTATE_TP", weight = "WGT_NLA", xcoord = "LON_DD", ycoord = "LAT_DD")
-
-TP_2017_ecoreg.1 <- TP_2017_ecoreg |>
-  select(Subpopulation, Category, nResp, Estimate.P, StdError.P) |>
-  mutate(year = 2017)
-
-TP_national <- cat_analysis(ts, vars = "TSTATE_TP", subpop = "year", weight = "WGT_NLA", xcoord = "LON_DD", ycoord = "LAT_DD")
-
-TP_national.1 <- TP_national|>
-  select(Subpopulation, Category, nResp, Estimate.P, StdError.P) |>
-  mutate(year = Subpopulation,
-         Subpopulation = "National")
-
-TP_trophic_states <- rbind(TP_national.1, TP_2007_ecoreg.1, TP_2012_ecoreg.1, TP_2017_ecoreg.1) |>
+TP_trophic_states <- no_lakes_ts(ts, "TSTATE_TP") |> # And do all this dumb formatting
   filter(Category != "Total") |>
   mutate(fill_column = paste(nResp, "(", round(Estimate.P, 1), "±", round(StdError.P, 1), ")")) |>
   mutate(column_names = paste(Category, ".", year)) |>
   pivot_wider(id_cols = c(Subpopulation), names_from = "column_names", values_from = "fill_column")
-
 
 #make the table
 
@@ -371,43 +291,31 @@ TP_trophic_states |>
 
 
 
+### How have the lakes changed trophic category (according to TP status) over the years?
+Looking at the difference between 2017 and 2007
+
+```{r, echo=FALSE, warning=FALSE, message=FALSE, fig.width=6.5, fig.height= 8.5}
+
+TP_total_change0717 <- change_lakes_ts(ts, "TSTATE_TP", "2007", "2017")
+
+nat.plot.TP <- plot_change_national(TP_total_change0717, "2007", "2017")
+  
+regional.plot.TP <- plot_change_regional(TP_total_change0717, "2007", "2017")
+
+
+nat.plot.TP / regional.plot.TP
+
+
+```
+
 
 ### Number of lakes in each trophic category (according to TN status)
 ```{r, echo=FALSE, warning=FALSE, message=FALSE, fig.width=6.5, fig.height=4.5}
-# 2007
-TN_2007_ecoreg <- cat_analysis(ts |> filter(year == 2007), subpop = "ECO_REG_NAME", vars = "TSTATE_TN", weight = "WGT_NLA", xcoord = "LON_DD", ycoord = "LAT_DD")
-
-TN_2007_ecoreg.1 <- TN_2007_ecoreg |>
-  select(Subpopulation, Category, nResp, Estimate.P, StdError.P) |>
-  mutate(year = 2007)
-
-# 2012
-TN_2012_ecoreg <- cat_analysis(ts |> filter(year == 2012), subpop = "ECO_REG_NAME", vars = "TSTATE_TN", weight = "WGT_NLA", xcoord = "LON_DD", ycoord = "LAT_DD")
-
-TN_2012_ecoreg.1 <- TN_2012_ecoreg |>
-  select(Subpopulation, Category, nResp, Estimate.P, StdError.P) |>
-  mutate(year = 2012)
-
-# 2017
-TN_2017_ecoreg <- cat_analysis(ts |> filter(year == 2017), subpop = "ECO_REG_NAME", vars = "TSTATE_TN", weight = "WGT_NLA", xcoord = "LON_DD", ycoord = "LAT_DD")
-
-TN_2017_ecoreg.1 <- TN_2017_ecoreg |>
-  select(Subpopulation, Category, nResp, Estimate.P, StdError.P) |>
-  mutate(year = 2017)
-
-TN_national <- cat_analysis(ts, vars = "TSTATE_TN", subpop = "year", weight = "WGT_NLA", xcoord = "LON_DD", ycoord = "LAT_DD")
-
-TN_national.1 <- TN_national|>
-  select(Subpopulation, Category, nResp, Estimate.P, StdError.P) |>
-  mutate(year = Subpopulation,
-         Subpopulation = "National")
-
-TN_trophic_states <- rbind(TN_national.1, TN_2007_ecoreg.1, TN_2012_ecoreg.1, TN_2017_ecoreg.1) |>
+TN_trophic_states <- no_lakes_ts(ts, "TSTATE_TN") |> # And do all this dumb formatting
   filter(Category != "Total") |>
   mutate(fill_column = paste(nResp, "(", round(Estimate.P, 1), "±", round(StdError.P, 1), ")")) |>
   mutate(column_names = paste(Category, ".", year)) |>
   pivot_wider(id_cols = c(Subpopulation), names_from = "column_names", values_from = "fill_column")
-
 
 #make the table
 
@@ -418,6 +326,42 @@ TN_trophic_states |>
   tab_spanner_delim(delim = ".")
 
 ```
+
+
+### How have the lakes changed trophic category (according to TP status) over the years?
+Looking at the difference between 2017 and 2007
+
+```{r, echo=FALSE, warning=FALSE, message=FALSE, fig.width=6.5, fig.height= 8.5}
+
+TN_total_change0717 <- change_lakes_ts(ts, "TSTATE_TN", "2007", "2017")
+
+nat.plot.TN <- plot_change_national(TN_total_change0717, "2007", "2017")
+  
+regional.plot.TN <- plot_change_regional(TN_total_change0717, "2007", "2017")
+
+
+nat.plot.TN / regional.plot.TN
+
+
+```
+
+
+### How have TN:TP ratios changed over the years?
+
+```{r, echo=FALSE, warning=FALSE, message=FALSE, fig.width=6.5, fig.height=4.5}
+
+#2007-2012
+dat_tntp <- all_NLA |>
+  filter(year %in% c("2007", "2012")) |>
+  select(UNIQUE_ID, year, tn.tp) |>
+  pivot_wider(names_from = year, values_from = tn.tp) 
+
+## can't make this until I determine what to do with double samplings
+
+
+```
+
+
 
 
 
