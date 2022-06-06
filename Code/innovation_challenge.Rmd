@@ -83,7 +83,7 @@ ggplot(all_NLA) +
   geom_abline(slope = 0, intercept = log(16, base = 10), color = "red") +
   theme_light() +
   scale_fill_manual("Year",values = palette_OkabeIto[]) +
-  labs(y = "Log TN:TP", x = "Log TP"~(mu~g~L^-1)) +
+  labs(y = "Log TN:TP", x = "Log TP"~(mu*g~L^-1)) +
   annotate('text', label = 'Redfield 16:1 line', x = 3.5, y = 1.1, hjust = 0, size = 3, color = "red") +
   annotate('text', label = 'Predicted N limitation \n (Bergström, 2010)', x = -1, y = 1, hjust = 0, size = 3) +
   annotate('text', label = 'Predicted P limitation \n (Bergström, 2010)', x = 3, y = 2, hjust = 0, size = 3) 
@@ -99,9 +99,9 @@ ggplot(all_NLA) +
   geom_abline(slope = 0, intercept = log(14, base = 10)) +
   theme_light() +
   scale_fill_manual("Year",values = palette_OkabeIto[]) +
-  labs(y = "Log TN:TP", x = "Log TP"~(mu~g~L^-1)) +
+  labs(y = "Log TN:TP", x = "Log TP"~(mu*g~L^-1)) +
   annotate('text', label = 'N limitation likely \n (Dodds & McCauley, 1992)', x = 2.5, y = -0.25, hjust = 0, size = 3) +
-  annotate('text', label = 'TP = 30'~(mu~g~L^-1), x = 0.9, y = -0.25, hjust = 0, size = 3) +
+  annotate('text', label = 'TP = 30'~(mu*g~L^-1), x = 0.9, y = -0.25, hjust = 0, size = 3) +
   annotate('text', label = 'TN:TP = 14', x = -0.5, y = 1, hjust = 0, size = 3) 
 ```
 
@@ -168,7 +168,7 @@ ggplot(all_NLA) +
   scale_fill_manual(values = palette_OkabeIto[]) +
   theme(legend.title = element_blank(),
         legend.position = 'bottom') +
-  labs(x = "TP"~(mu~g~L^-1), y = "Chlorophyll"~(mu~g~L^-1), title = "Chl vs TP") +
+  labs(x = "TP"~(mu*g~L^-1), y = "Chlorophyll"~(mu*g~L^-1), title = "Chl vs TP") +
   scale_y_log10() +
   scale_x_log10() 
 
@@ -179,7 +179,7 @@ ggplot(all_NLA) +
   scale_fill_manual(values = palette_OkabeIto[]) +
   theme(legend.title = element_blank(),
         legend.position = 'bottom') +
-  labs(x = "TN"~(mg~L^-1), y = "Chlorophyll"~(mu~g~L^-1), title = "Chl vs TN") +
+  labs(x = "TN"~(mg~L^-1), y = "Chlorophyll"~(mu*g~L^-1), title = "Chl vs TN") +
   scale_y_log10() +
   scale_x_log10() 
 
@@ -190,7 +190,7 @@ ggplot(all_NLA) +
   scale_fill_manual(values = palette_OkabeIto[]) +
   theme(legend.title = element_blank(),
         legend.position = 'bottom') +
-  labs(x = "DIN"~(mg~L^-1), y = "Chlorophyll"~(mu~g~L^-1), title = "Chl vs DIN") +
+  labs(x = "DIN"~(mg~L^-1), y = "Chlorophyll"~(mu*g~L^-1), title = "Chl vs DIN") +
   scale_y_log10() +
   scale_x_log10() 
 
@@ -201,7 +201,7 @@ ggplot(all_NLA) +
   scale_fill_manual(values = palette_OkabeIto[]) +
   theme(legend.title = element_blank(),
         legend.position = 'bottom') +
-  labs(x = "TN:TP (molar)", y = "Chlorophyll"~(mu~g~L^-1), title = "Chl vs TN:TP") +
+  labs(x = "TN:TP (molar)", y = "Chlorophyll"~(mu*g~L^-1), title = "Chl vs TN:TP") +
   scale_y_log10() +
   scale_x_log10() 
 
@@ -212,7 +212,7 @@ ggplot(all_NLA) +
   scale_fill_manual(values = palette_OkabeIto[]) +
   theme(legend.title = element_blank(),
         legend.position = 'bottom') +
-  labs(x = "DIN:TP (molar)", y = "Chlorophyll"~(mu~g~L^-1), title = "Chl vs DIN:TP") +
+  labs(x = "DIN:TP (molar)", y = "Chlorophyll"~(mu*g~L^-1), title = "Chl vs DIN:TP") +
   scale_y_log10() +
   scale_x_log10() 
 ```
@@ -351,16 +351,93 @@ nat.plot.TN / regional.plot.TN
 ```{r, echo=FALSE, warning=FALSE, message=FALSE, fig.width=6.5, fig.height=4.5}
 
 #2007-2012
-dat_tntp <- all_NLA |>
-  filter(year %in% c("2007", "2012")) |>
-  select(UNIQUE_ID, year, tn.tp) |>
-  pivot_wider(names_from = year, values_from = tn.tp) 
+# dat_tntp <- all_NLA |>
+#   filter(year %in% c("2007", "2012")) |>
+#   select(UNIQUE_ID, year, tn.tp) |>
+#   pivot_wider(names_from = year, values_from = tn.tp) 
 
 ## can't make this until I determine what to do with double samplings
 
 
 ```
 
+#### Table showing changes in TN:TP, TN, TP, Chla across the years
+
+
+### Boxplots showing how concentrations and ratios vary across trophic states in the most recent NLA survey (2017)
+
+#### Trophic states based on chlorophyll 
+
+```{r, echo=FALSE, warning=FALSE, message=FALSE, fig.width=6.5, fig.height=4.5}
+#2017 data
+NLA17_boxplots <- NLA17 |>
+    mutate(TSTATE_CHL = ifelse(startsWith(TSTATE_CHL, "OLIGOTROPHIC"), "Oligo.",
+                             ifelse(startsWith(TSTATE_CHL, "MESOTROPHIC"), "Meso.", 
+                                    ifelse(startsWith(TSTATE_CHL,"EUTROPHIC"), "Eutro.",
+                                           ifelse(startsWith(TSTATE_CHL, "HYPEREUTROPHIC"), "Hyper.", TSTATE_CHL))))) |>
+    mutate(TSTATE_CHL = factor(TSTATE_CHL, levels = c("Oligo.", "Meso.", "Eutro.", "Hyper."))) 
+
+pta <- ggplot(NLA17_boxplots) +
+  geom_boxplot(aes(TSTATE_CHL, tn.tp, fill = TSTATE_CHL)) +
+  theme_light() +
+  scale_fill_manual(values = palette_OkabeIto[]) +
+  scale_y_log10() +
+  theme(legend.position = "none") +
+  labs(x = "",
+       y = "TN:TP Molar Ratio")
+
+ptb <- ggplot(NLA17_boxplots) +
+  geom_boxplot(aes(TSTATE_CHL, DIN_mol/TP_mol, fill = TSTATE_CHL)) +
+  theme_light() +
+  scale_fill_manual(values = palette_OkabeIto[]) +
+  scale_y_log10() +
+  theme(legend.position = "none") +
+  labs(x = "",
+       y = "DIN:TP Molar Ratio")
+  
+ptc <- ggplot(NLA17_boxplots) +
+  geom_boxplot(aes(TSTATE_CHL, NTL_PPM, fill = TSTATE_CHL)) +
+  theme_light() +
+  scale_fill_manual(values = palette_OkabeIto[]) +
+  scale_y_log10() +
+  theme(legend.position = "none") +
+  labs(x = "",
+       y = "TN"~(mg~L^-1))
+
+ptd <- ggplot(NLA17_boxplots) +
+  geom_boxplot(aes(TSTATE_CHL, PTL_PPB, fill = TSTATE_CHL)) +
+  theme_light() +
+  scale_fill_manual(values = palette_OkabeIto[]) +
+  scale_y_log10() +
+  theme(legend.position = "none") +
+  labs(x = "",
+       y = "TP"~(mu*g~L^-1))
+
+pte <- ggplot(NLA17_boxplots) +
+  geom_boxplot(aes(TSTATE_CHL, DIN_PPM, fill = TSTATE_CHL)) +
+  theme_light() +
+  scale_fill_manual(values = palette_OkabeIto[]) +
+  scale_y_log10() +
+  theme(legend.position = "none") +
+  labs(x = "",
+       y = "DIN"~(mg~L^-1))
+
+ptf <- ggplot(NLA17_boxplots) +
+  geom_boxplot(aes(TSTATE_CHL, CHLA_PPB, fill = TSTATE_CHL)) +
+  theme_light() +
+  scale_fill_manual(values = palette_OkabeIto[]) +
+  scale_y_log10() +
+  theme(legend.position = "none") +
+  labs(x = "",
+       y = "Chlorophyll-a"~(mu*g~L^-1))
+
+
+( (pta | ptb) /
+  (ptc | ptd) /
+  (pte | ptf) )+
+  plot_annotation(tag_levels = 'a')
+
+```
 
 
 
