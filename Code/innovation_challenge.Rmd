@@ -14,13 +14,10 @@ library(biogas)
 library(patchwork)
 library(spsurvey)
 library(gt)
-source("C:/Users/lrock1/Downloads/PhD_code/STOICH_NARSchallenge/Data/NLA/Call_NLA_data.R")
-source("C:/Users/lrock1/Downloads/PhD_code/STOICH_NARSchallenge/Code/Functions/no_lakes_ts.R")
-source("C:/Users/lrock1/Downloads/PhD_code/STOICH_NARSchallenge/Code/Functions/percent_change_lakes_ts.R")
+source("C:/Users/linne/Downloads/PhD_code/STOICH_NARSchallenge/Data/NLA/Call_NLA_data.R")
+source("C:/Users/linne/Downloads/PhD_code/STOICH_NARSchallenge/Code/Functions/no_lakes_ts.R")
+source("C:/Users/linne/Downloads/PhD_code/STOICH_NARSchallenge/Code/Functions/percent_change_lakes_ts.R")
 ```
-
-## Some basics about the NLA datasets
-
 
 ### What are the sizes of lakes sampled during the NLA? 
 ```{r, echo=FALSE, warning=FALSE, message=FALSE, include = FALSE}
@@ -41,7 +38,7 @@ lake_size$size = factor(lake_size$size,
 lake_size_plot <- ggplot(lake_size) +
   geom_bar(aes(size, fill = year)) +
   theme_light() +
-  scale_fill_manual("Year", values = palette_OkabeIto[]) +
+  scale_fill_manual("Year", values = palette_OkabeIto[5:7]) +
   labs(x = "Lake Size",
        y = "# Lakes Sampled")
 
@@ -82,7 +79,7 @@ ggplot(all_NLA) +
   geom_abline(slope = 0, intercept = log(41, base = 10), linetype = "dashed") +
   geom_abline(slope = 0, intercept = log(16, base = 10), color = "red") +
   theme_light() +
-  scale_fill_manual("Year",values = palette_OkabeIto[]) +
+  scale_fill_manual("Year",values = palette_OkabeIto[5:7]) +
   labs(y = "Log TN:TP", x = "Log TP"~(mu*g~L^-1)) +
   annotate('text', label = 'Redfield 16:1 line', x = 3.5, y = 1.1, hjust = 0, size = 3, color = "red") +
   annotate('text', label = 'Predicted N limitation \n (Bergström, 2010)', x = -1, y = 1, hjust = 0, size = 3) +
@@ -98,7 +95,7 @@ ggplot(all_NLA) +
   geom_vline(xintercept = log(30, base = 10)) +
   geom_abline(slope = 0, intercept = log(14, base = 10)) +
   theme_light() +
-  scale_fill_manual("Year",values = palette_OkabeIto[]) +
+  scale_fill_manual("Year",values = palette_OkabeIto[5:7]) +
   labs(y = "Log TN:TP", x = "Log TP"~(mu*g~L^-1)) +
   annotate('text', label = 'N limitation likely \n (Dodds & McCauley, 1992)', x = 2.5, y = -0.25, hjust = 0, size = 3) +
   annotate('text', label = 'TP = 30'~(mu*g~L^-1), x = 0.9, y = -0.25, hjust = 0, size = 3) +
@@ -139,7 +136,7 @@ ggplot(all_NLA) +
   geom_hline(yintercept = 0.75/Nmol, base = 10, color = "#cc79a7") +# mesotrophic 0.35-0.75 mg/L TN
   geom_hline(yintercept = 1.4/Nmol, base = 10, color = "#cc79a7") +# eutrophic 0.75-1.4 mg/L TN, hypereutrophic greater than 1.4 mg/L TN
   theme_light() +
-  scale_fill_manual(values = palette_OkabeIto[]) +
+  scale_fill_manual(values = palette_OkabeIto[5:7]) +
   theme(legend.title = element_blank(),
         legend.position = 'bottom') +
   labs(x = "TP (molar)", y = "TN (molar)", title = "Trophic Status based on TN and TP") +
@@ -165,7 +162,7 @@ Note: axes are logged in these figures
 ggplot(all_NLA) +
   geom_point(aes(PTL_PPB, CHLA_PPB, fill = year), size = 2.5, shape = 21, alpha = 0.8) +
   theme_light() +
-  scale_fill_manual(values = palette_OkabeIto[]) +
+  scale_fill_manual(values = palette_OkabeIto[5:7]) +
   theme(legend.title = element_blank(),
         legend.position = 'bottom') +
   labs(x = "TP"~(mu*g~L^-1), y = "Chlorophyll"~(mu*g~L^-1), title = "Chl vs TP") +
@@ -176,7 +173,7 @@ ggplot(all_NLA) +
 ggplot(all_NLA) +
   geom_point(aes(NTL_PPM, CHLA_PPB, fill = year), size = 2.5, shape = 21, alpha = 0.8) +
   theme_light() +
-  scale_fill_manual(values = palette_OkabeIto[]) +
+  scale_fill_manual(values = palette_OkabeIto[5:7]) +
   theme(legend.title = element_blank(),
         legend.position = 'bottom') +
   labs(x = "TN"~(mg~L^-1), y = "Chlorophyll"~(mu*g~L^-1), title = "Chl vs TN") +
@@ -187,7 +184,7 @@ ggplot(all_NLA) +
 ggplot(all_NLA) +
   geom_point(aes(DIN_PPM, CHLA_PPB, fill = year), size = 2.5, shape = 21, alpha = 0.8) +
   theme_light() +
-  scale_fill_manual(values = palette_OkabeIto[]) +
+  scale_fill_manual(values = palette_OkabeIto[5:7]) +
   theme(legend.title = element_blank(),
         legend.position = 'bottom') +
   labs(x = "DIN"~(mg~L^-1), y = "Chlorophyll"~(mu*g~L^-1), title = "Chl vs DIN") +
@@ -198,7 +195,7 @@ ggplot(all_NLA) +
 ggplot(all_NLA) +
   geom_point(aes(tn.tp, CHLA_PPB, fill = year), size = 2.5, shape = 21, alpha = 0.8) +
   theme_light() +
-  scale_fill_manual(values = palette_OkabeIto[]) +
+  scale_fill_manual(values = palette_OkabeIto[5:7]) +
   theme(legend.title = element_blank(),
         legend.position = 'bottom') +
   labs(x = "TN:TP (molar)", y = "Chlorophyll"~(mu*g~L^-1), title = "Chl vs TN:TP") +
@@ -209,7 +206,7 @@ ggplot(all_NLA) +
 ggplot(all_NLA) +
   geom_point(aes(DIN_mol/TP_mol, CHLA_PPB, fill = year), size = 2.5, shape = 21, alpha = 0.8) +
   theme_light() +
-  scale_fill_manual(values = palette_OkabeIto[]) +
+  scale_fill_manual(values = palette_OkabeIto[5:7]) +
   theme(legend.title = element_blank(),
         legend.position = 'bottom') +
   labs(x = "DIN:TP (molar)", y = "Chlorophyll"~(mu*g~L^-1), title = "Chl vs DIN:TP") +
@@ -218,7 +215,7 @@ ggplot(all_NLA) +
 ```
 
 
-### Number of lakes in each trophic category (according to Chlorophyll status)
+### Number of lakes in each trophic category
 
 
 ```{r, echo=FALSE, warning=FALSE, message=FALSE, fig.width=6.5, fig.height=4.5}
@@ -251,10 +248,10 @@ chla_trophic_states |>
 ```
 
 
-### How have the lakes changed trophic category (according to Chlorophyll status) over the years?
-Looking at the difference between 2017 and 2007
+### How have the lakes changed trophic category over the years?
+#### Looking at the difference between 2017 and 2007
 
-```{r, echo=FALSE, warning=FALSE, message=FALSE, fig.width=6.5, fig.height= 8.5}
+```{r, echo=FALSE, warning=FALSE, message=FALSE, include = FALSE}
 
 chla_total_change0717 <- change_lakes_ts(ts, "TSTATE_CHL", "2007", "2017")
 
@@ -262,92 +259,94 @@ nat.plot.chla <- plot_change_national(chla_total_change0717, "2007", "2017")
   
 regional.plot.chla <- plot_change_regional(chla_total_change0717, "2007", "2017")
 
+```
+
+```{r, echo=FALSE, warning=FALSE, message=FALSE, fig.width=6.5, fig.height= 8.5}
 
 nat.plot.chla / regional.plot.chla
 
-
 ```
+<!-- ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ -->
+<!-- ### Number of lakes in each trophic category (according to TP status) -->
+
+<!-- ```{r, echo=FALSE, warning=FALSE, message=FALSE, fig.width=6.5, fig.height=4.5} -->
+
+<!-- TP_trophic_states <- no_lakes_ts(ts, "TSTATE_TP") |> # And do all this dumb formatting -->
+<!--   filter(Category != "Total") |> -->
+<!--   mutate(fill_column = paste(nResp, "(", round(Estimate.P, 1), "±", round(StdError.P, 1), ")")) |> -->
+<!--   mutate(column_names = paste(Category, ".", year)) |> -->
+<!--   pivot_wider(id_cols = c(Subpopulation), names_from = "column_names", values_from = "fill_column") -->
+
+<!-- #make the table -->
+
+<!-- #this is not exactly what I want for my table, but it is close enough for now -->
+<!-- TP_trophic_states |> -->
+<!--   group_by(Subpopulation) |> -->
+<!--   gt() |> -->
+<!--   tab_spanner_delim(delim = ".") -->
+
+<!-- ``` -->
 
 
-### Number of lakes in each trophic category (according to TP status)
 
-```{r, echo=FALSE, warning=FALSE, message=FALSE, fig.width=6.5, fig.height=4.5}
+<!-- ### How have the lakes changed trophic category (according to TP status) over the years? -->
+<!-- Looking at the difference between 2017 and 2007 -->
 
-TP_trophic_states <- no_lakes_ts(ts, "TSTATE_TP") |> # And do all this dumb formatting
-  filter(Category != "Total") |>
-  mutate(fill_column = paste(nResp, "(", round(Estimate.P, 1), "±", round(StdError.P, 1), ")")) |>
-  mutate(column_names = paste(Category, ".", year)) |>
-  pivot_wider(id_cols = c(Subpopulation), names_from = "column_names", values_from = "fill_column")
+<!-- ```{r, echo=FALSE, warning=FALSE, message=FALSE, fig.width=6.5, fig.height= 8.5} -->
 
-#make the table
+<!-- TP_total_change0717 <- change_lakes_ts(ts, "TSTATE_TP", "2007", "2017") -->
 
-#this is not exactly what I want for my table, but it is close enough for now
-TP_trophic_states |>
-  group_by(Subpopulation) |>
-  gt() |>
-  tab_spanner_delim(delim = ".")
+<!-- nat.plot.TP <- plot_change_national(TP_total_change0717, "2007", "2017") -->
 
-```
+<!-- regional.plot.TP <- plot_change_regional(TP_total_change0717, "2007", "2017") -->
 
 
-
-### How have the lakes changed trophic category (according to TP status) over the years?
-Looking at the difference between 2017 and 2007
-
-```{r, echo=FALSE, warning=FALSE, message=FALSE, fig.width=6.5, fig.height= 8.5}
-
-TP_total_change0717 <- change_lakes_ts(ts, "TSTATE_TP", "2007", "2017")
-
-nat.plot.TP <- plot_change_national(TP_total_change0717, "2007", "2017")
-  
-regional.plot.TP <- plot_change_regional(TP_total_change0717, "2007", "2017")
+<!-- nat.plot.TP / regional.plot.TP -->
 
 
-nat.plot.TP / regional.plot.TP
+<!-- ``` -->
 
 
-```
+<!-- ### Number of lakes in each trophic category (according to TN status) -->
+<!-- ```{r, echo=FALSE, warning=FALSE, message=FALSE, fig.width=6.5, fig.height=4.5} -->
+<!-- TN_trophic_states <- no_lakes_ts(ts, "TSTATE_TN") |> # And do all this dumb formatting -->
+<!--   filter(Category != "Total") |> -->
+<!--   mutate(fill_column = paste(nResp, "(", round(Estimate.P, 1), "±", round(StdError.P, 1), ")")) |> -->
+<!--   mutate(column_names = paste(Category, ".", year)) |> -->
+<!--   pivot_wider(id_cols = c(Subpopulation), names_from = "column_names", values_from = "fill_column") -->
+
+<!-- #make the table -->
+
+<!-- #this is not exactly what I want for my table, but it is close enough for now -->
+<!-- TN_trophic_states |> -->
+<!--   group_by(Subpopulation) |> -->
+<!--   gt() |> -->
+<!--   tab_spanner_delim(delim = ".") -->
+
+<!-- ``` -->
 
 
-### Number of lakes in each trophic category (according to TN status)
-```{r, echo=FALSE, warning=FALSE, message=FALSE, fig.width=6.5, fig.height=4.5}
-TN_trophic_states <- no_lakes_ts(ts, "TSTATE_TN") |> # And do all this dumb formatting
-  filter(Category != "Total") |>
-  mutate(fill_column = paste(nResp, "(", round(Estimate.P, 1), "±", round(StdError.P, 1), ")")) |>
-  mutate(column_names = paste(Category, ".", year)) |>
-  pivot_wider(id_cols = c(Subpopulation), names_from = "column_names", values_from = "fill_column")
+<!-- ### How have the lakes changed trophic category (according to TN status) over the years? -->
+<!-- Looking at the difference between 2017 and 2007 -->
 
-#make the table
+<!-- ```{r, echo=FALSE, warning=FALSE, message=FALSE, fig.width=6.5, fig.height= 8.5} -->
 
-#this is not exactly what I want for my table, but it is close enough for now
-TN_trophic_states |>
-  group_by(Subpopulation) |>
-  gt() |>
-  tab_spanner_delim(delim = ".")
+<!-- TN_total_change0717 <- change_lakes_ts(ts, "TSTATE_TN", "2007", "2017") -->
 
-```
+<!-- nat.plot.TN <- plot_change_national(TN_total_change0717, "2007", "2017") -->
+
+<!-- regional.plot.TN <- plot_change_regional(TN_total_change0717, "2007", "2017") -->
 
 
-### How have the lakes changed trophic category (according to TP status) over the years?
-Looking at the difference between 2017 and 2007
-
-```{r, echo=FALSE, warning=FALSE, message=FALSE, fig.width=6.5, fig.height= 8.5}
-
-TN_total_change0717 <- change_lakes_ts(ts, "TSTATE_TN", "2007", "2017")
-
-nat.plot.TN <- plot_change_national(TN_total_change0717, "2007", "2017")
-  
-regional.plot.TN <- plot_change_regional(TN_total_change0717, "2007", "2017")
+<!-- nat.plot.TN / regional.plot.TN -->
 
 
-nat.plot.TN / regional.plot.TN
-
-
-```
-
+<!-- ``` -->
+<!-- ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ -->
 
 ### How have TN:TP ratios changed over the years?
-
+#### Table and figure showing changes in TN:TP, TN, TP, Chla across the years
+ I can't add these until I determine what to do with double samplings 
 ```{r, echo=FALSE, warning=FALSE, message=FALSE, fig.width=6.5, fig.height=4.5}
 
 #2007-2012
@@ -360,8 +359,6 @@ nat.plot.TN / regional.plot.TN
 
 
 ```
-
-#### Table showing changes in TN:TP, TN, TP, Chla across the years
 
 
 ### Boxplots showing how concentrations and ratios vary across trophic states in the most recent NLA survey (2017)
