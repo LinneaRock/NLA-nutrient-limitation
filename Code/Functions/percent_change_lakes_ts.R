@@ -40,8 +40,8 @@ plot_change_national <- function(data, year1, year2) {
     geom_point(aes(Category, DiffEst.P, fill = Category), color = "black", pch = 21, size = 3) +
     geom_errorbar(aes(Category, DiffEst.P, ymin = DiffEst.P-StdError.P, ymax = DiffEst.P+StdError.P, color = Category),   width = 0.2)  + 
     theme_light() +
-    scale_fill_manual(values = palette_OkabeIto[]) +
-    scale_color_manual(values = palette_OkabeIto[]) +
+    scale_fill_manual(values = c(palette_OkabeIto[2], palette_OkabeIto[4], palette_OkabeIto[3], palette_OkabeIto[1])) +
+    scale_color_manual(values = c(palette_OkabeIto[2], palette_OkabeIto[4], palette_OkabeIto[3], palette_OkabeIto[1])) +
     geom_hline(yintercept = 0) +
     theme(legend.position = "none") +
     labs(x = "",
@@ -58,8 +58,8 @@ plot_change_regional <- function(data, year1, year2) {
     geom_errorbar(aes(Category, DiffEst.P, ymin = DiffEst.P-StdError.P, ymax = DiffEst.P+StdError.P, color = Category),   width = 0.2)  +
     facet_wrap(~Subpopulation, ncol = 3) +
     theme_light() +
-    scale_fill_manual(values = palette_OkabeIto[]) +
-    scale_color_manual(values = palette_OkabeIto[]) +
+    scale_fill_manual(values = c(palette_OkabeIto[2], palette_OkabeIto[4], palette_OkabeIto[3], palette_OkabeIto[1])) +
+    scale_color_manual(values = c(palette_OkabeIto[2], palette_OkabeIto[4], palette_OkabeIto[3], palette_OkabeIto[1])) +
     geom_hline(yintercept = 0) +
     theme(legend.position = "none") +
     labs(x = "",

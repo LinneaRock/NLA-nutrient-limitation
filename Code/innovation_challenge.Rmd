@@ -13,16 +13,17 @@ library(colorblindr)
 library(biogas)
 library(patchwork)
 library(spsurvey)
+library(plotly)
 library(gt)
-source("C:/Users/linne/Downloads/PhD_code/STOICH_NARSchallenge/Data/NLA/Call_NLA_data.R")
-source("C:/Users/linne/Downloads/PhD_code/STOICH_NARSchallenge/Code/Functions/no_lakes_ts.R")
-source("C:/Users/linne/Downloads/PhD_code/STOICH_NARSchallenge/Code/Functions/percent_change_lakes_ts.R")
+source("C:/Users/lrock1/Downloads/PhD_code/STOICH_NARSchallenge/Data/NLA/Call_NLA_data.R")
+source("C:/Users/lrock1/Downloads/PhD_code/STOICH_NARSchallenge/Code/Functions/no_lakes_ts.R")
+source("C:/Users/lrock1/Downloads/PhD_code/STOICH_NARSchallenge/Code/Functions/percent_change_lakes_ts.R")
 ```
 
 ### What are the sizes of lakes sampled during the NLA? 
 ```{r, echo=FALSE, warning=FALSE, message=FALSE, include = FALSE}
 lake_size <- all_NLA |>
-  select(UNIQUE_ID, AREA_HA, year) |>
+  select(UNIQUE_ID, AREA_HA, year, LAKE_ORIGIN, URBAN) |>
   distinct() |>
   mutate(size = NA) |>
   mutate(size = ifelse(AREA_HA <= 4, "<=4 ha",
@@ -37,7 +38,7 @@ lake_size$size = factor(lake_size$size,
 
 lake_size_plot <- ggplot(lake_size) +
   geom_bar(aes(size, fill = year)) +
-  theme_light() +
+  theme_minimal() +
   scale_fill_manual("Year", values = palette_OkabeIto[5:7]) +
   labs(x = "Lake Size",
        y = "# Lakes Sampled")
@@ -58,6 +59,9 @@ median <- round(median(lake_size$AREA_HA),2)
 
 #Mean lake size is:
 mean <- round(mean(lake_size$AREA_HA), 2)
+
+#number man-made lakes:
+
 ```
 
 
@@ -78,7 +82,7 @@ ggplot(all_NLA) +
   geom_abline(slope = 0, intercept = log(28, base = 10)) +
   geom_abline(slope = 0, intercept = log(41, base = 10), linetype = "dashed") +
   geom_abline(slope = 0, intercept = log(16, base = 10), color = "red") +
-  theme_light() +
+  theme_minimal() +
   scale_fill_manual("Year",values = palette_OkabeIto[5:7]) +
   labs(y = "Log TN:TP", x = "Log TP"~(mu*g~L^-1)) +
   annotate('text', label = 'Redfield 16:1 line', x = 3.5, y = 1.1, hjust = 0, size = 3, color = "red") +
@@ -94,7 +98,7 @@ ggplot(all_NLA) +
   geom_point(aes(log(PTL_PPB, base = 10), log(tn.tp, base = 10), fill = year), size = 2.5, shape = 21, alpha = 0.8) +
   geom_vline(xintercept = log(30, base = 10)) +
   geom_abline(slope = 0, intercept = log(14, base = 10)) +
-  theme_light() +
+  theme_minimal() +
   scale_fill_manual("Year",values = palette_OkabeIto[5:7]) +
   labs(y = "Log TN:TP", x = "Log TP"~(mu*g~L^-1)) +
   annotate('text', label = 'N limitation likely \n (Dodds & McCauley, 1992)', x = 2.5, y = -0.25, hjust = 0, size = 3) +
@@ -112,8 +116,8 @@ Note: the axes are logged in these figures
 ggplot(all_NLA) +
   geom_point(aes(TP_mol, TN_mol, fill = TSTATE_CHL), size = 2.5, shape = 21, alpha = 0.8) +
  # geom_abline(slope = 16, intercept = 0) +
-  theme_light() +
-  scale_fill_manual(values = palette_OkabeIto[]) +
+  theme_minimal() +
+  scale_fill_manual(values = c(palette_OkabeIto[2], palette_OkabeIto[4], palette_OkabeIto[3], palette_OkabeIto[1])) +
   theme(legend.title = element_blank()) +
         #legend.position = 'bottom') +
   labs(x = "TP (molar)", y = "TN (molar)", title = "Trophic Status based on Chlorophyll") +
@@ -135,7 +139,7 @@ ggplot(all_NLA) +
   geom_hline(yintercept = 0.35/Nmol, base = 10, color = "#cc79a7") +# oligotrophic under 0.35 mg/L TN
   geom_hline(yintercept = 0.75/Nmol, base = 10, color = "#cc79a7") +# mesotrophic 0.35-0.75 mg/L TN
   geom_hline(yintercept = 1.4/Nmol, base = 10, color = "#cc79a7") +# eutrophic 0.75-1.4 mg/L TN, hypereutrophic greater than 1.4 mg/L TN
-  theme_light() +
+  theme_minimal() +
   scale_fill_manual(values = palette_OkabeIto[5:7]) +
   theme(legend.title = element_blank(),
         legend.position = 'bottom') +
@@ -161,7 +165,7 @@ Note: axes are logged in these figures
 ```{r, echo=FALSE, warning=FALSE, message=FALSE, fig.width=6.5, fig.height=4.5}
 ggplot(all_NLA) +
   geom_point(aes(PTL_PPB, CHLA_PPB, fill = year), size = 2.5, shape = 21, alpha = 0.8) +
-  theme_light() +
+  theme_minimal() +
   scale_fill_manual(values = palette_OkabeIto[5:7]) +
   theme(legend.title = element_blank(),
         legend.position = 'bottom') +
@@ -172,7 +176,7 @@ ggplot(all_NLA) +
 
 ggplot(all_NLA) +
   geom_point(aes(NTL_PPM, CHLA_PPB, fill = year), size = 2.5, shape = 21, alpha = 0.8) +
-  theme_light() +
+  theme_minimal() +
   scale_fill_manual(values = palette_OkabeIto[5:7]) +
   theme(legend.title = element_blank(),
         legend.position = 'bottom') +
@@ -183,7 +187,7 @@ ggplot(all_NLA) +
 
 ggplot(all_NLA) +
   geom_point(aes(DIN_PPM, CHLA_PPB, fill = year), size = 2.5, shape = 21, alpha = 0.8) +
-  theme_light() +
+  theme_minimal() +
   scale_fill_manual(values = palette_OkabeIto[5:7]) +
   theme(legend.title = element_blank(),
         legend.position = 'bottom') +
@@ -194,7 +198,7 @@ ggplot(all_NLA) +
 
 ggplot(all_NLA) +
   geom_point(aes(tn.tp, CHLA_PPB, fill = year), size = 2.5, shape = 21, alpha = 0.8) +
-  theme_light() +
+  theme_minimal() +
   scale_fill_manual(values = palette_OkabeIto[5:7]) +
   theme(legend.title = element_blank(),
         legend.position = 'bottom') +
@@ -205,7 +209,7 @@ ggplot(all_NLA) +
 
 ggplot(all_NLA) +
   geom_point(aes(DIN_mol/TP_mol, CHLA_PPB, fill = year), size = 2.5, shape = 21, alpha = 0.8) +
-  theme_light() +
+  theme_minimal() +
   scale_fill_manual(values = palette_OkabeIto[5:7]) +
   theme(legend.title = element_blank(),
         legend.position = 'bottom') +
@@ -376,8 +380,8 @@ NLA17_boxplots <- NLA17 |>
 
 pta <- ggplot(NLA17_boxplots) +
   geom_boxplot(aes(TSTATE_CHL, tn.tp, fill = TSTATE_CHL)) +
-  theme_light() +
-  scale_fill_manual(values = palette_OkabeIto[]) +
+  theme_minimal() +
+  scale_fill_manual(values = c(palette_OkabeIto[2], palette_OkabeIto[4], palette_OkabeIto[3], palette_OkabeIto[1])) +
   scale_y_log10() +
   theme(legend.position = "none") +
   labs(x = "",
@@ -385,8 +389,8 @@ pta <- ggplot(NLA17_boxplots) +
 
 ptb <- ggplot(NLA17_boxplots) +
   geom_boxplot(aes(TSTATE_CHL, DIN_mol/TP_mol, fill = TSTATE_CHL)) +
-  theme_light() +
-  scale_fill_manual(values = palette_OkabeIto[]) +
+  theme_minimal() +
+  scale_fill_manual(values = c(palette_OkabeIto[2], palette_OkabeIto[4], palette_OkabeIto[3], palette_OkabeIto[1])) +
   scale_y_log10() +
   theme(legend.position = "none") +
   labs(x = "",
@@ -394,8 +398,8 @@ ptb <- ggplot(NLA17_boxplots) +
   
 ptc <- ggplot(NLA17_boxplots) +
   geom_boxplot(aes(TSTATE_CHL, NTL_PPM, fill = TSTATE_CHL)) +
-  theme_light() +
-  scale_fill_manual(values = palette_OkabeIto[]) +
+  theme_minimal() +
+  scale_fill_manual(values = c(palette_OkabeIto[2], palette_OkabeIto[4], palette_OkabeIto[3], palette_OkabeIto[1])) +
   scale_y_log10() +
   theme(legend.position = "none") +
   labs(x = "",
@@ -403,8 +407,8 @@ ptc <- ggplot(NLA17_boxplots) +
 
 ptd <- ggplot(NLA17_boxplots) +
   geom_boxplot(aes(TSTATE_CHL, PTL_PPB, fill = TSTATE_CHL)) +
-  theme_light() +
-  scale_fill_manual(values = palette_OkabeIto[]) +
+  theme_minimal() +
+  scale_fill_manual(values = c(palette_OkabeIto[2], palette_OkabeIto[4], palette_OkabeIto[3], palette_OkabeIto[1])) +
   scale_y_log10() +
   theme(legend.position = "none") +
   labs(x = "",
@@ -412,8 +416,8 @@ ptd <- ggplot(NLA17_boxplots) +
 
 pte <- ggplot(NLA17_boxplots) +
   geom_boxplot(aes(TSTATE_CHL, DIN_PPM, fill = TSTATE_CHL)) +
-  theme_light() +
-  scale_fill_manual(values = palette_OkabeIto[]) +
+  theme_minimal() +
+  scale_fill_manual(values = c(palette_OkabeIto[2], palette_OkabeIto[4], palette_OkabeIto[3], palette_OkabeIto[1])) +
   scale_y_log10() +
   theme(legend.position = "none") +
   labs(x = "",
@@ -421,8 +425,8 @@ pte <- ggplot(NLA17_boxplots) +
 
 ptf <- ggplot(NLA17_boxplots) +
   geom_boxplot(aes(TSTATE_CHL, CHLA_PPB, fill = TSTATE_CHL)) +
-  theme_light() +
-  scale_fill_manual(values = palette_OkabeIto[]) +
+  theme_minimal() +
+  scale_fill_manual(values = c(palette_OkabeIto[2], palette_OkabeIto[4], palette_OkabeIto[3], palette_OkabeIto[1])) +
   scale_y_log10() +
   theme(legend.position = "none") +
   labs(x = "",
@@ -437,5 +441,122 @@ ptf <- ggplot(NLA17_boxplots) +
 ```
 
 
+### Comparisons between years in resampled lakes
+
+#### TN:TP ratio differences between 2007 and 2017. Red line is 1:1, or no change.
+Note: there are a lot of doubles here. I need to determine what to do about lakes that are sampled twice.
 
 
+```{r, echo=FALSE, warning=FALSE, message=FALSE, fig.width=6.5, fig.height=4.5}
+comparison <- NLA07 |>
+  select(UNIQUE_ID, tn.tp, NTL_PPM, PTL_PPB, CHLA_PPB) |>
+  rename(tn.tp_2007 = tn.tp,
+         NTL_PPM_2007 = NTL_PPM,
+         PTL_PPB_2007 = PTL_PPB,
+         CHLA_PPB_2007 = CHLA_PPB)
+
+temp.17 <- NLA17 |>
+  select(UNIQUE_ID, tn.tp, NTL_PPM, PTL_PPB, CHLA_PPB) |>
+  rename(tn.tp_2017 = tn.tp,
+         NTL_PPM_2017 = NTL_PPM,
+         PTL_PPB_2017 = PTL_PPB,
+         CHLA_PPB_2017 = CHLA_PPB)
+
+comparison <- inner_join(comparison, temp.17)
+
+p1 <- ggplot(comparison) +
+  geom_point(aes(tn.tp_2007, tn.tp_2017)) +
+  theme_minimal() +
+  #scale_color_manual(values = "black") +
+  theme(legend.position = "none") +
+  labs(x = "2007 value",
+       y = "2017 value",
+       title = "TN:TP molar ratio") +
+  geom_abline(slope = 1, intercept = 0, color = "red3")
+
+
+p2 <- ggplot(comparison) +
+  geom_point(aes(NTL_PPM_2007, NTL_PPM_2017)) +
+  theme_minimal() +
+  #scale_color_manual(values = "black") +
+  theme(legend.position = "none") +
+    labs(x = "2007 value",
+       y = "2017 value",
+       title = "Total Nitrogen"~(mg~L^-1)) +
+  geom_abline(slope = 1, intercept = 0, color = "red3")
+
+p3 <- ggplot(comparison) +
+  geom_point(aes(PTL_PPB_2007, PTL_PPB_2017)) +
+  theme_minimal() +
+  #scale_color_manual(values = "black") +
+  theme(legend.position = "none") +
+  theme(legend.position = "none") +
+    labs(x = "2007 value",
+       y = "2017 value",
+       title = "Total Phosphorus"~(mu*g~L^-1)) +
+  geom_abline(slope = 1, intercept = 0, color = "red3")
+
+p4 <- ggplot(comparison) +
+  geom_point(aes(CHLA_PPB_2007, CHLA_PPB_2017)) +
+  theme_minimal() +
+  #scale_color_manual(values = "black") +
+  theme(legend.position = "none") +
+    labs(x = "2007 value",
+       y = "2017 value",
+       title = "Chlorophyll-a"~(mu*g~L^-1)) +
+  geom_abline(slope = 1, intercept = 0, color = "red3")
+
+(p1 | p4) / (p2 | p3)
+
+```
+
+
+
+### How do trophic statuses and stoichiometries compare across ecoregions in natural vs. manmade lakes? 
+
+#### Logged axes
+
+```{r, echo=FALSE, warning=FALSE, message=FALSE, fig.width=6.5, fig.height=4.5}
+#filter the dataset
+ts_laketype <- all_NLA |>
+  select(URBAN, LAKE_ORIGIN, TSTATE_CHL, ECO_REG_NAME, year, tn.tp, DIN_mol, TP_mol) |>
+  mutate(din.tp = DIN_mol/TP_mol) |>
+  select(-DIN_mol, -TP_mol) 
+
+#2007
+ggplot(ts_laketype |> filter(!is.na(TSTATE_CHL),
+                             year == 2007)) +
+  geom_violin(aes(y = tn.tp, x = LAKE_ORIGIN,  fill = TSTATE_CHL)) +
+  #geom_jitter(aes(y = tn.tp, x = LAKE_ORIGIN, shape = URBAN, color = TSTATE_CHL, group = TSTATE_CHL), size = 1) +
+  scale_y_log10() +
+  theme_minimal() +
+  scale_fill_manual("", values = c(palette_OkabeIto[2], palette_OkabeIto[4], palette_OkabeIto[3], palette_OkabeIto[1])) +
+  labs(y = "TN:TP molar ratio",
+       x = "Lake Type",
+       title = "2007")
+
+#2012
+ggplot(ts_laketype |> filter(!is.na(TSTATE_CHL),
+                             year == 2012)) +
+  geom_violin(aes(y = tn.tp, x = LAKE_ORIGIN,  fill = TSTATE_CHL)) +
+  #geom_jitter(aes(y = tn.tp, x = LAKE_ORIGIN, shape = URBAN, color = TSTATE_CHL, group = TSTATE_CHL), size = 1) +
+  scale_y_log10() +
+  theme_minimal() +
+  scale_fill_manual("", values = c(palette_OkabeIto[2], palette_OkabeIto[4], palette_OkabeIto[3], palette_OkabeIto[1])) +
+  labs(y = "TN:TP molar ratio",
+       x = "Lake Type",
+       title = "2012")
+
+#2017
+ggplot(ts_laketype |> filter(!is.na(TSTATE_CHL),
+                             year == 2017)) +
+  geom_violin(aes(y = tn.tp, x = LAKE_ORIGIN,  fill = TSTATE_CHL)) +
+  #geom_jitter(aes(y = tn.tp, x = LAKE_ORIGIN, shape = URBAN, color = TSTATE_CHL, group = TSTATE_CHL), size = 1) +
+  scale_y_log10() +
+  theme_minimal() +
+  scale_fill_manual("", values = c(palette_OkabeIto[2], palette_OkabeIto[4], palette_OkabeIto[3], palette_OkabeIto[1])) +
+  labs(y = "TN:TP molar ratio",
+       x = "Lake Type",
+       title = "2017")
+
+```
