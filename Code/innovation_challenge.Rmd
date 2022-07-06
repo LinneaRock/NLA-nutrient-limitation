@@ -512,51 +512,67 @@ p4 <- ggplot(comparison) +
 
 
 
-### How do trophic statuses and stoichiometries compare across ecoregions in natural vs. manmade lakes? 
+### How do trophic statuses and stoichiometries compare across ecoregions in natural vs. manmade lakes in 2017? 
 
 #### Logged axes
 
-```{r, echo=FALSE, warning=FALSE, message=FALSE, fig.width=6.5, fig.height=4.5}
+```{r, echo=FALSE, warning=FALSE, message=FALSE, fig.width=6.5, fig.height=8.5}
 #filter the dataset
 ts_laketype <- all_NLA |>
   select(URBAN, LAKE_ORIGIN, TSTATE_CHL, ECO_REG_NAME, year, tn.tp, DIN_mol, TP_mol) |>
   mutate(din.tp = DIN_mol/TP_mol) |>
   select(-DIN_mol, -TP_mol) 
 
-#2007
-ggplot(ts_laketype |> filter(!is.na(TSTATE_CHL),
-                             year == 2007)) +
-  geom_violin(aes(y = tn.tp, x = LAKE_ORIGIN,  fill = TSTATE_CHL)) +
-  #geom_jitter(aes(y = tn.tp, x = LAKE_ORIGIN, shape = URBAN, color = TSTATE_CHL, group = TSTATE_CHL), size = 1) +
-  scale_y_log10() +
-  theme_minimal() +
-  scale_fill_manual("", values = c(palette_OkabeIto[2], palette_OkabeIto[4], palette_OkabeIto[3], palette_OkabeIto[1])) +
-  labs(y = "TN:TP molar ratio",
-       x = "Lake Type",
-       title = "2007")
-
-#2012
-ggplot(ts_laketype |> filter(!is.na(TSTATE_CHL),
-                             year == 2012)) +
-  geom_violin(aes(y = tn.tp, x = LAKE_ORIGIN,  fill = TSTATE_CHL)) +
-  #geom_jitter(aes(y = tn.tp, x = LAKE_ORIGIN, shape = URBAN, color = TSTATE_CHL, group = TSTATE_CHL), size = 1) +
-  scale_y_log10() +
-  theme_minimal() +
-  scale_fill_manual("", values = c(palette_OkabeIto[2], palette_OkabeIto[4], palette_OkabeIto[3], palette_OkabeIto[1])) +
-  labs(y = "TN:TP molar ratio",
-       x = "Lake Type",
-       title = "2012")
+# #2007
+# ggplot(ts_laketype |> filter(!is.na(TSTATE_CHL),
+#                              year == 2007)) +
+#   geom_violin(aes(y = tn.tp, x = LAKE_ORIGIN,  fill = TSTATE_CHL)) +
+#   #geom_jitter(aes(y = tn.tp, x = LAKE_ORIGIN, shape = URBAN, color = TSTATE_CHL, group = TSTATE_CHL), size = 1) +
+#   scale_y_log10() +
+#   theme_minimal() +
+#   scale_fill_manual("", values = c(palette_OkabeIto[2], palette_OkabeIto[4], palette_OkabeIto[3], palette_OkabeIto[1])) +
+#   labs(y = "TN:TP molar ratio",
+#        x = "Lake Type",
+#        title = "2007")
+# 
+# #2012
+# ggplot(ts_laketype |> filter(!is.na(TSTATE_CHL),
+#                              year == 2012)) +
+#   geom_violin(aes(y = tn.tp, x = LAKE_ORIGIN,  fill = TSTATE_CHL)) +
+#   #geom_jitter(aes(y = tn.tp, x = LAKE_ORIGIN, shape = URBAN, color = TSTATE_CHL, group = TSTATE_CHL), size = 1) +
+#   scale_y_log10() +
+#   theme_minimal() +
+#   scale_fill_manual("", values = c(palette_OkabeIto[2], palette_OkabeIto[4], palette_OkabeIto[3], palette_OkabeIto[1])) +
+#   labs(y = "TN:TP molar ratio",
+#        x = "Lake Type",
+#        title = "2012")
 
 #2017
-ggplot(ts_laketype |> filter(!is.na(TSTATE_CHL),
+p1 <- ggplot(ts_laketype |> filter(!is.na(TSTATE_CHL),
                              year == 2017)) +
   geom_violin(aes(y = tn.tp, x = LAKE_ORIGIN,  fill = TSTATE_CHL)) +
   #geom_jitter(aes(y = tn.tp, x = LAKE_ORIGIN, shape = URBAN, color = TSTATE_CHL, group = TSTATE_CHL), size = 1) +
   scale_y_log10() +
   theme_minimal() +
-  scale_fill_manual("", values = c(palette_OkabeIto[2], palette_OkabeIto[4], palette_OkabeIto[3], palette_OkabeIto[1])) +
+  theme(legend.position = "bottom") +
+  scale_fill_manual("", values = c(palette_OkabeIto[2], palette_OkabeIto[4], palette_OkabeIto[3], palette_OkabeIto[1]),
+                    labels = c("Olig.", "Meso.", "Eutro.", "Hyper.")) +
   labs(y = "TN:TP molar ratio",
        x = "Lake Type",
-       title = "2017")
+       title = "National")
+
+p2 <- ggplot(ts_laketype |> filter(!is.na(TSTATE_CHL),
+                             year == 2017)) +
+  geom_violin(aes(y = tn.tp, x = LAKE_ORIGIN,  fill = TSTATE_CHL)) +
+  #geom_jitter(aes(y = tn.tp, x = LAKE_ORIGIN, shape = URBAN, color = TSTATE_CHL, group = TSTATE_CHL), size = 1) +
+  scale_y_log10() +
+  theme_bw() +
+  theme(legend.position = "none") +
+  scale_fill_manual("", values = c(palette_OkabeIto[2], palette_OkabeIto[4], palette_OkabeIto[3], palette_OkabeIto[1])) +
+  labs(y = "TN:TP molar ratio",
+       x = "Lake Type") +
+  facet_wrap(~ECO_REG_NAME, ncol = 3)
+
+p1/p2
 
 ```
