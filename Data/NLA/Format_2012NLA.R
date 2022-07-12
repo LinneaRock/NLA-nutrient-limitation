@@ -16,6 +16,15 @@ nla2012_siteinfo <- read.csv('C:/Users/lrock1/OneDrive/Desktop/raw_data/nla2012_
 nla2012_condition <- read.csv('C:/Users/lrock1/OneDrive/Desktop/raw_data/nla2012_alldata/nla_2012_condition_categories.csv')
 nla2012_keyinfo <- read.csv('C:/Users/lrock1/OneDrive/Desktop/raw_data/nla2012_alldata/nla12_keyvariables_data.csv') 
 
+ws_data_2012 <- read.csv('C:/Users/lrock1/OneDrive/Desktop/raw_data/nla2012_alldata/nla2012_wide_watershed.csv') |>
+  select(SITE_ID, NLCD2006_DEVELOPEDPCT_BSN, NLCD2006_AGRICPCT_BSN, NLCD2006_WATERPCT_BSN, NLCD2006_WETLANDPCT_BSN, NLCD2006_FORESTPCT_BSN) |>
+  rename(PCT_WATER_BSN = NLCD2006_WATERPCT_BSN,
+         PCT_DEVELOPED_BSN = NLCD2006_DEVELOPEDPCT_BSN,
+         PCT_FOREST_BSN = NLCD2006_FORESTPCT_BSN,
+         PCT_AGRIC_BSN = NLCD2006_AGRICPCT_BSN,
+         PCT_WETLAND_BSN = NLCD2006_WETLANDPCT_BSN)
+
+
 key <- nla2012_keyinfo |>
   mutate(keeprow = "YES") |>
   select(SITE_ID, UID, PTL_RESULT, NTL_RESULT, keeprow) |>
@@ -46,7 +55,8 @@ nla2012_siteinfo1 <- nla2012_siteinfo |>
          ELEV_PT = ELEVATION,
          HUC_8 = HUC8) |>
   filter(!is.na(VISIT_ID)) |>
-  mutate(UNIQUE_ID = ifelse(is.na(UNIQUE_ID), SITE_ID, UNIQUE_ID))
+  mutate(UNIQUE_ID = ifelse(is.na(UNIQUE_ID), SITE_ID, UNIQUE_ID)) |>
+  left_join(ws_data_2012)
 
 
 # filter for condition information

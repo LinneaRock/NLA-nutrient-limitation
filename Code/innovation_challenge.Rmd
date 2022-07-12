@@ -14,11 +14,12 @@ library(biogas)
 library(patchwork)
 library(spsurvey)
 library(plotly)
+library(inlmisc)
 library(sf)
 library(gt)
-source("C:/Users/linne/Downloads/PhD_code/STOICH_NARSchallenge/Data/NLA/Call_NLA_data.R")
-source("C:/Users/linne/Downloads/PhD_code/STOICH_NARSchallenge/Code/Functions/no_lakes_ts.R")
-source("C:/Users/linne/Downloads/PhD_code/STOICH_NARSchallenge/Code/Functions/percent_change_lakes_ts.R")
+source("C:/Users/lrock1/Downloads/PhD_code/STOICH_NARSchallenge/Data/NLA/Call_NLA_data.R")
+source("C:/Users/lrock1/Downloads/PhD_code/STOICH_NARSchallenge/Code/Functions/no_lakes_ts.R")
+source("C:/Users/lrock1/Downloads/PhD_code/STOICH_NARSchallenge/Code/Functions/percent_change_lakes_ts.R")
 ```
 
 ### What are the sizes of lakes sampled during the NLA? 
@@ -77,14 +78,18 @@ mean <- round(mean(lake_size$AREA_HA), 2)
 #### Lakes colored by trophic status
 
 ```{r, echo=FALSE, warning=FALSE, message=FALSE, fig.height=6.5, fig.height=4.5}
-regions.sf <- read_sf("C:/Users/linne/Downloads/PhD_code/STOICH_NARSchallenge/Data/aggr_ecoregions_2015/Aggr_Ecoregions_2015.shp")
+regions.sf <- read_sf("C:/Users/lrock1/Downloads/PhD_code/STOICH_NARSchallenge/Data/aggr_ecoregions_2015/Aggr_Ecoregions_2015.shp")
 nla_locations.sf <- st_as_sf(all_NLA, coords = c("LON_DD", "LAT_DD"), crs = 4326)
 
+inlmisc::GetColors(9, scheme = "muted")
+pal <- c("#CC6677", "#332288", "#DDCC77", "#117733", "#88CCEE", "#882255" ,"#44AA99" ,"#999933", "#AA4499")
+
+
 TS <- ggplot() +
-  geom_sf(data = regions.sf, aes(fill = WSA9_NAME), alpha = 0.25) +
+  geom_sf(data = regions.sf, aes(fill = WSA9_NAME), alpha = 0.35) +
   geom_sf(data = nla_locations.sf |> filter(year == 2017, !is.na(TSTATE_CHL)), aes(color = TSTATE_CHL), size = 2) +
   theme_minimal() +
-  scale_fill_manual("", values = c(palette_OkabeIto_black[], '#FFFFFF')) +
+  scale_fill_manual("", values = pal) +
   scale_color_manual("", values = c(palette_OkabeIto[2], palette_OkabeIto[4], palette_OkabeIto[3], palette_OkabeIto[1]),
                      labels = c("Olig.", "Meso.", "Eutro.", "Hyper.")) 
 
@@ -100,7 +105,8 @@ NP <- ggplot() +
   geom_sf(data = regions.sf, aes(fill = WSA9_NAME), alpha = 0.25) +
   geom_sf(data = nla_locations.sf |> filter(year == 2017), aes(color = log10(tn.tp)), size = 2) +
   theme_minimal() +
-  scale_fill_manual("", values = c(palette_OkabeIto_black[], '#FFFFFF')) +
+  scale_fill_manual("", values = pal) +
+  #scale_fill_manual("", values = c(palette_OkabeIto_black[], '#FFFFFF')) +
   scale_color_viridis_c('Log10 TN:TP molar ratio')
 
 NP

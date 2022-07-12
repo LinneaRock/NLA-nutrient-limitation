@@ -15,6 +15,8 @@ nla2007_trophicstatus <- read.csv('C:/Users/lrock1/OneDrive/Desktop/raw_data/nla
 nla2007_reccondition <- read.csv('C:/Users/lrock1/OneDrive/Desktop/raw_data/nla2007_alldata/NLA2007_Recreational_ConditionEstimates_20091123.csv')
 nla2007_chemcondition <- read.csv('C:/Users/lrock1/OneDrive/Desktop/raw_data/nla2007_alldata/NLA2007_Chemical_ConditionEstimates_20091123.csv')
 
+ws_data_2007 <- read.csv('C:/Users/lrock1/OneDrive/Desktop/raw_data/nla2007_alldata/NLA2007_Basin_Landuse_Metrics_20061022.csv') |>
+  select(SITE_ID, PCT_WATER_BSN, PCT_DEVELOPED_BSN, PCT_FOREST_BSN, PCT_AGRIC_BSN, PCT_WETLAND_BSN)
 
 #filter for N & P
 nla2007_wq1 <- nla2007_wq |>
@@ -42,7 +44,8 @@ nla2007_siteinfo1 <- nla2007_siteinfo |>
   select(SITE_ID, VISIT_ID, VISIT_NO, DATE_COL, SITE_TYPE, LON_DD, LAT_DD, EPA_REG, WGT_NLA, URBAN, WSA_ECO9, LAKE_ORIGIN, AREA_HA, ELEV_PT, HUC_8) |>
   mutate(VISIT_ID = ifelse(SITE_ID == "NLA06608-3846", 8844, VISIT_ID)) |> # for some reason this is missing in the original dataset and messes up joining later.
   left_join(uniques1) |>
-  rename(ECO_REG = WSA_ECO9)
+  rename(ECO_REG = WSA_ECO9) |>
+  left_join(ws_data_2007)
   
 #filterfor trophic information
 nla2007_trophicstatus1 <- nla2007_trophicstatus |>

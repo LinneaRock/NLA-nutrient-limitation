@@ -40,7 +40,7 @@ write.csv(nla07, "Data/NLA/NLA_2007.csv")
 
 
 #NLA 2012 needs eco reg names and chlorophyll and trophic states
-nla2012_keyinfo <- read.csv('C:/Users/linne/OneDrive/Desktop/raw_data/nla2012_alldata/nla12_keyvariables_data.csv') |>
+nla2012_keyinfo <- read.csv('C:/Users/lrock1/OneDrive/Desktop/raw_data/nla2012_alldata/nla12_keyvariables_data.csv') |>
   select(UID, CHLX_RESULT) |>
   rename(VISIT_ID = UID,
          CHLA_PPB = CHLX_RESULT)
@@ -53,7 +53,7 @@ nla12 <- NLA12 |>
 write.csv(nla12, "Data/NLA/NLA_2012.csv")
 
 #NLA 2012 needs chlorophyll and trophic states
-nla2017_wq <- read.csv("C:/Users/linne/OneDrive/Desktop/raw_data/nla2017_alldata/nla_2017_water_chemistry_chla-data.csv") |>
+nla2017_wq <- read.csv("C:/Users/lrock1/OneDrive/Desktop/raw_data/nla2017_alldata/nla_2017_water_chemistry_chla-data.csv") |>
   select(UID, ANALYTE, RESULT, RESULT_UNITS) |> 
   rename(VISIT_ID = UID) |>
   filter(ANALYTE %in% c('CHLA')) |>
