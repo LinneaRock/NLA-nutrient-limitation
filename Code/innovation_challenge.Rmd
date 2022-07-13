@@ -505,6 +505,7 @@ Note: there are a lot of doubles here. I need to determine what to do about lake
 
 ```{r, echo=FALSE, warning=FALSE, message=FALSE, fig.width=6.5, fig.height=4.5}
 comparison <- NLA07 |>
+  filter(VISIT_NO == 1) |>
   select(UNIQUE_ID, tn.tp, NTL_PPM, PTL_PPB, CHLA_PPB) |>
   rename(tn.tp_2007 = tn.tp,
          NTL_PPM_2007 = NTL_PPM,
@@ -512,6 +513,7 @@ comparison <- NLA07 |>
          CHLA_PPB_2007 = CHLA_PPB)
 
 temp.17 <- NLA17 |>
+  filter(VISIT_NO == 1) |>
   select(UNIQUE_ID, tn.tp, NTL_PPM, PTL_PPB, CHLA_PPB) |>
   rename(tn.tp_2017 = tn.tp,
          NTL_PPM_2017 = NTL_PPM,

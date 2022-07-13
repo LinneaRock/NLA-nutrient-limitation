@@ -26,8 +26,8 @@ nla2007_wq1 <- nla2007_wq |>
          #NO3NO2_PPM = NO3_NO2,
          #TOC_PPM = TOC, # don't keep TOC -- it is minimally collected and not collected at all in 2017
          DOC_PPM = DOC) |>
-  group_by(SITE_ID, VISIT_ID, DATE_COL) |>
-  summarise(NH4N_PPM = mean(NH4N_PPM), #There are some duplicates in the data, this averages duplicate analyses
+  group_by(SITE_ID) |> # Take the mean of parameters in intentionally resampled locations 
+  mutate(NH4N_PPM = mean(NH4N_PPM), 
            NO3N_PPM = mean(NO3N_PPM), 
            #NO3NO2_PPM = mean(NO3NO2_PPM), #this is collected using a different method.It is sometimes less than NO3, which doesn't make sense
            NTL_PPM = mean(NTL_PPM),
@@ -60,10 +60,10 @@ nla2007_chemcondition1 <- nla2007_chemcondition |>
   select(SITE_ID, VISIT_NO, 46:48) # chemical condition based on TN, TP, and chlorophyll 
 
 #combine the informaiton 
-nla2007 <- left_join(nla2007_wq1, nla2007_siteinfo1, by = c("SITE_ID", "VISIT_ID")) |>
+nla2007 <- left_join(nla2007_wq1, nla2007_siteinfo1) |>
   left_join(nla2007_trophicstatus1) |>
  # left_join(nla2007_reccondition1) |>
-  left_join(nla2007_chemcondition1)
+  left_join(nla2007_chemcondition1) 
 
 
 #add column for molar TN:TP, NH4:TP, NO3:TP
@@ -97,8 +97,8 @@ ggplot(nla2007_tntp) +
 
 # get rid of extra date column and save dataset
 nla2007_tntp1 <-nla2007_tntp |>
-  select(-DATE_COL.y) |>
-  rename(DATE_COL =  DATE_COL.x) |>
+  # select(-DATE_COL.y) |>
+  # rename(DATE_COL =  DATE_COL.x) |>
   mutate(UNIQUE_ID = ifelse(is.na(UNIQUE_ID), SITE_ID, UNIQUE_ID)) # this resolves missing data problem :)
 
 

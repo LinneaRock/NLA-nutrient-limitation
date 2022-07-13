@@ -21,7 +21,7 @@ analytes <- data.frame(unique(nla2017_wq$ANALYTE))
 nla2017_wq1 <- nla2017_wq |>
   select(UID, SITE_ID, VISIT_NO, DATE_COL, ANALYTE, RESULT, RESULT_UNITS) |> 
   rename(VISIT_ID = UID) |>
-  filter(ANALYTE %in% c('NTL', 'PTL', 'AMMONIA_N', 'NITRATE_N', 'DOC')) |>
+  filter(ANALYTE %in% c('NTL', 'PTL', 'AMMONIA_N', 'NITRATE_N', 'DOC', 'CHLA')) |>
   mutate(RESULT = as.numeric(RESULT)) |>
   drop_na(RESULT) |>
   select(-RESULT_UNITS) |>
@@ -30,7 +30,18 @@ nla2017_wq1 <- nla2017_wq |>
          PTL_PPB = PTL,
          NH4N_PPM = AMMONIA_N,
          NO3N_PPM = NITRATE_N,
-         DOC_PPM = DOC) |>
+         DOC_PPM = DOC,
+         CHLA_PPB = CHLA) |>
+  group_by(SITE_ID) |> # Take the mean of parameters in intentionally resampled locations 
+  mutate(NH4N_PPM = mean(NH4N_PPM), 
+         NO3N_PPM = mean(NO3N_PPM), 
+         #NO3NO2_PPM = mean(NO3NO2_PPM), #this is collected using a different method.It is sometimes less than NO3, which doesn't make sense
+         NTL_PPM = mean(NTL_PPM),
+         PTL_PPB = mean(PTL_PPB),
+         CHLA_PPB = mean(CHLA_PPB),
+         #TOC_PPM = mean(TOC_PPM),
+         DOC_PPM = mean(DOC_PPM)) |>
+  ungroup() |> 
   mutate(DIN_PPM = NH4N_PPM + NO3N_PPM)
 
 

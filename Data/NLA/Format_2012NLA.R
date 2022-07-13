@@ -27,8 +27,14 @@ ws_data_2012 <- read.csv('C:/Users/lrock1/OneDrive/Desktop/raw_data/nla2012_alld
 
 key <- nla2012_keyinfo |>
   mutate(keeprow = "YES") |>
-  select(SITE_ID, UID, PTL_RESULT, NTL_RESULT, keeprow) |>
-  rename(VISIT_ID = UID)
+  select(SITE_ID, UID, PTL_RESULT, NTL_RESULT, CHLX_RESULT, keeprow) |>
+  rename(VISIT_ID = UID,
+         CHLA_PPB = CHLX_RESULT)
+
+add_chl <- nla2012_keyinfo |>
+  select(UID, CHLX_RESULT) |>
+  rename(VISIT_ID = UID,
+         CHLA_PPB = CHLX_RESULT)
 
 # filter for N & P
 nla2012_wq1 <- nla2012_wq |>
@@ -40,7 +46,7 @@ nla2012_wq1 <- nla2012_wq |>
          DOC_PPM = DOC_RESULT,
          VISIT_ID = UID) |>
   select(-contains("UNITS")) |>
-  mutate(DIN_PPM = NH4N_PPM + NO3N_PPM)
+  left_join(add_chl)
 
 
 # filter for useful site informaiton
@@ -68,7 +74,16 @@ nla2012_condition1 <- nla2012_condition |>
 
 nla2012 <- left_join(nla2012_wq1, nla2012_siteinfo1) 
 
-nla2012 <- left_join(nla2012, nla2012_condition1)
+nla2012 <- left_join(nla2012, nla2012_condition1) |>
+  group_by(SITE_ID) |> # Take the mean of parameters in intentionally resampled locations 
+  mutate(NH4N_PPM = mean(NH4N_PPM), 
+         NO3N_PPM = mean(NO3N_PPM), 
+         NTL_PPM = mean(NTL_PPM),
+         PTL_PPB = mean(PTL_PPB),
+         CHLA_PPB = mean(CHLA_PPB),
+         DOC_PPM = mean(DOC_PPM)) |>
+  ungroup() |>
+  mutate(DIN_PPM = NH4N_PPM + NO3N_PPM)
 
 
 #add column for molar TN:TP, TN, TP
@@ -83,7 +98,8 @@ nla2012.tntp <- nla2012 |>
          NO3N_mol = (NO3N_PPM)/Nmol,
          TP_mol = (PTL_PPB)/Pmol,
          DOC_mol = DOC_PPM/Cmol,
-         DIN_mol = DIN_PPM/Nmol)
+         DIN_mol = DIN_PPM/Nmol) 
+  
 
 
 # delete rows not in key information? - yes. these data were not included here so I'm chucking them
