@@ -6,7 +6,7 @@
 # data is the subsetted dataframe
 # tstate_var is the trophic state variable name in the dataframe, e.g. "TSTATE_CHL"
 # year1 is first year of interest, e.g., "2007"
-# year2 is hte final year of interest, e.g., "2017
+# year2 is the final year of interest, e.g., "2017
 
 
 change_lakes_ts <- function(data, tstate_var, year1, year2) {

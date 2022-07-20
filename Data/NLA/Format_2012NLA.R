@@ -194,3 +194,19 @@ NLA_2012_1 <- NLA_2012 |>
 
 
 write.csv(NLA_2012_1, "Data/NLA/NLA_2012.csv")
+
+
+
+#NLA 2012 needs eco reg names and chlorophyll and trophic states
+# nla2012_keyinfo <- read.csv('C:/Users/lrock1/OneDrive/Desktop/raw_data/nla2012_alldata/nla12_keyvariables_data.csv') |>
+#   select(UID, CHLX_RESULT) |>
+#   rename(VISIT_ID = UID,
+#          CHLA_PPB = CHLX_RESULT)
+
+nla12 <- NLA_2012_1 |>
+  left_join(ecoregs) |>
+  #left_join(nla2012_keyinfo) |>
+  get_tstate()
+
+write.csv(nla12, "Data/NLA/NLA_2012.csv")
+

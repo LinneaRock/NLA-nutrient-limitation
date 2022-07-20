@@ -85,3 +85,23 @@ nla2017.tntp <- nla2017 |>
 
 write.csv(nla2017.tntp, "Data/NLA_2017.csv")
 
+
+#NLA 2017 needs chlorophyll and trophic states
+# nla2017_wq <- read.csv("C:/Users/lrock1/OneDrive/Desktop/raw_data/nla2017_alldata/nla_2017_water_chemistry_chla-data.csv") |>
+#   select(UID, ANALYTE, RESULT, RESULT_UNITS) |> 
+#   rename(VISIT_ID = UID) |>
+#   filter(ANALYTE %in% c('CHLA')) |>
+#   mutate(RESULT = as.numeric(RESULT)) |>
+#   drop_na(RESULT) |>
+#   select(-RESULT_UNITS) |>
+#   pivot_wider(names_from = ANALYTE, values_from = RESULT) |>
+#   rename(CHLA_PPB = CHLA) 
+
+
+
+nla17 <- nla2017.tntp |>
+  #left_join(nla2017_wq) |>
+  get_tstate()
+
+
+write.csv(nla17, "Data/NLA/NLA_2017.csv")

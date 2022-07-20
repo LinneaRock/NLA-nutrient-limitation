@@ -86,8 +86,8 @@ pal <- c("#CC6677", "#332288", "#DDCC77", "#117733", "#88CCEE", "#882255" ,"#44A
 
 
 TS <- ggplot() +
-  geom_sf(data = regions.sf, aes(fill = WSA9_NAME), alpha = 0.35) +
-  geom_sf(data = nla_locations.sf |> filter(year == 2017, !is.na(TSTATE_CHL)), aes(color = TSTATE_CHL), size = 2) +
+  geom_sf(data = regions.sf, aes(fill = WSA9_NAME), alpha = 0.25) +
+  geom_sf(data = nla_locations.sf |> filter(year == 2017, !is.na(TSTATE_CHL)), aes(color = TSTATE_CHL)) +
   theme_minimal() +
   scale_fill_manual("", values = pal) +
   scale_color_manual("", values = c(palette_OkabeIto[2], palette_OkabeIto[4], palette_OkabeIto[3], palette_OkabeIto[1]),

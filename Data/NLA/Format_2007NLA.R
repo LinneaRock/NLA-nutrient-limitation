@@ -42,11 +42,12 @@ nla2007_wq1 <- nla2007_wq |>
 #filter for useful site informaiton
 nla2007_siteinfo1 <- nla2007_siteinfo |>
   select(SITE_ID, VISIT_ID, VISIT_NO, DATE_COL, SITE_TYPE, LON_DD, LAT_DD, EPA_REG, WGT_NLA, URBAN, WSA_ECO9, LAKE_ORIGIN, AREA_HA, ELEV_PT, HUC_8) |>
-  mutate(VISIT_ID = ifelse(SITE_ID == "NLA06608-3846", 8844, VISIT_ID)) |> # for some reason this is missing in the original dataset and messes up joining later.
+  mutate(VISIT_ID = ifelse(SITE_ID == "NLA06608-3846", 8844, VISIT_ID),
+         DATE_COL = ifelse(SITE_ID == "NLA06608-4320", "9/10/2007", DATE_COL)) |> # for some reason these are missing in the original dataset and messes up joining later.
   left_join(uniques1) |>
   rename(ECO_REG = WSA_ECO9) |>
   left_join(ws_data_2007)
-  
+
 #filterfor trophic information
 nla2007_trophicstatus1 <- nla2007_trophicstatus |>
   select(SITE_ID, VISIT_NO, 45:47) # trophic status based on TN, TP, and chlorophyll 
@@ -101,9 +102,17 @@ nla2007_tntp1 <-nla2007_tntp |>
   # rename(DATE_COL =  DATE_COL.x) |>
   mutate(UNIQUE_ID = ifelse(is.na(UNIQUE_ID), SITE_ID, UNIQUE_ID)) # this resolves missing data problem :)
 
-
-
 write.csv(nla2007_tntp1, "Data/NLA/NLA_2007.csv")
+
+########### calculate trophic states ################
+source("Data/NLA/calculate_trophic_states.R")
+
+# NLA 2007 just needs eco reg names and to standardize trophic status names
+nla07 <- nla2007_tntp1 |>
+  left_join(ecoregs) |>
+  get_tstate()
+
+write.csv(nla07, "Data/NLA/NLA_2007.csv")
 
 
 
