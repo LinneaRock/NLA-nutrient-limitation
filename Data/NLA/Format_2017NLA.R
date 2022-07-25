@@ -5,14 +5,14 @@ library(biogas) # gets molar masses
 
 
 # unique site id crosswalk
-uniques <- readxl::read_xlsx('C:/Users/lrock1/OneDrive/Desktop/raw_data/crosswalk_ID.xlsx', sheet = 'LONG_NARS_ALLSurvey_SITE_ID_CRO')
+uniques <- readxl::read_xlsx('C:/Users/linne/OneDrive/Desktop/raw_data/crosswalk_ID.xlsx', sheet = 'LONG_NARS_ALLSurvey_SITE_ID_CRO')
 uniques1 <- uniques |>
   filter(SURVEY %in% c('NLA', 'NRSA')) |>
   select(UNIQUE_ID, SITE_ID)
 
 # call in relevant datasets
-nla2017_wq <- read.csv("C:/Users/lrock1/OneDrive/Desktop/raw_data/nla2017_alldata/nla_2017_water_chemistry_chla-data.csv") 
-nla2017_siteinfo <- read.csv('C:/Users/lrock1/OneDrive/Desktop/raw_data/nla2017_alldata/nla_2017_site_information-data.csv')
+nla2017_wq <- read.csv("C:/Users/linne/OneDrive/Desktop/raw_data/nla2017_alldata/nla_2017_water_chemistry_chla-data.csv") 
+nla2017_siteinfo <- read.csv('C:/Users/linne/OneDrive/Desktop/raw_data/nla2017_alldata/nla_2017_site_information-data.csv')
 
 
 analytes <- data.frame(unique(nla2017_wq$ANALYTE))
@@ -32,7 +32,7 @@ nla2017_wq1 <- nla2017_wq |>
          NO3N_PPM = NITRATE_N,
          DOC_PPM = DOC,
          CHLA_PPB = CHLA) |>
-  group_by(SITE_ID) |> # Take the mean of parameters in intentionally resampled locations 
+  group_by(SITE_ID, VISIT_ID, DATE_COL) |> # There are some duplicate sample runs in the data, this averages duplicate analyses 
   mutate(NH4N_PPM = mean(NH4N_PPM), 
          NO3N_PPM = mean(NO3N_PPM), 
          #NO3NO2_PPM = mean(NO3NO2_PPM), #this is collected using a different method.It is sometimes less than NO3, which doesn't make sense
@@ -83,11 +83,11 @@ nla2017.tntp <- nla2017 |>
          DIN_mol = DIN_PPM/Nmol)
 
 
-write.csv(nla2017.tntp, "Data/NLA_2017.csv")
+#write.csv(nla2017.tntp, "Data/NLA_2017.csv")
 
 
 #NLA 2017 needs chlorophyll and trophic states
-# nla2017_wq <- read.csv("C:/Users/lrock1/OneDrive/Desktop/raw_data/nla2017_alldata/nla_2017_water_chemistry_chla-data.csv") |>
+# nla2017_wq <- read.csv("C:/Users/linne/OneDrive/Desktop/raw_data/nla2017_alldata/nla_2017_water_chemistry_chla-data.csv") |>
 #   select(UID, ANALYTE, RESULT, RESULT_UNITS) |> 
 #   rename(VISIT_ID = UID) |>
 #   filter(ANALYTE %in% c('CHLA')) |>
@@ -97,7 +97,7 @@ write.csv(nla2017.tntp, "Data/NLA_2017.csv")
 #   pivot_wider(names_from = ANALYTE, values_from = RESULT) |>
 #   rename(CHLA_PPB = CHLA) 
 
-
+source("Data/NLA/calculate_trophic_states.R")
 
 nla17 <- nla2017.tntp |>
   #left_join(nla2017_wq) |>

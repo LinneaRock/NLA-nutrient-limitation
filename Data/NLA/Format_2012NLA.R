@@ -5,18 +5,18 @@ library(biogas) # gets molar masses
 
 
 # unique site id crosswalk
-uniques <- readxl::read_xlsx('C:/Users/lrock1/OneDrive/Desktop/raw_data/crosswalk_ID.xlsx', sheet = 'LONG_NARS_ALLSurvey_SITE_ID_CRO')
+uniques <- readxl::read_xlsx('C:/Users/linne/OneDrive/Desktop/raw_data/crosswalk_ID.xlsx', sheet = 'LONG_NARS_ALLSurvey_SITE_ID_CRO')
 uniques1 <- uniques |>
   filter(SURVEY %in% c('NLA', 'NRSA')) |>
   select(UNIQUE_ID, SITE_ID)
 
 # call in relevant datasets
-nla2012_wq <- read.csv("C:/Users/lrock1/OneDrive/Desktop/raw_data/nla2012_alldata/nla2012_waterchem_wide.csv") 
-nla2012_siteinfo <- read.csv('C:/Users/lrock1/OneDrive/Desktop/raw_data/nla2012_alldata/NLA2012_wide_siteinfo_08232016.csv')
-nla2012_condition <- read.csv('C:/Users/lrock1/OneDrive/Desktop/raw_data/nla2012_alldata/nla_2012_condition_categories.csv')
-nla2012_keyinfo <- read.csv('C:/Users/lrock1/OneDrive/Desktop/raw_data/nla2012_alldata/nla12_keyvariables_data.csv') 
+nla2012_wq <- read.csv("C:/Users/linne/OneDrive/Desktop/raw_data/nla2012_alldata/nla2012_waterchem_wide.csv") 
+nla2012_siteinfo <- read.csv('C:/Users/linne/OneDrive/Desktop/raw_data/nla2012_alldata/NLA2012_wide_siteinfo_08232016.csv')
+nla2012_condition <- read.csv('C:/Users/linne/OneDrive/Desktop/raw_data/nla2012_alldata/nla_2012_condition_categories.csv')
+nla2012_keyinfo <- read.csv('C:/Users/linne/OneDrive/Desktop/raw_data/nla2012_alldata/nla12_keyvariables_data.csv') 
 
-ws_data_2012 <- read.csv('C:/Users/lrock1/OneDrive/Desktop/raw_data/nla2012_alldata/nla2012_wide_watershed.csv') |>
+ws_data_2012 <- read.csv('C:/Users/linne/OneDrive/Desktop/raw_data/nla2012_alldata/nla2012_wide_watershed.csv') |>
   select(SITE_ID, NLCD2006_DEVELOPEDPCT_BSN, NLCD2006_AGRICPCT_BSN, NLCD2006_WATERPCT_BSN, NLCD2006_WETLANDPCT_BSN, NLCD2006_FORESTPCT_BSN) |>
   rename(PCT_WATER_BSN = NLCD2006_WATERPCT_BSN,
          PCT_DEVELOPED_BSN = NLCD2006_DEVELOPEDPCT_BSN,
@@ -75,7 +75,7 @@ nla2012_condition1 <- nla2012_condition |>
 nla2012 <- left_join(nla2012_wq1, nla2012_siteinfo1) 
 
 nla2012 <- left_join(nla2012, nla2012_condition1) |>
-  group_by(SITE_ID) |> # Take the mean of parameters in intentionally resampled locations 
+  group_by(SITE_ID, VISIT_ID, DATE_COL) |> # There are some duplicate sample runs in the data, this averages duplicate analyses 
   mutate(NH4N_PPM = mean(NH4N_PPM), 
          NO3N_PPM = mean(NO3N_PPM), 
          NTL_PPM = mean(NTL_PPM),
@@ -193,7 +193,7 @@ NLA_2012_1 <- NLA_2012 |>
   select(-WGT2, -ECO2, -chcond2, -tpcond2, -tncond2, -tstate)
 
 
-write.csv(NLA_2012_1, "Data/NLA/NLA_2012.csv")
+#write.csv(NLA_2012_1, "Data/NLA/NLA_2012.csv")
 
 
 
@@ -202,6 +202,8 @@ write.csv(NLA_2012_1, "Data/NLA/NLA_2012.csv")
 #   select(UID, CHLX_RESULT) |>
 #   rename(VISIT_ID = UID,
 #          CHLA_PPB = CHLX_RESULT)
+source("Data/NLA/calculate_trophic_states.R")
+
 
 nla12 <- NLA_2012_1 |>
   left_join(ecoregs) |>

@@ -7,24 +7,24 @@ library(lubridate)
 
 ## Looking at plots of  all data
 
-#NLA07 <-read.csv("Data/NLA/NLA_2007.csv") |> 
-NLA07 <-   read.csv("C:/Users/lrock1/Downloads/PhD_code/STOICH_NARSchallenge/Data/NLA/NLA_2007.csv") |>
+NLA07 <-read.csv("Data/NLA/NLA_2007.csv") |> 
+#NLA07 <-   read.csv("C:/Users/lrock1/Downloads/PhD_code/STOICH_NARSchallenge/Data/NLA/NLA_2007.csv") |>
   select(-X) |>
   mutate(DATE_COL = as.Date(DATE_COL, format = "%m/%d/%Y"))
 
 #str(NLA07) # what variables need to be altered (e.g. to as date or as numeric, etc.)? 
 
-#NLA12 <- read.csv("Data/NLA/NLA_2012.csv") |> 
-NLA12 <- read.csv("C:/Users/lrock1/Downloads/PhD_code/STOICH_NARSchallenge/Data/NLA/NLA_2012.csv") |>
+NLA12 <- read.csv("Data/NLA/NLA_2012.csv") |> 
+#NLA12 <- read.csv("C:/Users/lrock1/Downloads/PhD_code/STOICH_NARSchallenge/Data/NLA/NLA_2012.csv") |>
   select(-X) |>
-  mutate(DATE_COL = as.Date(DATE_COL))
+  mutate(DATE_COL = as.Date(DATE_COL, format = "%m/%d/%Y"))
 
 #str(NLA12) # what variables need to be altered (e.g. to as date or as numeric, etc.)? 
 
-#NLA17 <- read.csv("Data/NLA/NLA_2017.csv") |> 
-NLA17 <- read.csv("C:/Users/lrock1/Downloads/PhD_code/STOICH_NARSchallenge/Data/NLA/NLA_2017.csv") |>
+NLA17 <- read.csv("Data/NLA/NLA_2017.csv") |> 
+#NLA17 <- read.csv("C:/Users/lrock1/Downloads/PhD_code/STOICH_NARSchallenge/Data/NLA/NLA_2017.csv") |>
   select(-X) |>
-  mutate(DATE_COL = as.Date(DATE_COL),
+  mutate(DATE_COL = as.Date(DATE_COL, format = "%d-%b-%y"),
          HUC_8 = as.integer(substring(HUC_8, 2)))
 
 #str(NLA17) # what variables need to be altered (e.g. to as date or as numeric, etc.)? 
@@ -39,7 +39,8 @@ all_NLA <- bind_rows(NLA07, NLA12, NLA17) |>
                                  ifelse(startsWith(TSTATE_CHL, "MESOTROPHIC"), "Meso.", 
                                         ifelse(startsWith(TSTATE_CHL,"EUTROPHIC"), "Eutro.",
                                                ifelse(startsWith(TSTATE_CHL, "HYPEREUTROPHIC"), "Hyper.", TROPHIC_STATE))))) |>
-  mutate(TROPHIC_STATE = factor(TROPHIC_STATE, levels = c("Oligo.", "Meso.", "Eutro.", "Hyper."))) 
+  mutate(TROPHIC_STATE = factor(TROPHIC_STATE, levels = c("Oligo.", "Meso.", "Eutro.", "Hyper."))) |>
+  drop_na(TROPHIC_STATE)
 
 
 all_NLA$TSTATE_TN = factor(all_NLA$TSTATE_TN,

@@ -3,19 +3,19 @@
 library(tidyverse)
 library(biogas) #gets molar masses 
 
-uniques <- readxl::read_xlsx('C:/Users/lrock1/OneDrive/Desktop/raw_data/crosswalk_ID.xlsx', sheet = 'LONG_NARS_ALLSurvey_SITE_ID_CRO')
+uniques <- readxl::read_xlsx('C:/Users/linne/OneDrive/Desktop/raw_data/crosswalk_ID.xlsx', sheet = 'LONG_NARS_ALLSurvey_SITE_ID_CRO')
 uniques1 <- uniques |>
   filter(SURVEY %in% c('NLA', 'NRSA')) |>
   select(UNIQUE_ID, SITE_ID)
 
 
-nla2007_wq <- read.csv('C:/Users/lrock1/OneDrive/Desktop/raw_data/nla2007_alldata/NLA2007_WaterQuality_20091123.csv') 
-nla2007_siteinfo <- read.csv('C:/Users/lrock1/OneDrive/Desktop/raw_data/nla2007_alldata/NLA2007_sampledlakeinformation_20091113.csv')
-nla2007_trophicstatus <- read.csv('C:/Users/lrock1/OneDrive/Desktop/raw_data/nla2007_alldata/NLA2007_Trophic_ConditionEstimate_20091123.csv')
-nla2007_reccondition <- read.csv('C:/Users/lrock1/OneDrive/Desktop/raw_data/nla2007_alldata/NLA2007_Recreational_ConditionEstimates_20091123.csv')
-nla2007_chemcondition <- read.csv('C:/Users/lrock1/OneDrive/Desktop/raw_data/nla2007_alldata/NLA2007_Chemical_ConditionEstimates_20091123.csv')
+nla2007_wq <- read.csv('C:/Users/linne/OneDrive/Desktop/raw_data/nla2007_alldata/NLA2007_WaterQuality_20091123.csv') 
+nla2007_siteinfo <- read.csv('C:/Users/linne/OneDrive/Desktop/raw_data/nla2007_alldata/NLA2007_sampledlakeinformation_20091113.csv')
+nla2007_trophicstatus <- read.csv('C:/Users/linne/OneDrive/Desktop/raw_data/nla2007_alldata/NLA2007_Trophic_ConditionEstimate_20091123.csv')
+nla2007_reccondition <- read.csv('C:/Users/linne/OneDrive/Desktop/raw_data/nla2007_alldata/NLA2007_Recreational_ConditionEstimates_20091123.csv')
+nla2007_chemcondition <- read.csv('C:/Users/linne/OneDrive/Desktop/raw_data/nla2007_alldata/NLA2007_Chemical_ConditionEstimates_20091123.csv')
 
-ws_data_2007 <- read.csv('C:/Users/lrock1/OneDrive/Desktop/raw_data/nla2007_alldata/NLA2007_Basin_Landuse_Metrics_20061022.csv') |>
+ws_data_2007 <- read.csv('C:/Users/linne/OneDrive/Desktop/raw_data/nla2007_alldata/NLA2007_Basin_Landuse_Metrics_20061022.csv') |>
   select(SITE_ID, PCT_WATER_BSN, PCT_DEVELOPED_BSN, PCT_FOREST_BSN, PCT_AGRIC_BSN, PCT_WETLAND_BSN)
 
 #filter for N & P
@@ -26,7 +26,7 @@ nla2007_wq1 <- nla2007_wq |>
          #NO3NO2_PPM = NO3_NO2,
          #TOC_PPM = TOC, # don't keep TOC -- it is minimally collected and not collected at all in 2017
          DOC_PPM = DOC) |>
-  group_by(SITE_ID) |> # Take the mean of parameters in intentionally resampled locations 
+  group_by(SITE_ID, VISIT_ID, DATE_COL) |> # There are some duplicate sample runs in the data, this averages duplicate analyses 
   mutate(NH4N_PPM = mean(NH4N_PPM), 
            NO3N_PPM = mean(NO3N_PPM), 
            #NO3NO2_PPM = mean(NO3NO2_PPM), #this is collected using a different method.It is sometimes less than NO3, which doesn't make sense
@@ -102,7 +102,7 @@ nla2007_tntp1 <-nla2007_tntp |>
   # rename(DATE_COL =  DATE_COL.x) |>
   mutate(UNIQUE_ID = ifelse(is.na(UNIQUE_ID), SITE_ID, UNIQUE_ID)) # this resolves missing data problem :)
 
-write.csv(nla2007_tntp1, "Data/NLA/NLA_2007.csv")
+#write.csv(nla2007_tntp1, "Data/NLA/NLA_2007.csv")
 
 ########### calculate trophic states ################
 source("Data/NLA/calculate_trophic_states.R")
