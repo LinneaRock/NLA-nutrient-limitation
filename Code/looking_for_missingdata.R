@@ -11,13 +11,15 @@ NLA_2017 <- read.csv("Data/NLA/NLA_2017.csv")
 
 na07 <- NLA_2007 |>
   mutate(findNA = complete.cases(NLA_2007)) # just 5 missing unique IDs, so I will add the code in to write missing uniques with that year's site ID and resave the csv file -- RESOLVED :)
+# note for 2007 data 07/25/2022 -- five missing trophic states/chorophyll info -- removed when data is called by sourcing the call data script
 
 na12 <- NLA_2012 |>
   mutate(findNA = complete.cases(NLA_2012)) # issues resolved!!!
+# note for 2007 data 07/25/2022 -- five missing trophic states/chorophyll info -- removed when data is called by sourcing the call data script -- also some missing DIN information
 
 na17 <- NLA_2017 |>
   mutate(findNA = complete.cases(NLA_2017)) # the 4 missing TP values (I already knew these were missing)
-
+# note for 2007 data 07/25/2022 -- some missing TN and TP, some missing DIN 
 
 
 

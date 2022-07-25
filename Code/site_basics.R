@@ -19,7 +19,7 @@ unique_2012 <- NLA12 |>
   distinct()
 
 nrow(unique_2012 |> filter(VISIT_NO == 1)  |> select(UNIQUE_ID) |> distinct()) # 1038 lakes surveyed
-nrow(unique_2012 |> filter(VISIT_NO == 2)  |> select(UNIQUE_ID) |> distinct()) # 95 lakes resampled
+nrow(unique_2012 |> filter(VISIT_NO == 2)  |> select(UNIQUE_ID) |> distinct()) # 100 lakes resampled
 
 nrow(NLA12 |> filter(SITE_TYPE == "REF_Lake") |> select(UNIQUE_ID) |> distinct()) # 0 reference lakes
 

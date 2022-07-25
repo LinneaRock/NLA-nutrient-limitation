@@ -11,7 +11,7 @@ library(colorblindr)
 all_NLA1 <- all_NLA |>
   filter(VISIT_NO == 1) # for this analysis, we are using just the first visit from each lake
 
-### N and P limitations from the literature ####
+#### N and P limitations from the literature ####
 
 #### Looking at the NLA data with N and P limits from Bergström, 2010. 
 # The predicted limitations are above/below the dotted lines. The red line is the Redfield 16:1 line. 
