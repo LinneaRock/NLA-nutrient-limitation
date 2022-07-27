@@ -41,10 +41,6 @@ ggplot(proportion_ts, aes(x = 1, y = proportion, fill = TROPHIC_STATE)) +
   theme(axis.text = element_blank())
 ggsave("Figures/Q3.Figs/2017_TS_Percents.png", height = 4.5, width = 6.5, units = "in", dpi = 500) 
   
-library(lme4)
-library(lmerTest)
-m.1 <- glmer(proportion ~ TROPHIC_STATE + (1|ECO_REG_NAME), proportion_ts)
-summary(m.1)
 
 #### How do trophic statuses and stoichiometries compare across ecoregions in natural vs. manmade lakes in 2017? ####
 source("Code/Functions/split_violin.R")
@@ -79,6 +75,12 @@ ggplot(ts_laketype) +
   facet_wrap(~ECO_REG_NAME, ncol = 3)
 ggsave("Figures/Q3.Figs/2017_ratio_ts_natvsmmlakes_regions.png", height = 4.5, width = 6.5, units = "in", dpi = 500) 
 
+library(lme4)
+library(lmerTest)
+m.1 <- lmer(tn.tp ~ TROPHIC_STATE + LAKE_ORIGIN + (1|ECO_REG_NAME), ts_laketype)
+summary(m.1)
+anova(m.1)
 
 
 
+#### N:P in  ####

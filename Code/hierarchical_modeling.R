@@ -40,7 +40,7 @@ all_NLA <- bind_rows(NLA07, NLA12, NLA17) |>
 
 
 ggplot(all_NLA) +
-  geom_point(aes(lakearea, tn.tp), size = 2.5, shape = 21, alpha = 0.8) +
+  geom_point(aes(AREA_HA, tn.tp), size = 2.5, shape = 21, alpha = 0.8) +
   # geom_abline(slope = 16, intercept = 0) +
   theme_light() +
   scale_fill_manual(values = palette_OkabeIto[]) +
@@ -55,7 +55,7 @@ ggplot(all_NLA) +
 library(lme4)
 library(lmerTest)
 
-m1 <- lmer(tn.tp ~ lakearea * elev + URBAN + (lakearea|ECO_REG) + (1|UNIQUE_ID) + (1|year), data = all_NLA)
+m1 <- lmer(tn.tp ~ AREA_HA * ELEV_PT + URBAN + (AREA_HA|ECO_REG) + (1|UNIQUE_ID) + (1|year), data = all_NLA)
 performance::r2(m1)
 summary(m1)
 coef(m1)
