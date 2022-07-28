@@ -7,77 +7,72 @@ source("Data/NLA/Call_NLA_data.R")
 library(colorblindr)
 
 
-all_NLA1 <- all_NLA |>
-  filter(VISIT_NO == 1) # for this analysis, we are using just the first visit from each lake
-
 #### N and P limitations from the literature ####
 
-#### Looking at the NLA data with N and P limits from Bergström, 2010. 
-# The predicted limitations are above/below the dotted lines. The red line is the Redfield 16:1 line. 
-#### From Downing and McCauley, 1992. N limitation singificantly occurs when TN:TP <= 14 and when TP > 30 ug/L
-#### Also adding a line for the average N:P for these data
-mean(all_NLA1$TN_mol)/mean(all_NLA1$TP_mol) # 22.80457 <- use this one!!!
-mean(all_NLA1$tn.tp) # 59.58256
-
+### ATTEMPT 1 ### 
+#uses nutrient thresholds for trophic status and full dat average ratio
 
 # uses all data from all years 
-ggplot(all_NLA1) +
-  geom_point(aes(log(PTL_PPB, base = 10), log(tn.tp, base = 10), fill = year), size = 2.5, shape = 21, alpha = 0.8) +
+ggplot(all_NLA) +
+  geom_point(aes(log(PTL_PPB, base = 10), log(tn.tp, base = 10), fill = year), size = 2.5, shape = 21, alpha = 0.5) +
   geom_abline(slope = 0, intercept = log(19, base = 10), linetype = "dashed") + # bergstrom N limitation line
   geom_abline(slope = 0, intercept = log(41, base = 10), linetype = "dashed") + # bergstrom P limitation line
   geom_abline(slope = 0, intercept = log(16, base = 10), color = "red4") + # redfield
-  geom_abline(slope = 0, intercept = log(22.80457, base = 10), linetype = "dotted", color = '#CC5500') + # average N:P based on this data
+  #geom_abline(slope = 0, intercept = log(22.80457, base = 10), linetype = "dotted", color = '#CC5500') + # average N:P based on this data
   geom_vline(xintercept = log(30, base = 10), color = '#336a98') + # dodds mccauley N limitation P > 30
   geom_abline(slope = 0, intercept = log(14, base = 10), color = '#336a98') + # dodds mccauley N limitation TN:TP < 14
+  geom_abline(slope = 0, intercept = log(53, base = 10), color = "#ffc857") +
   theme_minimal() +
-  scale_fill_manual("Year",values = palette_OkabeIto[5:7]) +
+  scale_fill_manual("Survey Year",values = palette_OkabeIto[5:7]) +
   labs(y = "Log TN:TP", x = "Log TP"~(mu*g~L^-1)) +
   annotate('text', label = 'Redfield 16:1 line', x = 3.5, y = 1.1, hjust = 0, size = 3, color = "red4") +
-  annotate('text', label = 'Predicted N limitation \n below dashed line \n (Bergström, 2010)', x = -1, y = 1, hjust = 0, size = 3) +
-  annotate('text', label = 'Predicted P limitation \n above dashed line \n (Bergström, 2010)', x = 3, y = 2, hjust = 0, size = 3) + 
-  annotate('text', label = 'N limitation likely \n (Dodds & McCauley, 1992)', x = 2.5, y = -0.25, hjust = 0, size = 3) +
+  annotate('text', label = 'Predicted N limitation from \n below dashed line \n (Bergström, 2010)', x = -1, y = 1, hjust = 0, size = 3) +
+  annotate('text', label = 'Predicted P limitation from \n above dashed line \n (Bergström, 2010)', x = 3, y = 2, hjust = 0, size = 3) + 
+  annotate('text', label = 'Predicted N limitation from \n (Dodds & McCauley, 1992)', x = 2.5, y = -0.25, hjust = 0, size = 3, color = '#336a98') +
   annotate('text', label = 'TP = 30'~(mu*g~L^-1), x = 0.9, y = -0.25, hjust = 0, size = 3, color = '#336a98') +
   annotate('text', label = 'TN:TP = 14', x = 0, y = 1, hjust = 0, size = 3, color = '#336a98') +
-  annotate('text', label = 'Average TN:TP line \n dotted orange', x = -1, y = 1.5, hjust = 0, size = 3, color = '#CC5500') 
+ # annotate('text', label = 'Average TN:TP line \n dotted orange', x = -1, y = 1.5, hjust = 0, size = 3, color = '#CC5500')  +
+  annotate('text', label = 'Predicted P limitation from \n (Ptacnik et al., 2010)', x = -1, y = 2, hjust = 0, size = 3, color = "#ffc857") 
 
+ggsave("Figures/Q1.Figs/Literature_limitations.png", height = 4.5, width = 6.5, units = "in", dpi = 500)  
 
-## Could I use trophic state based on TN and TP along with Redfield TN:TP ratio to determine 
+## Could I use trophic state based on TN and TP along with average TN:TP ratio to determine 
 ## which lakes are limited by which nutrients? 
-
+TotalAveNP<- mean(all_NLA$TN_mol)/mean(all_NLA$TP_mol) # 22.5064 
+mean(all_NLA$tn.tp) # 59.58256
 # limited by P:
 # How many oligotrophic based on TP are there? 
 # Be sure to select certain criteria to get rid of redundant measurements 
-nrow(all_NLA1 |> select(UNIQUE_ID, SITE_ID, PTL_PPB, NTL_PPM, tn.tp, TSTATE_TP, TSTATE_TN, TROPHIC_STATE) |>
-       distinct()|> filter(TSTATE_TP == "OLIGOTROPHIC (<= 10 ug/L)")) #558
+nrow(all_NLA |> select(UNIQUE_ID, SITE_ID, PTL_PPB, NTL_PPM, tn.tp, TSTATE_TP, TSTATE_TN, TROPHIC_STATE) |>
+       distinct()|> filter(TSTATE_TP == "OLIGOTROPHIC (<= 10 ug/L)")) #602
 # How many lakes are limited by P based on average ratio alone
-nrow(all_NLA1 |> select(UNIQUE_ID, SITE_ID, PTL_PPB, NTL_PPM, tn.tp, TSTATE_TP, TSTATE_TN, TROPHIC_STATE) |>
-       distinct()|> filter(tn.tp > 22.80457)) #2483
+nrow(all_NLA |> select(UNIQUE_ID, SITE_ID, PTL_PPB, NTL_PPM, tn.tp, TSTATE_TP, TSTATE_TN, TROPHIC_STATE) |>
+       distinct()|> filter(tn.tp > 22.80457)) #2689
 
 #limited by N:
 # How many oligotrophic based on TP are there? 
-nrow(all_NLA1 |> select(UNIQUE_ID, SITE_ID, PTL_PPB, NTL_PPM, tn.tp, TSTATE_TP, TSTATE_TN, TROPHIC_STATE) |> 
-       distinct()|> filter(TSTATE_TN == "OLIGOTROPHIC (<= 0.35 mg/L)")) #877
+nrow(all_NLA |> select(UNIQUE_ID, SITE_ID, PTL_PPB, NTL_PPM, tn.tp, TSTATE_TP, TSTATE_TN, TROPHIC_STATE) |> 
+       distinct()|> filter(TSTATE_TN == "OLIGOTROPHIC (<= 0.35 mg/L)")) #952
 # How many lakes are limited by P based on average ratio alone
-nrow(all_NLA1 |> select(UNIQUE_ID, SITE_ID, PTL_PPB, NTL_PPM, tn.tp, TSTATE_TP, TSTATE_TN, TROPHIC_STATE) |>
-       distinct()|> filter(tn.tp < 22.80457)) #804
+nrow(all_NLA |> select(UNIQUE_ID, SITE_ID, PTL_PPB, NTL_PPM, tn.tp, TSTATE_TP, TSTATE_TN, TROPHIC_STATE) |>
+       distinct()|> filter(tn.tp < 22.80457)) #890
 
 
 #combine those two metrics 
-all_NLA1_limits <- all_NLA1 |>
-  select(UNIQUE_ID, SITE_ID, PTL_PPB, NTL_PPM, tn.tp, TSTATE_TP, TSTATE_TN, TROPHIC_STATE, year, WGT_NLA, ECO_REG_NAME, LAT_DD, LON_DD) |>
-  distinct() |>
-  mutate(limitation = ifelse(TSTATE_TP == "OLIGOTROPHIC (<= 10 ug/L)" & tn.tp > 22.80457, "P-limited", NA)) |>
-  mutate(limitation = ifelse(TSTATE_TN == "OLIGOTROPHIC (<= 0.35 mg/L)" & tn.tp < 22.80457, "N-limited", limitation)) 
+limits <- all_NLA |>
+  #select(UNIQUE_ID, SITE_ID, PTL_PPB, NTL_PPM, tn.tp, TSTATE_TP, TSTATE_TN, TROPHIC_STATE, year, WGT_NLA, ECO_REG_NAME, LAT_DD, LON_DD) |>
+  #distinct() |>
+  mutate(limitation = ifelse(TSTATE_TP == "OLIGOTROPHIC (<= 10 ug/L)" & tn.tp > TotalAveNP, "Potential P-limitation", NA)) |>
+  mutate(limitation = ifelse(TSTATE_TN == "OLIGOTROPHIC (<= 0.35 mg/L)" & tn.tp < TotalAveNP, "Potential N-limitation", limitation)) 
 
-nrow(all_NLA1_limits |> filter(limitation == "P-limited")) #541 #when I based this on redfield, there were 551 limited by P
-nrow(all_NLA1_limits |> filter(limitation == "N-limited")) #208 #when I based this on redfield, there were 125 limited by N
+nrow(limits |> filter(limitation == "Potential P-limitation")) #607 #when I based this on redfield, there were 551 limited by P
+nrow(limits |> filter(limitation == "Potential N-limitation")) #221 #when I based this on redfield, there were 125 limited by N
 
 # Check the graph -- do they generally fall in areas that could be considered N or P limited? 
-## Yes they do.... And I think this makes sense. When I look at some of the lakes that are in the "N-limitation likely" 
-#### based on D & M, some are hypereutrophic based on the absolute N concentration. It makes sense to me that limitation
- #### should be based on both the absolute amounts and stoichiometry. 
+## Yes they do.... It makes sense to me that limitation should be based on both the absolute amounts and stoichiometry, 
+## however, this method leaves a lot of lakes wihtout limitation designation. So what would they be??
 
-ggplot(all_NLA1_limits) +
+ggplot(limits) +
   geom_point(aes(log(PTL_PPB, base = 10), log(tn.tp, base = 10), fill = year), size = 2.5, shape = 21, alpha = 0.8) +
   geom_point(aes(log(PTL_PPB, base = 10), log(tn.tp, base = 10), shape = limitation), size = 2.5,  alpha = 0.8) +
   geom_abline(slope = 0, intercept = log(19, base = 10), linetype = "dashed") + # bergstrom N limitation line
@@ -86,6 +81,7 @@ ggplot(all_NLA1_limits) +
   geom_abline(slope = 0, intercept = log(22.5032, base = 10), color = '#CC5500') + # average N:P based on this data
   geom_vline(xintercept = log(30, base = 10), color = '#336a98') + # dodds mccauley N limitation P > 30
   geom_abline(slope = 0, intercept = log(14, base = 10), color = '#336a98') + # dodds mccauley N limitation TN:TP < 14
+  geom_abline(slope = 0, intercept = log(53, base = 10), color = "#ffc857") +
   theme_minimal() +
   scale_fill_manual("Survey Year",values = palette_OkabeIto[5:7]) +
   scale_shape_manual("Limitation", values = c(3, 4)) +
@@ -96,25 +92,96 @@ ggplot(all_NLA1_limits) +
   annotate('text', label = 'N limitation likely \n (Dodds & McCauley, 1992)', x = 2.5, y = -0.25, hjust = 0, size = 2) +
   annotate('text', label = 'TP = 30'~(mu*g~L^-1), x = 0.9, y = -0.25, hjust = 0, size = 2, color = '#336a98') +
   annotate('text', label = 'TN:TP = 14', x = 0, y = 1, hjust = 0, size = 2, color = '#336a98')   +
-  annotate('text', label = 'Average TN:TP line', x = -1, y = 1.5, hjust = 0, size = 2, color = '#CC5500') 
+  annotate('text', label = 'Average TN:TP line', x = -1, y = 1.5, hjust = 0, size = 2, color = '#CC5500')  +
+  annotate('text', label = 'Predicted P limitation from \n (Ptacnik et al., 2010)', x = -1, y = 2, hjust = 0, size = 3, color = "#ffc857") 
 
-ggsave("Figures/Q1.Figs/P_N_Limitation_Thresholds.png", height = 4.5, width = 6.5, units = "in", dpi = 500)  
+ggsave("Figures/Q1.Figs/Limits_attempt1.png", height = 4.5, width = 6.5, units = "in", dpi = 500)  
 
-# note, there are 10 samples that do not have trophic state based on chlorophyll associated with them. 2 are N-limited, 1 is P-limited
+
+
+
+### ATTEMPT 2 ###  -- note, overwrite the "limits" df
+# uses 25th percentile nutrient thresholds for each ecoregion and average N:P for each ecoregion 
+
+# get information about the refernece lakes
+ref_np <- all_NLA |>
+  filter(SITE_TYPE %in% c("REF_Lake", "HAND")) |> # subset of 230 lakes
+  group_by(ECO_REG_NAME) |>
+  summarise(meanNP = (mean(TN_mol)/mean(TP_mol)),
+            medianNP = (median(TN_mol)/median(TP_mol)),
+            medianTN_PPM = median(NTL_PPM),
+            medianTP_PPB = median(PTL_PPB))
+
+# get some information about the entire dataset
+averages_np <- all_NLA |>
+  group_by(ECO_REG_NAME) |>
+  summarise(meanNP = (mean(TN_mol)/mean(TP_mol)),
+            medianNP = (median(TN_mol)/median(TP_mol)),
+            medianTN_PPM = median(NTL_PPM),
+            medianTP_PPB = median(PTL_PPB),
+            percentile25TN_PPM = quantile(NTL_PPM, probs = 0.25),
+            percentile25TP_PPB = quantile(PTL_PPB, probs = 0.25))
+
+# How do the lower 25th percentiles of TN and TP compare the the median  concentrations of TN and TP in the reference lakes? 
+t.test(ref_np$medianTN_PPM, averages_np$percentile25TN_PPM) # these are similar to each other!! 
+t.test(ref_np$medianTP_PPB, averages_np$percentile25TP_PPB) # these are similar to each other!!
+
+#Try using these values as the thresholds in addition to the average N:P ratios in each ecoregion 
+
+limits <- all_NLA |>
+  left_join(averages_np) |>
+  mutate(limitation = NA) |>
+  mutate(limitation = ifelse(PTL_PPB > percentile25TP_PPB & tn.tp > meanNP, "Potential P-limitation", 
+                             ifelse(NTL_PPM > percentile25TN_PPM & tn.tp < meanNP, "Potential N-limitation",
+                                    ifelse(is.na(limitation), "Potentially no or co-nutrient limitation", limitation))))
+
+nrow(limits |> filter(limitation == "Potential P-limitation")) # 1699
+nrow(limits |> filter(limitation == "Potential N-limitation")) # 848
+nrow(limits |> filter(limitation == "Potentially no or co-nutrient limitation")) #1106
+# still a lot of leftovers.... but maybe these are co-limited? 
+
+
+ggplot(limits) +
+  geom_point(aes(log(PTL_PPB, base = 10), log(NTL_PPM, base = 10), fill = limitation), size = 2.5, shape = 21, alpha = 0.8) +
+  # geom_point(aes(log(PTL_PPB, base = 10), log(tn.tp, base = 10), shape = limitation), size = 2.5,  alpha = 0.8) +
+  # geom_abline(slope = 0, intercept = log(19, base = 10), linetype = "dashed") + # bergstrom N limitation line
+  # geom_abline(slope = 0, intercept = log(41, base = 10), linetype = "dashed") + # bergstrom P limitation line
+  # geom_abline(slope = 0, intercept = log(16, base = 10), color = "red4") + # redfield
+  # geom_abline(slope = 0, intercept = log(22.5032, base = 10), color = '#CC5500') + # average N:P based on this data
+  # geom_vline(xintercept = log(30, base = 10), color = '#336a98') + # dodds mccauley N limitation P > 30
+  # geom_abline(slope = 0, intercept = log(14, base = 10), color = '#336a98') + # dodds mccauley N limitation TN:TP < 14
+  theme_minimal() +
+  scale_fill_manual("",values = palette_OkabeIto[5:7]) +
+  #scale_shape_manual("Limitation", values = c(3, 5, 12)) +
+  labs(y = "Log TN"~(m*g~L^-1), x = "Log TP"~(mu*g~L^-1)) # +
+  # annotate('text', label = 'Redfield 16:1 line', x = 3.5, y = 1.1, hjust = 0, size = 2, color = "red4") +
+  # annotate('text', label = 'Predicted N limitation \n below dotted line \n (Bergström, 2010)', x = -1, y = 0.9, hjust = 0, size = 2) +
+  # annotate('text', label = 'Predicted P limitation \n above dotted line \n (Bergström, 2010)', x = 3, y = 2, hjust = 0, size = 2) + 
+  # annotate('text', label = 'N limitation likely \n (Dodds & McCauley, 1992)', x = 2.5, y = -0.25, hjust = 0, size = 2) +
+  # annotate('text', label = 'TP = 30'~(mu*g~L^-1), x = 0.9, y = -0.25, hjust = 0, size = 2, color = '#336a98') +
+  # annotate('text', label = 'TN:TP = 14', x = 0, y = 1, hjust = 0, size = 2, color = '#336a98')   +
+  # annotate('text', label = 'Average TN:TP line', x = -1, y = 1.5, hjust = 0, size = 2, color = '#CC5500') 
+
+ggsave("Figures/Q1.Figs/Limits_attempt2.png", height = 4.5, width = 6.5, units = "in", dpi = 500) 
+
+
+
+
 
 
 #### Limitation shifts over time ####
 library(spsurvey) 
 
 # how to the nutrient limitations change from 2007 to 2012?
-limits_change_prep <- all_NLA1_limits |>
-  filter(WGT_NLA > 0) |> # the sp survey package is not designed to use the reference lakes, so those are ignored when using this package for analyses.
-  mutate(limitation = ifelse(is.na(limitation), "No limitation", limitation))
+limits_change_prep <- limits|> # total 3066 lakes for this analysis 
+  filter(VISIT_NO == 1) |># for this analysis, we are using just the first visit from each lake
+  filter(WGT_NLA > 0) # the sp survey package is not designed to use the reference lakes, so those are ignored when using this package for analyses.
+
 
 # lakes with limitations considered for this analysis now - the remainder are considered not nutrient limited 
-nrow(limits_change_prep |> filter(limitation == "P-limited")) #454 
-nrow(limits_change_prep |> filter(limitation == "N-limited")) #200
-
+nrow(limits_change_prep |> filter(limitation == "Potential P-limitation")) #1461 
+nrow(limits_change_prep |> filter(limitation == "Potential N-limitation")) #729
+nrow(limits_change_prep |> filter(limitation == "Potentially no or co-nutrient limitation")) #879
 
 
 ### write a function for this change analysis 
@@ -191,7 +258,7 @@ changes.final <- rbind(lim_change0712, lim_change1217) |>
 # National plot for N limitation
 ggplot(changes.final |>
          filter(ECO_REG == "National",
-                Category == "N-limited")) +
+                Category == "Potential N-limitation")) +
   geom_point(aes(Trophic.State, DiffEst.P, fill = year.shift), color = "black", pch = 21, size = 1, position=position_dodge(width=0.5)) +
   geom_errorbar(aes(Trophic.State, DiffEst.P, ymin = DiffEst.P-StdError.P, ymax = DiffEst.P+StdError.P, color = year.shift), width = 0.2, position=position_dodge(width=0.5))  + 
   theme_minimal() +
@@ -202,14 +269,14 @@ ggplot(changes.final |>
   theme(axis.text.x = element_blank()) +
   geom_hline(yintercept = 0) +
   labs(x = "",
-       y = "% Difference in N-limited lakes",
+       y = "% Difference in potential N-limitation lakes",
        title = "National") 
 ggsave("Figures/Q1.Figs/N_limitation_changes_percentdiff_national.png", height = 4.5, width = 6.5, units = "in", dpi = 500) 
 
 # ecoregion plots 
 ggplot(changes.final |>
          filter(ECO_REG != "National",
-                Category == "N-limited")) +
+                Category == "Potential N-limitation")) +
   geom_point(aes(Trophic.State, DiffEst.P, fill = year.shift), color = "black", pch = 21, size = 1, position=position_dodge(width=0.5)) +
   geom_errorbar(aes(Trophic.State, DiffEst.P, ymin = DiffEst.P-StdError.P, ymax = DiffEst.P+StdError.P, color = year.shift), width = 0.2, position=position_dodge(width=0.5))  + 
   theme_minimal() +
@@ -220,7 +287,7 @@ ggplot(changes.final |>
   scale_color_manual("", values = c("red4", "#336a98")) +
   geom_hline(yintercept = 0) +
   labs(x = "",
-       y = "% Difference in N-limited lakes") +
+       y = "% Difference in potential N-limitation lakes") +
   scale_x_discrete(labels = c("Olig.", "Meso.", "Eutro.", "Hyper."))
 ggsave("Figures/Q1.Figs/N_limitation_changes_percentdiff_regional.png", height = 4.5, width = 6.5, units = "in", dpi = 500) 
 
@@ -228,7 +295,7 @@ ggsave("Figures/Q1.Figs/N_limitation_changes_percentdiff_regional.png", height =
 # National plot for P limitation
 ggplot(changes.final |>
          filter(ECO_REG == "National",
-                Category == "P-limited")) +
+                Category == "Potential P-limitation")) +
   geom_point(aes(Trophic.State, DiffEst.P, fill = year.shift), color = "black", pch = 21, size = 1, position=position_dodge(width=0.5)) +
   geom_errorbar(aes(Trophic.State, DiffEst.P, ymin = DiffEst.P-StdError.P, ymax = DiffEst.P+StdError.P, color = year.shift), width = 0.2, position=position_dodge(width=0.5))  + 
   theme_minimal() +
@@ -239,14 +306,14 @@ ggplot(changes.final |>
   theme(axis.text.x = element_blank()) +
   geom_hline(yintercept = 0) +
   labs(x = "",
-       y = "% Difference in P-limited lakes",
+       y = "% Difference in potential P-limitation lakes",
        title = "National") 
 ggsave("Figures/Q1.Figs/P_limitation_changes_percentdiff_national.png", height = 4.5, width = 6.5, units = "in", dpi = 500) 
 
 # ecoregion plots 
 ggplot(changes.final |>
          filter(ECO_REG != "National",
-                Category == "P-limited")) +
+                Category == "Potential P-limitation")) +
   geom_point(aes(Trophic.State, DiffEst.P, fill = year.shift), color = "black", pch = 21, size = 1, position=position_dodge(width=0.5)) +
   geom_errorbar(aes(Trophic.State, DiffEst.P, ymin = DiffEst.P-StdError.P, ymax = DiffEst.P+StdError.P, color = year.shift), width = 0.2, position=position_dodge(width=0.5))  + 
   theme_minimal() +
@@ -257,7 +324,7 @@ ggplot(changes.final |>
   scale_color_manual("", values = c("red4", "#336a98")) +
   geom_hline(yintercept = 0) +
   labs(x = "",
-       y = "% Difference in P-limited lakes") +
+       y = "% Difference in potential P-limitation lakes") +
   scale_x_discrete(labels = c("Olig.", "Meso.", "Eutro.", "Hyper."))
 ggsave("Figures/Q1.Figs/P_limitation_changes_percentdiff_regional.png", height = 4.5, width = 6.5, units = "in", dpi = 500) 
 
@@ -266,7 +333,7 @@ ggsave("Figures/Q1.Figs/P_limitation_changes_percentdiff_regional.png", height =
 # Nationalplot for no limitation
 ggplot(changes.final |>
          filter(ECO_REG == "National",
-                Category == "No limitation")) +
+                Category == "Potentially no or co-nutrient limitation")) +
   geom_point(aes(Trophic.State, DiffEst.P, fill = year.shift), color = "black", pch = 21, size = 1, position=position_dodge(width=0.5)) +
   geom_errorbar(aes(Trophic.State, DiffEst.P, ymin = DiffEst.P-StdError.P, ymax = DiffEst.P+StdError.P, color = year.shift), width = 0.2, position=position_dodge(width=0.5))  + 
   theme_minimal() +
@@ -277,14 +344,14 @@ ggplot(changes.final |>
   theme(axis.text.x = element_blank()) +
   geom_hline(yintercept = 0) +
   labs(x = "",
-       y = "% Difference in non-limited lakes",
+       y = "% Difference in potentially no or co-nutrient limitation lakes",
        title = "National") 
 ggsave("Figures/Q1.Figs/no_limitation_changes_percentdiff_national.png", height = 4.5, width = 6.5, units = "in", dpi = 500) 
 
 # ecoregion plots 
 ggplot(changes.final |>
          filter(ECO_REG != "National",
-                Category == "No limitation")) +
+                Category == "Potentially no or co-nutrient limitation")) +
   geom_point(aes(Trophic.State, DiffEst.P, fill = year.shift), color = "black", pch = 21, size = 1, position=position_dodge(width=0.5)) +
   geom_errorbar(aes(Trophic.State, DiffEst.P, ymin = DiffEst.P-StdError.P, ymax = DiffEst.P+StdError.P, color = year.shift), width = 0.2, position=position_dodge(width=0.5))  + 
   theme_minimal() +
@@ -295,7 +362,7 @@ ggplot(changes.final |>
   scale_color_manual("", values = c("red4", "#336a98")) +
   geom_hline(yintercept = 0) +
   labs(x = "",
-       y = "% Difference in non-limited lakes") +
+       y = "% Difference in potentially no or co-nutrient limitation lakes") +
   scale_x_discrete(labels = c("Olig.", "Meso.", "Eutro.", "Hyper."))
 ggsave("Figures/Q1.Figs/no_limitation_changes_percentdiff_regional.png", height = 4.5, width = 6.5, units = "in", dpi = 500) 
 
@@ -305,8 +372,8 @@ ggsave("Figures/Q1.Figs/no_limitation_changes_percentdiff_regional.png", height 
 
 #### Bar charts of lakes in each trophic state that are N, P, not limited in each ecoregion ####
 ## take into account the weights for proportions
-## plots show what percentage of N, P, or non-limited lakes are which trophic state
-weighted_limits <- all_NLA1_limits |>
+## plots show what percentage of N, P, or Potentially no or co-nutrient limitation lakes are which trophic state
+weighted_limits <- limits |>
   group_by(year, ECO_REG_NAME, TROPHIC_STATE, limitation) |>
   mutate(weighted_lim = sum(WGT_NLA)) |>
   ungroup() |>
@@ -317,46 +384,23 @@ weighted_limits <- all_NLA1_limits |>
   mutate(prop = (weighted_lim/weighted_total) * 100) |>
   ungroup() |>
   drop_na(prop) |>
-  mutate(limitation = ifelse(is.na(limitation), "non-limited", limitation))
+  mutate(limitation = ifelse(is.na(limitation), "Potentially no or co-nutrient limitation", limitation))
 
-proportional_columns <- function(limit_type, year1, title1, filename) {
-  ggplot(weighted_limits |> filter(limitation == limit_type,
-                                   year == year1)) +
-    geom_col(aes(ECO_REG_NAME, prop, fill = TROPHIC_STATE)) +
-    theme_minimal() +
+proportional_columns <- function( year1, filename) {
+  ggplot(weighted_limits |> filter( year == year1)) +
+    geom_col(aes(limitation, prop, fill = TROPHIC_STATE)) +
+    theme_bw() +
     scale_fill_manual("", values = c(palette_OkabeIto[2], palette_OkabeIto[4], palette_OkabeIto[3], palette_OkabeIto[1])) +
     labs(x = "",
-         y = "% lakes in each limitation type",
-         title = title1)  +
-    facet_wrap(~limitation) +
+         y = "% lakes in each limitation type")  +
+    facet_wrap(~ECO_REG_NAME, ncol = 3) +
     theme(axis.text.x = element_text(angle = 45, vjust = 1, hjust=1))
   ggsave(paste("Figures/Q1.Figs/", filename, ".png", sep = ""), height = 4.5, width = 6.5, units = "in", dpi = 500)
   
 }
 
-#nitrogen limited
-proportional_columns("N-limited", "2007", "N-limited lakes only", "N_limitation_proportions/2007")
-proportional_columns("N-limited", "2012", "N-limited lakes only", "N_limitation_proportions/2012")
-proportional_columns("N-limited", "2017", "N-limited lakes only", "N_limitation_proportions/2017")
+# create the grap
+proportional_columns("2007", "Limitations_2007")
+proportional_columns("2012", "Limitations_2012")
+proportional_columns("2017", "Limitations_2017")
 
-#phosphorus limited
-proportional_columns("P-limited", "2007", "P-limited lakes only", "P_limitation_proportions/2007")
-proportional_columns("P-limited", "2012", "P-limited lakes only", "P_limitation_proportions/2012")
-proportional_columns("P-limited", "2017", "P-limited lakes only", "P_limitation_proportions/2017")
-
-#non-limited
-proportional_columns("non-limited", "2007", "Non-limited lakes only", "No_limitation_proportions/2007")
-proportional_columns("non-limited", "2012", "Non-limited lakes only", "No_limitation_proportions/2012")
-proportional_columns("non-limited", "2017", "Non-limited lakes only", "No_limitation_proportions/2017")
-
-
-
-ggplot(weighted_limits |> filter( year == "2007")) +
-  geom_col(aes(limitation, prop, fill = TROPHIC_STATE)) +
-  theme_bw() +
-  scale_fill_manual("", values = c(palette_OkabeIto[2], palette_OkabeIto[4], palette_OkabeIto[3], palette_OkabeIto[1])) +
-  labs(x = "",
-       y = "% lakes in each limitation type",
-       title = "title1")  +
-  facet_grid(~ECO_REG_NAME) +
-  theme(axis.text.x = element_text(angle = 45, vjust = 1, hjust=1))
