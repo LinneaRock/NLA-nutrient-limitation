@@ -1,7 +1,6 @@
-################################################################################
-############## How do nutrient limitation/enrichment  vary across ############## 
-############## ecoregions and what are the underlying mechanisms? ############## 
-################################################################################
+
+##### How does nutrient limitation vary spatially and temporally across the US?  #####
+
 
 
 source("Data/NLA/Call_NLA_data.R")
@@ -105,7 +104,7 @@ ggsave("Figures/Q1.Figs/P_N_Limitation_Thresholds.png", height = 4.5, width = 6.
 
 
 #### Limitation shifts over time ####
-library(spsurvey)
+library(spsurvey) 
 
 # how to the nutrient limitations change from 2007 to 2012?
 limits_change_prep <- all_NLA1_limits |>
@@ -304,37 +303,48 @@ ggsave("Figures/Q1.Figs/no_limitation_changes_percentdiff_regional.png", height 
 
 
 
-#### Bar graphs showing number/proportion of lakes in each trophic state that are N, P, not limited in each ecoregion ####
+#### Tree maps of lakes in each trophic state that are N, P, not limited in each ecoregion ####
+## take into account the weights for proportions
+weighted_limits <- all_NLA1_limits |>
+  group_by(year, ECO_REG_NAME, TROPHIC_STATE, limitation) |>
+  mutate(weighted_lim = sum(WGT_NLA)) |>
+  ungroup() |>
+  select(year, ECO_REG_NAME, TROPHIC_STATE, WGT_NLA, limitation, weighted_lim) |>
+  group_by(year, ECO_REG_NAME, TROPHIC_STATE) |>
+  mutate(weighted_total_ts_ecoreg = sum(weighted_lim))
 
-#nitrogen limited
-ggplot(all_NLA1_limits |> filter(limitation == "N-limited")) +
-  geom_bar(aes(ECO_REG_NAME, fill = TROPHIC_STATE)) +
-  theme_minimal() +
-  scale_fill_manual("", values = c(palette_OkabeIto[2], palette_OkabeIto[4], palette_OkabeIto[3], palette_OkabeIto[1])) +
-  labs(x = "",
-       y = "No. lakes in each trophic category",
-       title = "N-limited lakes only")  +
-  theme(axis.text.x = element_text(angle = 45, vjust = 1, hjust=1))
-ggsave("Figures/Q1.Figs/N_lim_numbers.png", height = 4.5, width = 6.5, units = "in", dpi = 500) 
 
-#phosphorus limited
-ggplot(all_NLA1_limits |> filter(limitation == "P-limited")) +
-  geom_bar(aes(ECO_REG_NAME, fill = TROPHIC_STATE)) +
-  theme_minimal() +
-  scale_fill_manual("", values = c(palette_OkabeIto[2], palette_OkabeIto[4], palette_OkabeIto[3], palette_OkabeIto[1])) +
-  labs(x = "",
-       y = "No. lakes in each trophic category",
-       title = "P-limited lakes only")  +
-  theme(axis.text.x = element_text(angle = 45, vjust = 1, hjust=1))
-ggsave("Figures/Q1.Figs/P_lim_numbers.png", height = 4.5, width = 6.5, units = "in", dpi = 500) 
 
-#non-limited
-ggplot(all_NLA1_limits |> filter(is.na(limitation))) +
-  geom_bar(aes(ECO_REG_NAME, fill = TROPHIC_STATE)) +
-  theme_minimal() +
-  scale_fill_manual("", values = c(palette_OkabeIto[2], palette_OkabeIto[4], palette_OkabeIto[3], palette_OkabeIto[1])) +
-  labs(x = "",
-       y = "No. lakes in each trophic category",
-       title = "Non-limited lakes only")  +
-  theme(axis.text.x = element_text(angle = 45, vjust = 1, hjust=1))
-ggsave("Figures/Q1.Figs/no_lim_numbers.png", height = 4.5, width = 6.5, units = "in", dpi = 500) 
+## Bar charts are not the best representation of these data because they are just the raw numbers and don't account for the weights
+# #nitrogen limited
+# ggplot(all_NLA1_limits |> filter(limitation == "N-limited")) +
+#   geom_bar(aes(ECO_REG_NAME, fill = TROPHIC_STATE)) +
+#   theme_minimal() +
+#   scale_fill_manual("", values = c(palette_OkabeIto[2], palette_OkabeIto[4], palette_OkabeIto[3], palette_OkabeIto[1])) +
+#   labs(x = "",
+#        y = "No. lakes in each trophic category",
+#        title = "N-limited lakes only")  +
+#   theme(axis.text.x = element_text(angle = 45, vjust = 1, hjust=1))
+# ggsave("Figures/Q1.Figs/N_lim_numbers.png", height = 4.5, width = 6.5, units = "in", dpi = 500) 
+# 
+# #phosphorus limited
+# ggplot(all_NLA1_limits |> filter(limitation == "P-limited")) +
+#   geom_bar(aes(ECO_REG_NAME, fill = TROPHIC_STATE)) +
+#   theme_minimal() +
+#   scale_fill_manual("", values = c(palette_OkabeIto[2], palette_OkabeIto[4], palette_OkabeIto[3], palette_OkabeIto[1])) +
+#   labs(x = "",
+#        y = "No. lakes in each trophic category",
+#        title = "P-limited lakes only")  +
+#   theme(axis.text.x = element_text(angle = 45, vjust = 1, hjust=1))
+# ggsave("Figures/Q1.Figs/P_lim_numbers.png", height = 4.5, width = 6.5, units = "in", dpi = 500) 
+# 
+# #non-limited
+# ggplot(all_NLA1_limits |> filter(is.na(limitation))) +
+#   geom_bar(aes(ECO_REG_NAME, fill = TROPHIC_STATE)) +
+#   theme_minimal() +
+#   scale_fill_manual("", values = c(palette_OkabeIto[2], palette_OkabeIto[4], palette_OkabeIto[3], palette_OkabeIto[1])) +
+#   labs(x = "",
+#        y = "No. lakes in each trophic category",
+#        title = "Non-limited lakes only")  +
+#   theme(axis.text.x = element_text(angle = 45, vjust = 1, hjust=1))
+# ggsave("Figures/Q1.Figs/no_lim_numbers.png", height = 4.5, width = 6.5, units = "in", dpi = 500) 
