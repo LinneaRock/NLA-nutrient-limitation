@@ -10,7 +10,7 @@ source("Data/NLA/Call_NLA_data.R")
 #### Trophic status and across ecoregions in 2017 data  ####
 library(colorblindr)
 
-## The total numbers of lakes in each category 
+## Total Number of lakes in each category 
 ggplot(all_NLA |> filter(year == "2017")) +
   geom_bar(aes(ECO_REG, fill = TSTATE_CHL)) +
   theme_minimal() +
@@ -18,19 +18,23 @@ ggplot(all_NLA |> filter(year == "2017")) +
                     labels = c("Olig.", "Meso.", "Eutro.", "Hyper.")) +
   labs(x = "",
        y = "# Lakes in each trophic category")
-ggsave("Figures/Q3.Figs/2017_TS_Totals.png", height = 4.5, width = 6.5, units = "in", dpi = 500) 
+#ggsave("Figures/Q3.Figs/2017_TS_Totals.png", height = 4.5, width = 6.5, units = "in", dpi = 500) 
 
-## Proportion of lakes in each category
+## Proportion of lakes in each category -- using weights
 proportion_ts <- all_NLA |>
-  filter(year == "2017") |>
-  count(ECO_REG_NAME, TROPHIC_STATE) |>
-  rename(lakes_ts = n) |>
-  group_by(ECO_REG_NAME) |>
+  #filter(year == "2017") |>
+  group_by(year, ECO_REG_NAME, TROPHIC_STATE) |>
+  mutate(lakes_ts = sum(WGT_NLA)) |>
+  ungroup() |>
+  select(year, ECO_REG_NAME, TROPHIC_STATE, lakes_ts) |>
+  distinct() |>
+  #count(ECO_REG_NAME, TROPHIC_STATE) |>
+  group_by(year, ECO_REG_NAME) |>
   mutate(tot_lakes = sum(lakes_ts)) |>
   ungroup() |>
   mutate(proportion = (lakes_ts/tot_lakes)*100)
 
-ggplot(proportion_ts, aes(x = 1, y = proportion, fill = TROPHIC_STATE)) +
+ggplot(proportion_ts |> filter(year == "2017"), aes(x = 1, y = proportion, fill = TROPHIC_STATE)) +
   facet_wrap(~ECO_REG_NAME, ncol = 3) +
   geom_col()+
   coord_polar(theta = 'y') +
