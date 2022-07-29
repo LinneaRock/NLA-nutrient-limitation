@@ -19,18 +19,22 @@ ggplot(all_NLA) +
   geom_abline(slope = 0, intercept = log(41, base = 10), linetype = "dashed") + # bergstrom P limitation line
   geom_abline(slope = 0, intercept = log(16, base = 10), color = "red4") + # redfield
   #geom_abline(slope = 0, intercept = log(22.80457, base = 10), linetype = "dotted", color = '#CC5500') + # average N:P based on this data
-  geom_vline(xintercept = log(30, base = 10), color = '#336a98') + # dodds mccauley N limitation P > 30
-  geom_abline(slope = 0, intercept = log(14, base = 10), color = '#336a98') + # dodds mccauley N limitation TN:TP < 14
-  geom_abline(slope = 0, intercept = log(53, base = 10), color = "#ffc857") +
+  #geom_vline(xintercept = log(30, base = 10), color = '#336a98') + # dodds mccauley N limitation P > 30
+ # geom_abline(slope = 0, intercept = log(14, base = 10), color = '#336a98') + # dodds mccauley N limitation TN:TP < 14
+  geom_abline(slope = 0, intercept = log(38, base = 10), color = '#336a98') + # Sakamoto, 1966; Smith 1982; Rhee 1980, Forsberg 1980  
+  geom_abline(slope = 0, intercept = log(22, base = 10), color = '#336a98') + # Sakamoto, 1966; Smith 1982; Rhee 1980, Forsberg 1980
+  geom_abline(slope = 0, intercept = log(53, base = 10), color = "#ffc857") + # Ptacnik, 2010
   theme_minimal() +
   scale_fill_manual("Survey Year",values = palette_OkabeIto[5:7]) +
   labs(y = "Log TN:TP", x = "Log TP"~(mu*g~L^-1)) +
   annotate('text', label = 'Redfield 16:1 line', x = 3.5, y = 1.1, hjust = 0, size = 3, color = "red4") +
   annotate('text', label = 'Predicted N limitation from \n below dashed line \n (Bergström, 2010)', x = -1, y = 1, hjust = 0, size = 3) +
-  annotate('text', label = 'Predicted P limitation from \n above dashed line \n (Bergström, 2010)', x = 3, y = 2, hjust = 0, size = 3) + 
-  annotate('text', label = 'Predicted N limitation from \n (Dodds & McCauley, 1992)', x = 2.5, y = -0.25, hjust = 0, size = 3, color = '#336a98') +
-  annotate('text', label = 'TP = 30'~(mu*g~L^-1), x = 0.9, y = -0.25, hjust = 0, size = 3, color = '#336a98') +
-  annotate('text', label = 'TN:TP = 14', x = 0, y = 1, hjust = 0, size = 3, color = '#336a98') +
+  annotate('text', label = 'Predicted P limitation from \n above dashed line \n (Bergström, 2010)', x = 3, y = 2, hjust = 0, size = 3) +
+  annotate('text', label = 'Predicted N limitation from \n below blue line \n (Forsberg, 1980; Rhee, 1980; \n Sakamoto, 1966; Smith, 1982)', x = -1, y = 0.25, hjust = 0, size = 3, color = '#336a98') +
+  annotate('text', label = 'Predicted P limitation from \n above blue line \n (Forsberg, 1980; Rhee, 1980; \n Sakamoto, 1966; Smith, 1982)', x = 3, y = 3, hjust = 0, size = 3, color = '#336a98') + 
+ # annotate('text', label = 'Predicted N limitation from \n (Dodds & McCauley, 1992)', x = 2.5, y = -0.25, hjust = 0, size = 3, color = '#336a98') +
+ # annotate('text', label = 'TP = 30'~(mu*g~L^-1), x = 0.9, y = -0.25, hjust = 0, size = 3, color = '#336a98') +
+ # annotate('text', label = 'TN:TP = 14', x = 0, y = 1, hjust = 0, size = 3, color = '#336a98') +
  # annotate('text', label = 'Average TN:TP line \n dotted orange', x = -1, y = 1.5, hjust = 0, size = 3, color = '#CC5500')  +
   annotate('text', label = 'Predicted P limitation from \n (Ptacnik et al., 2010)', x = -1, y = 2, hjust = 0, size = 3, color = "#ffc857") 
 
@@ -78,23 +82,26 @@ ggplot(limits) +
   geom_abline(slope = 0, intercept = log(19, base = 10), linetype = "dashed") + # bergstrom N limitation line
   geom_abline(slope = 0, intercept = log(41, base = 10), linetype = "dashed") + # bergstrom P limitation line
   geom_abline(slope = 0, intercept = log(16, base = 10), color = "red4") + # redfield
-  geom_abline(slope = 0, intercept = log(22.5032, base = 10), color = '#CC5500') + # average N:P based on this data
-  geom_vline(xintercept = log(30, base = 10), color = '#336a98') + # dodds mccauley N limitation P > 30
-  geom_abline(slope = 0, intercept = log(14, base = 10), color = '#336a98') + # dodds mccauley N limitation TN:TP < 14
+  #geom_abline(slope = 0, intercept = log(22.80457, base = 10), linetype = "dotted", color = '#CC5500') + # average N:P based on this data
+  #geom_vline(xintercept = log(30, base = 10), color = '#336a98') + # dodds mccauley N limitation P > 30
+  # geom_abline(slope = 0, intercept = log(14, base = 10), color = '#336a98') + # dodds mccauley N limitation TN:TP < 14
+  geom_abline(slope = 0, intercept = log(38, base = 10), color = '#336a98') + # Sakamoto, 1966; Smith 1982; Rhee 1980, Forsberg 1980  
+  geom_abline(slope = 0, intercept = log(22, base = 10), color = '#336a98') + # Sakamoto, 1966; Smith 1982; Rhee 1980, Forsberg 1980
   geom_abline(slope = 0, intercept = log(53, base = 10), color = "#ffc857") +
   theme_minimal() +
   scale_fill_manual("Survey Year",values = palette_OkabeIto[5:7]) +
   scale_shape_manual("Limitation", values = c(3, 4)) +
   labs(y = "Log TN:TP", x = "Log TP"~(mu*g~L^-1)) +
-  annotate('text', label = 'Redfield 16:1 line', x = 3.5, y = 1.1, hjust = 0, size = 2, color = "red4") +
-  annotate('text', label = 'Predicted N limitation \n below dotted line \n (Bergström, 2010)', x = -1, y = 0.9, hjust = 0, size = 2) +
-  annotate('text', label = 'Predicted P limitation \n above dotted line \n (Bergström, 2010)', x = 3, y = 2, hjust = 0, size = 2) + 
-  annotate('text', label = 'N limitation likely \n (Dodds & McCauley, 1992)', x = 2.5, y = -0.25, hjust = 0, size = 2) +
-  annotate('text', label = 'TP = 30'~(mu*g~L^-1), x = 0.9, y = -0.25, hjust = 0, size = 2, color = '#336a98') +
-  annotate('text', label = 'TN:TP = 14', x = 0, y = 1, hjust = 0, size = 2, color = '#336a98')   +
-  annotate('text', label = 'Average TN:TP line', x = -1, y = 1.5, hjust = 0, size = 2, color = '#CC5500')  +
+  annotate('text', label = 'Redfield 16:1 line', x = 3.5, y = 1.1, hjust = 0, size = 3, color = "red4") +
+  annotate('text', label = 'Predicted N limitation from \n below dashed line \n (Bergström, 2010)', x = -1, y = 1, hjust = 0, size = 3) +
+  annotate('text', label = 'Predicted P limitation from \n above dashed line \n (Bergström, 2010)', x = 3, y = 2, hjust = 0, size = 3) +
+  annotate('text', label = 'Predicted N limitation from \n below blue line \n (Forsberg, 1980; Rhee, 1980; \n Sakamoto, 1966; Smith, 1982)', x = -1, y = 0.25, hjust = 0, size = 3, color = '#336a98') +
+  annotate('text', label = 'Predicted P limitation from \n above blue line \n (Forsberg, 1980; Rhee, 1980; \n Sakamoto, 1966; Smith, 1982)', x = 3, y = 3, hjust = 0, size = 3, color = '#336a98') + 
+  # annotate('text', label = 'Predicted N limitation from \n (Dodds & McCauley, 1992)', x = 2.5, y = -0.25, hjust = 0, size = 3, color = '#336a98') +
+  # annotate('text', label = 'TP = 30'~(mu*g~L^-1), x = 0.9, y = -0.25, hjust = 0, size = 3, color = '#336a98') +
+  # annotate('text', label = 'TN:TP = 14', x = 0, y = 1, hjust = 0, size = 3, color = '#336a98') +
+  # annotate('text', label = 'Average TN:TP line \n dotted orange', x = -1, y = 1.5, hjust = 0, size = 3, color = '#CC5500')  +
   annotate('text', label = 'Predicted P limitation from \n (Ptacnik et al., 2010)', x = -1, y = 2, hjust = 0, size = 3, color = "#ffc857") 
-
 ggsave("Figures/Q1.Figs/Limits_attempt1.png", height = 4.5, width = 6.5, units = "in", dpi = 500)  
 
 
@@ -133,37 +140,44 @@ limits <- all_NLA |>
   mutate(limitation = NA) |>
   mutate(limitation = ifelse(PTL_PPB > percentile25TP_PPB & tn.tp > meanNP, "Potential P-limitation", 
                              ifelse(NTL_PPM > percentile25TN_PPM & tn.tp < meanNP, "Potential N-limitation",
-                                    ifelse(is.na(limitation), "Potentially no or co-nutrient limitation", limitation))))
+                                    ifelse(is.na(limitation), "Potential co-nutrient limitation", limitation))))
 
 nrow(limits |> filter(limitation == "Potential P-limitation")) # 1699
 nrow(limits |> filter(limitation == "Potential N-limitation")) # 848
-nrow(limits |> filter(limitation == "Potentially no or co-nutrient limitation")) #1106
+nrow(limits |> filter(limitation == "Potential co-nutrient limitation")) #1106
 # still a lot of leftovers.... but maybe these are co-limited? 
 
 
 ggplot(limits) +
   geom_point(aes(log(PTL_PPB, base = 10), log(NTL_PPM, base = 10), fill = limitation), size = 2.5, shape = 21, alpha = 0.8) +
-  # geom_point(aes(log(PTL_PPB, base = 10), log(tn.tp, base = 10), shape = limitation), size = 2.5,  alpha = 0.8) +
-  # geom_abline(slope = 0, intercept = log(19, base = 10), linetype = "dashed") + # bergstrom N limitation line
-  # geom_abline(slope = 0, intercept = log(41, base = 10), linetype = "dashed") + # bergstrom P limitation line
-  # geom_abline(slope = 0, intercept = log(16, base = 10), color = "red4") + # redfield
-  # geom_abline(slope = 0, intercept = log(22.5032, base = 10), color = '#CC5500') + # average N:P based on this data
-  # geom_vline(xintercept = log(30, base = 10), color = '#336a98') + # dodds mccauley N limitation P > 30
-  # geom_abline(slope = 0, intercept = log(14, base = 10), color = '#336a98') + # dodds mccauley N limitation TN:TP < 14
   theme_minimal() +
   scale_fill_manual("",values = palette_OkabeIto[5:7]) +
-  #scale_shape_manual("Limitation", values = c(3, 5, 12)) +
-  labs(y = "Log TN"~(m*g~L^-1), x = "Log TP"~(mu*g~L^-1)) # +
-  # annotate('text', label = 'Redfield 16:1 line', x = 3.5, y = 1.1, hjust = 0, size = 2, color = "red4") +
-  # annotate('text', label = 'Predicted N limitation \n below dotted line \n (Bergström, 2010)', x = -1, y = 0.9, hjust = 0, size = 2) +
-  # annotate('text', label = 'Predicted P limitation \n above dotted line \n (Bergström, 2010)', x = 3, y = 2, hjust = 0, size = 2) + 
-  # annotate('text', label = 'N limitation likely \n (Dodds & McCauley, 1992)', x = 2.5, y = -0.25, hjust = 0, size = 2) +
-  # annotate('text', label = 'TP = 30'~(mu*g~L^-1), x = 0.9, y = -0.25, hjust = 0, size = 2, color = '#336a98') +
-  # annotate('text', label = 'TN:TP = 14', x = 0, y = 1, hjust = 0, size = 2, color = '#336a98')   +
-  # annotate('text', label = 'Average TN:TP line', x = -1, y = 1.5, hjust = 0, size = 2, color = '#CC5500') 
-
+  labs(y = "Log TN"~(m*g~L^-1), x = "Log TP"~(mu*g~L^-1))
 ggsave("Figures/Q1.Figs/Limits_attempt2.png", height = 4.5, width = 6.5, units = "in", dpi = 500) 
 
+
+
+### ATTEMPT 3 ###  -- note, overwrite the "limits" df
+# uses TN:TP limits of 22 and 38 from Sakamoto, 1966; Smith 1982; Rhee 1980, Forsberg 1980  
+
+limits <- all_NLA |>
+  mutate(limitation = NA) |>
+  mutate(limitation = ifelse(tn.tp > 38, "Potential P-limitation", 
+                             ifelse(tn.tp < 22, "Potential N-limitation",
+                                    ifelse(is.na(limitation), "Potential co-nutrient limitation", limitation))))
+
+nrow(limits |> filter(limitation == "Potential P-limitation")) # 1858
+nrow(limits |> filter(limitation == "Potential N-limitation")) # 854
+nrow(limits |> filter(limitation == "Potential co-nutrient limitation")) #941
+# still a lot of leftovers.... but maybe these are co-limited? 
+
+
+ggplot(limits) +
+  geom_point(aes(log(PTL_PPB, base = 10), log(NTL_PPM, base = 10), fill = limitation), size = 2.5, shape = 21, alpha = 0.8) +
+  theme_minimal() +
+  scale_fill_manual("",values = palette_OkabeIto[5:7]) +
+  labs(y = "Log TN"~(m*g~L^-1), x = "Log TP"~(mu*g~L^-1)) 
+ggsave("Figures/Q1.Figs/Limits_attempt3.png", height = 4.5, width = 6.5, units = "in", dpi = 500) 
 
 
 
@@ -181,7 +195,7 @@ limits_change_prep <- limits|> # total 3066 lakes for this analysis
 # lakes with limitations considered for this analysis now - the remainder are considered not nutrient limited 
 nrow(limits_change_prep |> filter(limitation == "Potential P-limitation")) #1461 
 nrow(limits_change_prep |> filter(limitation == "Potential N-limitation")) #729
-nrow(limits_change_prep |> filter(limitation == "Potentially no or co-nutrient limitation")) #879
+nrow(limits_change_prep |> filter(limitation == "Potential co-nutrient limitation")) #879
 
 
 ### write a function for this change analysis 
@@ -330,10 +344,10 @@ ggsave("Figures/Q1.Figs/P_limitation_changes_percentdiff_regional.png", height =
 
 
 
-# Nationalplot for no limitation
+# Nationalplot for co-limitation
 ggplot(changes.final |>
          filter(ECO_REG == "National",
-                Category == "Potentially no or co-nutrient limitation")) +
+                Category == "Potential co-nutrient limitation")) +
   geom_point(aes(Trophic.State, DiffEst.P, fill = year.shift), color = "black", pch = 21, size = 1, position=position_dodge(width=0.5)) +
   geom_errorbar(aes(Trophic.State, DiffEst.P, ymin = DiffEst.P-StdError.P, ymax = DiffEst.P+StdError.P, color = year.shift), width = 0.2, position=position_dodge(width=0.5))  + 
   theme_minimal() +
@@ -344,14 +358,14 @@ ggplot(changes.final |>
   theme(axis.text.x = element_blank()) +
   geom_hline(yintercept = 0) +
   labs(x = "",
-       y = "% Difference in potentially no or co-nutrient limitation lakes",
+       y = "% Difference in potential co-nutrient limitation lakes",
        title = "National") 
 ggsave("Figures/Q1.Figs/no_limitation_changes_percentdiff_national.png", height = 4.5, width = 6.5, units = "in", dpi = 500) 
 
 # ecoregion plots 
 ggplot(changes.final |>
          filter(ECO_REG != "National",
-                Category == "Potentially no or co-nutrient limitation")) +
+                Category == "Potential co-nutrient limitation")) +
   geom_point(aes(Trophic.State, DiffEst.P, fill = year.shift), color = "black", pch = 21, size = 1, position=position_dodge(width=0.5)) +
   geom_errorbar(aes(Trophic.State, DiffEst.P, ymin = DiffEst.P-StdError.P, ymax = DiffEst.P+StdError.P, color = year.shift), width = 0.2, position=position_dodge(width=0.5))  + 
   theme_minimal() +
@@ -362,7 +376,7 @@ ggplot(changes.final |>
   scale_color_manual("", values = c("red4", "#336a98")) +
   geom_hline(yintercept = 0) +
   labs(x = "",
-       y = "% Difference in potentially no or co-nutrient limitation lakes") +
+       y = "% Difference in potential co-nutrient limitation lakes") +
   scale_x_discrete(labels = c("Olig.", "Meso.", "Eutro.", "Hyper."))
 ggsave("Figures/Q1.Figs/no_limitation_changes_percentdiff_regional.png", height = 4.5, width = 6.5, units = "in", dpi = 500) 
 
@@ -372,7 +386,7 @@ ggsave("Figures/Q1.Figs/no_limitation_changes_percentdiff_regional.png", height 
 
 #### Bar charts of lakes in each trophic state that are N, P, not limited in each ecoregion ####
 ## take into account the weights for proportions
-## plots show what percentage of N, P, or Potentially no or co-nutrient limitation lakes are which trophic state
+## plots show what percentage of N, P, or Potential co-nutrient limitation lakes are which trophic state
 weighted_limits <- limits |>
   group_by(year, ECO_REG_NAME, TROPHIC_STATE, limitation) |>
   mutate(weighted_lim = sum(WGT_NLA)) |>
@@ -384,7 +398,7 @@ weighted_limits <- limits |>
   mutate(prop = (weighted_lim/weighted_total) * 100) |>
   ungroup() |>
   drop_na(prop) |>
-  mutate(limitation = ifelse(is.na(limitation), "Potentially no or co-nutrient limitation", limitation))
+  mutate(limitation = ifelse(is.na(limitation), "Potential co-nutrient limitation", limitation))
 
 proportional_columns <- function( year1, filename) {
   ggplot(weighted_limits |> filter( year == year1)) +
