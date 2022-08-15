@@ -10,7 +10,7 @@ library(colorblindr)
 #### N and P limitations from the literature ####
 
 ### ATTEMPT 1 ### 
-#uses nutrient thresholds for trophic status and full dat average ratio
+#uses nutrient thresholds for trophic status and full data average ratio
 
 # uses all data from all years 
 ggplot(all_NLA) +
@@ -146,7 +146,7 @@ averages_np <- all_NLA |>
 t.test(ref_np$medianTN_PPM, averages_np$percentile25TN_PPM) # these are similar to each other!! 
 t.test(ref_np$medianTP_PPB, averages_np$percentile25TP_PPB) # these are similar to each other!!
 
-#Try using these values as the thresholds in addition to the average N:P ratios in each ecoregion 
+#Try using these values as the thresholds in addition to the average N: average P ratios in each ecoregion 
 
 limits <- all_NLA |>
   left_join(averages_np) |>
@@ -169,7 +169,7 @@ ggsave("Figures/Q1.Figs/Limits_attempt2.png", height = 4.5, width = 6.5, units =
 
 
 ### ATTEMPT 2a ###  -- note, overwrite the "limits" df
-# uses 25th percentile nutrient thresholds for each ecoregion and average N:P for each ecoregion 
+# uses 25th percentile nutrient thresholds for each ecoregion and average N:P 
 
 limits <- all_NLA |>
   left_join(averages_np) |>
@@ -478,3 +478,38 @@ proportional_columns("2007", "Limitations_2007")
 proportional_columns("2012", "Limitations_2012")
 proportional_columns("2017", "Limitations_2017")
 
+#### How do ecoregions compare? ####
+# Does the # of limited lakes over time change and does that vary across trophic state and ecoregion?
+library(lme4)
+weighted_limits$year <- as.factor(weighted_limits$year)
+
+plot(weighted_lim ~ year, weighted_limits)
+plot(weighted_lim ~ ECO_REG_NAME, weighted_limits) # ????
+plot(weighted_lim ~ TROPHIC_STATE, weighted_limits)
+
+m.1 <- aov(weighted_lim ~ year * ECO_REG_NAME * TROPHIC_STATE *limitation, weighted_limits)
+summary(m.1)
+anova(m.1) # perfect fit, unreliable 
+
+
+m.2 <- aov(weighted_lim ~ year + ECO_REG_NAME +  TROPHIC_STATE * limitation, weighted_limits)
+summary(m.2)
+anova(m.2)
+performance::r2(m.2)
+
+
+
+m.3 <- lmer(weighted_lim ~ year + limitation + (1|TROPHIC_STATE/ECO_REG_NAME), weighted_limits) # better, not good though
+summary(m.3)
+anova(m.3)
+performance::r2(m.3)
+
+m.4 <- lmer(weighted_lim ~ limitation + (year|TROPHIC_STATE/ECO_REG_NAME), weighted_limits) # singular
+summary(m.4)
+anova(m.3, m.4)
+performance::r2(m.4)
+
+m.5 <- lmer(weighted_lim ~ year + limitation (1|TROPHIC_STATE) + (1|ECO_REG_NAME), weighted_limits) # worse
+summary(m.5)
+anova(m.3, m.5)
+performance::r2(m.5)
