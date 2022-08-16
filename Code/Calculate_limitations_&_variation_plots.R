@@ -66,7 +66,7 @@ ggplot(limits) +
   theme_minimal() +
   scale_fill_manual("",values = palette_OkabeIto[5:7]) +
   labs(y = "Log TN"~(m*g~L^-1), x = "Log TP"~(mu*g~L^-1))
-ggsave("Figures/Q1.Figs/FINAL_limitationsmethod.png", height = 4.5, width = 6.5, units = "in", dpi = 500) 
+ggsave("Figures/Qlim.Figs/FINAL_limitationsmethod.png", height = 4.5, width = 6.5, units = "in", dpi = 500) 
 
 
 #### Bar charts of lakes in each trophic state that are N, P, or co-limited in each ecoregion ####
@@ -94,7 +94,7 @@ proportional_columns <- function( year1, filename) {
          y = "% lakes in each limitation type")  +
     facet_wrap(~ECO_REG_NAME, ncol = 3) +
     theme(axis.text.x = element_text(angle = 45, vjust = 1, hjust=1))
-  ggsave(paste("Figures/Q1.Figs/", filename, ".png", sep = ""), height = 4.5, width = 6.5, units = "in", dpi = 500)
+  ggsave(paste("Figures/Qlim.Figs/", filename, ".png", sep = ""), height = 4.5, width = 6.5, units = "in", dpi = 500)
   
 }
 
@@ -171,7 +171,7 @@ summary(co_model) #adj R = -0.02681 , p = 0.5257
 
 (nlim | plim | colim ) +
   plot_annotation(tag_levels = "a", tag_suffix = ")")
-ggsave("Figures/Q1.Figs/number_lakes_change.png", height = 4.5, width = 6.5, units = "in", dpi = 500) 
+ggsave("Figures/Qlim.Figs/number_lakes_change.png", height = 4.5, width = 6.5, units = "in", dpi = 500) 
 
 
 #### looking at trophic states and limitations ####
@@ -187,21 +187,21 @@ ggplot(no.lim.ts |> filter(year == "2007"), aes(TROPHIC_STATE, wgt_lim, fill = l
   scale_fill_manual("", values = palette_OkabeIto[5:7]) +
   theme_minimal() +
   labs(x = "", y = "(Weighted) number of lakes")
-ggsave("Figures/Q1.Figs/nolakes_by_ts_lim2007.png", height = 4.5, width = 6.5, units = "in", dpi = 500) 
+ggsave("Figures/Qlim.Figs/nolakes_by_ts_lim2007.png", height = 4.5, width = 6.5, units = "in", dpi = 500) 
 
 ggplot(no.lim.ts |> filter(year == "2012"), aes(TROPHIC_STATE, wgt_lim, fill = limitation)) +
   geom_bar(stat = "identity", position = "dodge") +
   scale_fill_manual("", values = palette_OkabeIto[5:7]) +
   theme_minimal() +
   labs(x = "", y = "(Weighted) number of lakes")
-ggsave("Figures/Q1.Figs/nolakes_by_ts_lim2012.png", height = 4.5, width = 6.5, units = "in", dpi = 500) 
+ggsave("Figures/Qlim.Figs/nolakes_by_ts_lim2012.png", height = 4.5, width = 6.5, units = "in", dpi = 500) 
 
 ggplot(no.lim.ts |> filter(year == "2017"), aes(TROPHIC_STATE, wgt_lim, fill = limitation)) +
   geom_bar(stat = "identity", position = "dodge") +
   scale_fill_manual("", values = palette_OkabeIto[5:7]) +
   theme_minimal() +
   labs(x = "", y = "(Weighted) number of lakes")
-ggsave("Figures/Q1.Figs/nolakes_by_ts_lim2017.png", height = 4.5, width = 6.5, units = "in", dpi = 500) 
+ggsave("Figures/Qlim.Figs/nolakes_by_ts_lim2017.png", height = 4.5, width = 6.5, units = "in", dpi = 500) 
 
 
 #### Limitation shifts over time ####
@@ -306,7 +306,7 @@ ggplot(changes.final |>
   labs(x = "",
        y = "% Difference in potential N-limitation lakes",
        title = "National") 
-ggsave("Figures/Q1.Figs/N_limitation_changes_percentdiff_national.png", height = 4.5, width = 6.5, units = "in", dpi = 500) 
+ggsave("Figures/Qlim.Figs/N_limitation_changes_percentdiff_national.png", height = 4.5, width = 6.5, units = "in", dpi = 500) 
 
 # ecoregion plots 
 ggplot(changes.final |>
@@ -324,7 +324,7 @@ ggplot(changes.final |>
   labs(x = "",
        y = "% Difference in potential N-limitation lakes") +
   scale_x_discrete(labels = c("Olig.", "Meso.", "Eutro.", "Hyper."))
-ggsave("Figures/Q1.Figs/N_limitation_changes_percentdiff_regional.png", height = 4.5, width = 6.5, units = "in", dpi = 500) 
+ggsave("Figures/Qlim.Figs/N_limitation_changes_percentdiff_regional.png", height = 4.5, width = 6.5, units = "in", dpi = 500) 
 
 
 # National plot for P limitation
@@ -343,7 +343,7 @@ ggplot(changes.final |>
   labs(x = "",
        y = "% Difference in potential P-limitation lakes",
        title = "National") 
-ggsave("Figures/Q1.Figs/P_limitation_changes_percentdiff_national.png", height = 4.5, width = 6.5, units = "in", dpi = 500) 
+ggsave("Figures/Qlim.Figs/P_limitation_changes_percentdiff_national.png", height = 4.5, width = 6.5, units = "in", dpi = 500) 
 
 # ecoregion plots 
 ggplot(changes.final |>
@@ -361,7 +361,7 @@ ggplot(changes.final |>
   labs(x = "",
        y = "% Difference in potential P-limitation lakes") +
   scale_x_discrete(labels = c("Olig.", "Meso.", "Eutro.", "Hyper."))
-ggsave("Figures/Q1.Figs/P_limitation_changes_percentdiff_regional.png", height = 4.5, width = 6.5, units = "in", dpi = 500) 
+ggsave("Figures/Qlim.Figs/P_limitation_changes_percentdiff_regional.png", height = 4.5, width = 6.5, units = "in", dpi = 500) 
 
 
 
@@ -381,7 +381,7 @@ ggplot(changes.final |>
   labs(x = "",
        y = "% Difference in potential co-nutrient limitation lakes",
        title = "National") 
-ggsave("Figures/Q1.Figs/no_limitation_changes_percentdiff_national.png", height = 4.5, width = 6.5, units = "in", dpi = 500) 
+ggsave("Figures/Qlim.Figs/no_limitation_changes_percentdiff_national.png", height = 4.5, width = 6.5, units = "in", dpi = 500) 
 
 # ecoregion plots 
 ggplot(changes.final |>
@@ -399,7 +399,7 @@ ggplot(changes.final |>
   labs(x = "",
        y = "% Difference in potential co-nutrient limitation lakes") +
   scale_x_discrete(labels = c("Olig.", "Meso.", "Eutro.", "Hyper."))
-ggsave("Figures/Q1.Figs/no_limitation_changes_percentdiff_regional.png", height = 4.5, width = 6.5, units = "in", dpi = 500) 
+ggsave("Figures/Qlim.Figs/no_limitation_changes_percentdiff_regional.png", height = 4.5, width = 6.5, units = "in", dpi = 500) 
 
 
 

@@ -18,7 +18,7 @@ ggplot(all_NLA |> filter(year == "2017")) +
                     labels = c("Olig.", "Meso.", "Eutro.", "Hyper.")) +
   labs(x = "",
        y = "# Lakes in each trophic category")
-#ggsave("Figures/Q3.Figs/2017_TS_Totals.png", height = 4.5, width = 6.5, units = "in", dpi = 500) 
+#ggsave("Figures/Qtrends.Figs/2017_TS_Totals.png", height = 4.5, width = 6.5, units = "in", dpi = 500) 
 
 ## Proportion of lakes in each category -- using weights
 proportion_ts <- all_NLA |>
@@ -43,7 +43,7 @@ ggplot(proportion_ts |> filter(year == "2017"), aes(x = 1, y = proportion, fill 
                     labels = c("Olig.", "Meso.", "Eutro.", "Hyper.")) +
   labs(x = "", y = "")+
   theme(axis.text = element_blank())
-ggsave("Figures/Q3.Figs/2017_TS_Percents.png", height = 4.5, width = 6.5, units = "in", dpi = 500) 
+ggsave("Figures/Qtrends.Figs/2017_TS_Percents.png", height = 4.5, width = 6.5, units = "in", dpi = 500) 
   
 
 #### How do trophic statuses and stoichiometries compare across ecoregions in natural vs. manmade lakes in 2017? ####
@@ -65,7 +65,7 @@ ggplot(ts_laketype) +
   labs(y = "TN:TP molar ratio",
        x = "",
        title = "National")
-ggsave("Figures/Q3.Figs/2017_ratio_ts_natvsmmlakes_national.png", height = 4.5, width = 6.5, units = "in", dpi = 500) 
+ggsave("Figures/Qtrends.Figs/2017_ratio_ts_natvsmmlakes_national.png", height = 4.5, width = 6.5, units = "in", dpi = 500) 
 
 ggplot(ts_laketype) +
   geom_split_violin(aes(y = tn.tp, x = TROPHIC_STATE,  fill = LAKE_ORIGIN)) +
@@ -77,7 +77,7 @@ ggplot(ts_laketype) +
   labs(y = "TN:TP molar ratio",
        x = "") +
   facet_wrap(~ECO_REG_NAME, ncol = 3)
-ggsave("Figures/Q3.Figs/2017_ratio_ts_natvsmmlakes_regions.png", height = 4.5, width = 6.5, units = "in", dpi = 500) 
+ggsave("Figures/Qtrends.Figs/2017_ratio_ts_natvsmmlakes_regions.png", height = 4.5, width = 6.5, units = "in", dpi = 500) 
 
 library(lme4)
 library(lmerTest)

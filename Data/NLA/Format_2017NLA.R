@@ -105,3 +105,21 @@ nla17 <- nla2017.tntp |>
 
 
 write.csv(nla17, "Data/NLA/NLA_2017.csv")
+
+nla17call <- read.csv("Data/NLA/NLA_2017.csv")
+
+ws_data_2017 <- read.csv('C:/Users/linne/Downloads/nla2017_landMets.csv') |>
+  select(SITE_ID, PCTURBHI2011, PCTURBLO2011, PCTURBMD2011, PCTURBOP2011, PCTHAY2011, PCTCROP2011) |>
+  mutate(#PCT_WATER_BSN = NLCD2006_WATERPCT_BSN,
+         PCT_DEVELOPED_BSN = (PCTURBHI2011 + PCTURBLO2011 + PCTURBMD2011 + PCTURBOP2011),
+        # PCT_FOREST_BSN = NLCD2006_FORESTPCT_BSN,
+         PCT_AGRIC_BSN = (PCTHAY2011 + PCTCROP2011)
+         #PCT_WETLAND_BSN = NLCD2006_WETLANDPCT_BSN
+        ) |>
+  select(SITE_ID, PCT_DEVELOPED_BSN, PCT_AGRIC_BSN) |>
+  distinct()
+
+nla17call2 <- nla17call |>
+  left_join(ws_data_2017)
+
+write.csv(nla17call2, "Data/NLA/NLA_2017.csv")
