@@ -117,12 +117,17 @@ nlim <- ggplot(no.lim |>
          filter(limitation == "Potential N-limitation")) +
   geom_point(aes(year, wgt_lim, color = ECO_REG_NAME)) +
   geom_line(aes(year, wgt_lim, group = ECO_REG_NAME, color = ECO_REG_NAME)) +
-  geom_smooth(aes(year, wgt_lim), color = "black") +
   theme_minimal() +
   scale_color_manual("", values = muted) +
   theme(legend.position = "none") +
   labs(x = "",
        y = "(Weighted) number of N-limited lakes")
+
+#global trend (linear model):
+N_model <- lm(wgt_lim~year, (no.lim |>
+                               filter(limitation == "Potential N-limitation")))
+summary(N_model) #adj R = 0.2195, p = 0.01955
+
 
 plim <- ggplot(no.lim |>
                  filter(limitation == "Potential P-limitation")) +
@@ -135,6 +140,12 @@ plim <- ggplot(no.lim |>
   labs(x = "",
        y = "(Weighted) number of P-limited lakes")
 
+#global trend (linear model):
+P_model <- lm(wgt_lim~year, (no.lim |>
+                               filter(limitation == "Potential P-limitation")))
+summary(P_model) #adj R = 0.01887, p = 0.3045
+
+
 colim <- ggplot(no.lim |>
             filter(limitation == "Potential co-nutrient limitation")) +
   geom_point(aes(year, wgt_lim, color = ECO_REG_NAME)) +
@@ -144,6 +155,11 @@ colim <- ggplot(no.lim |>
   theme(legend.position = "none") +
   labs(x = "",
        y = "(Weighted) number of co-limited lakes")
+
+#global trend (linear model):
+co_model <- lm(wgt_lim~year, (no.lim |>
+                               filter(limitation == "Potential co-nutrient limitation")))
+summary(co_model) #adj R = -0.02049, p = 0.4882
 
 
 (nlim | plim | colim ) +
