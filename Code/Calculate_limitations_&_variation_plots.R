@@ -24,14 +24,21 @@ ref_np <- all_NLA |>
 
 # get some information about the entire dataset
 averages_np <- all_NLA |>
+  group_by(ECO_REG, year) |>
+  mutate(yearlymeanlogNP = mean(log(tn.tp))) |>
+  ungroup() |>
   group_by(ECO_REG_NAME) |>
-  summarise(
+  mutate(
     meanlogNP = mean(log(tn.tp)),
     medianlogNP = median(log(tn.tp)),
     medianTN_PPM = median(NTL_PPM),
     medianTP_PPB = median(PTL_PPB),
     percentile25TN_PPM = quantile(NTL_PPM, probs = 0.25),
-    percentile25TP_PPB = quantile(PTL_PPB, probs = 0.25))
+    percentile25TP_PPB = quantile(PTL_PPB, probs = 0.25)) |>
+  ungroup() |>
+  select(year, ECO_REG_NAME, meanlogNP, yearlymeanlogNP, percentile25TN_PPM, percentile25TP_PPB) |>
+  distinct()
+ 
 
 # How do the lower 25th percentiles of TN and TP compare the the median  concentrations of TN and TP in the reference lakes? 
 t.test(ref_np$medianTN_PPM, averages_np$percentile25TN_PPM) # these are similar to each other!! 
@@ -39,18 +46,18 @@ t.test(ref_np$medianTP_PPB, averages_np$percentile25TP_PPB) # these are similar 
 
 
 
-# uses 25th percentile nutrient thresholds for each ecoregion and logged average N:P for each ecoregion 
+# uses 25th percentile nutrient thresholds for each ecoregion (over all years) and logged average N:P for each ecoregion (over each year)
 
 limits <- all_NLA |>
   left_join(averages_np) |>
   mutate(limitation = NA) |>
-  mutate(limitation = ifelse(PTL_PPB > percentile25TP_PPB & log(tn.tp) < meanlogNP, "Potential N-limitation", 
-                             ifelse(NTL_PPM > percentile25TN_PPM & log(tn.tp) > meanlogNP, "Potential P-limitation",
+  mutate(limitation = ifelse(PTL_PPB > percentile25TP_PPB & log(tn.tp) < yearlymeanlogNP, "Potential N-limitation", 
+                             ifelse(NTL_PPM > percentile25TN_PPM & log(tn.tp) > yearlymeanlogNP, "Potential P-limitation",
                                     ifelse(is.na(limitation), "Potential co-nutrient limitation", limitation))))
 
-nrow(limits |> filter(limitation == "Potential P-limitation")) # 1285
-nrow(limits |> filter(limitation == "Potential N-limitation")) # 1727
-nrow(limits |> filter(limitation == "Potential co-nutrient limitation")) #641
+nrow(limits |> filter(limitation == "Potential P-limitation")) # 1299 (1285 when using overal mean N:P)
+nrow(limits |> filter(limitation == "Potential N-limitation")) # 1703 (1727 when using overal mean N:P)
+nrow(limits |> filter(limitation == "Potential co-nutrient limitation")) # 651 (641 when using overal mean N:P)
 
 
 
@@ -126,7 +133,7 @@ nlim <- ggplot(no.lim |>
 #global trend (linear model):
 N_model <- lm(wgt_lim~year, (no.lim |>
                                filter(limitation == "Potential N-limitation")))
-summary(N_model) #adj R = 0.2195, p = 0.01955
+summary(N_model) #adj R = 0.121, p = 0.08137
 
 
 plim <- ggplot(no.lim |>
@@ -143,7 +150,7 @@ plim <- ggplot(no.lim |>
 #global trend (linear model):
 P_model <- lm(wgt_lim~year, (no.lim |>
                                filter(limitation == "Potential P-limitation")))
-summary(P_model) #adj R = 0.01887, p = 0.3045
+summary(P_model) #adj R = 0.1199, p = 0.08268
 
 
 colim <- ggplot(no.lim |>
@@ -159,13 +166,42 @@ colim <- ggplot(no.lim |>
 #global trend (linear model):
 co_model <- lm(wgt_lim~year, (no.lim |>
                                filter(limitation == "Potential co-nutrient limitation")))
-summary(co_model) #adj R = -0.02049, p = 0.4882
+summary(co_model) #adj R = -0.02681 , p = 0.5257
 
 
 (nlim | plim | colim ) +
   plot_annotation(tag_levels = "a", tag_suffix = ")")
 ggsave("Figures/Q1.Figs/number_lakes_change.png", height = 4.5, width = 6.5, units = "in", dpi = 500) 
 
+
+#### looking at trophic states and limitations ####
+no.lim.ts <- weighted_limits |>
+  select(year, weighted_lim, limitation, TROPHIC_STATE) |>
+  group_by(year, limitation, TROPHIC_STATE) |>
+  mutate(wgt_lim = sum(weighted_lim)) |>
+  select(-weighted_lim) |>
+  distinct()
+
+ggplot(no.lim.ts |> filter(year == "2007"), aes(TROPHIC_STATE, wgt_lim, fill = limitation)) +
+  geom_bar(stat = "identity", position = "dodge") +
+  scale_fill_manual("", values = palette_OkabeIto[5:7]) +
+  theme_minimal() +
+  labs(x = "", y = "(Weighted) number of lakes")
+ggsave("Figures/Q1.Figs/nolakes_by_ts_lim2007.png", height = 4.5, width = 6.5, units = "in", dpi = 500) 
+
+ggplot(no.lim.ts |> filter(year == "2012"), aes(TROPHIC_STATE, wgt_lim, fill = limitation)) +
+  geom_bar(stat = "identity", position = "dodge") +
+  scale_fill_manual("", values = palette_OkabeIto[5:7]) +
+  theme_minimal() +
+  labs(x = "", y = "(Weighted) number of lakes")
+ggsave("Figures/Q1.Figs/nolakes_by_ts_lim2012.png", height = 4.5, width = 6.5, units = "in", dpi = 500) 
+
+ggplot(no.lim.ts |> filter(year == "2017"), aes(TROPHIC_STATE, wgt_lim, fill = limitation)) +
+  geom_bar(stat = "identity", position = "dodge") +
+  scale_fill_manual("", values = palette_OkabeIto[5:7]) +
+  theme_minimal() +
+  labs(x = "", y = "(Weighted) number of lakes")
+ggsave("Figures/Q1.Figs/nolakes_by_ts_lim2017.png", height = 4.5, width = 6.5, units = "in", dpi = 500) 
 
 
 #### Limitation shifts over time ####
@@ -178,9 +214,9 @@ limits_change_prep <- limits|> # total 3066 lakes for this analysis
 
 
 # lakes with limitations considered for this analysis now 
-nrow(limits_change_prep |> filter(limitation == "Potential P-limitation")) #1092 
-nrow(limits_change_prep |> filter(limitation == "Potential N-limitation")) #1492
-nrow(limits_change_prep |> filter(limitation == "Potential co-nutrient limitation")) #482
+nrow(limits_change_prep |> filter(limitation == "Potential P-limitation")) # 1113 (1092 when using overal mean N:P)
+nrow(limits_change_prep |> filter(limitation == "Potential N-limitation")) # 1459 (1492 when using overal mean N:P)
+nrow(limits_change_prep |> filter(limitation == "Potential co-nutrient limitation")) # 494 (482 when using overal mean N:P)
 
 
 ### write a function for this change analysis 
