@@ -133,9 +133,15 @@ limits1 <- limits |>
   mutate(logNP = log10(tn.tp)) |>
   mutate(year = as.factor(year))
 
+ggplot(limits1, aes(year, logNP)) +
+  geom_boxplot()
+anova(aov(logNP~year, limits1)) # p < 2.2e-16 
+TukeyHSD(aov(logNP~year, limits1), conf.level = 0.95) # p < 0.001 - all groups are different at the 95% CI
+plot(TukeyHSD(aov(logNP~year, limits1), conf.level = 0.95), las = 2)
+
 ggplot(limits1, aes(limitation, logNP)) +
   geom_boxplot()
-anova(aov(logNP~limitation, limits1)) # p < 2.2e-16 
+ anova(aov(logNP~limitation, limits1)) # p < 2.2e-16 
 TukeyHSD(aov(logNP~limitation, limits1), conf.level = 0.95) # p < 0.001 - all groups are different at the 95% CI
 plot(TukeyHSD(aov(logNP~limitation, limits1), conf.level = 0.95), las = 2)
 
@@ -196,7 +202,38 @@ m.6 <- lmer(logNP~scale(AREA_HA)*limitation*TROPHIC_STATE + (1|year) + (1|ECO_RE
 performance::r2(m.6)
 anova(m.6, m.5) # m.5 is a better fit model
 
+
+
 m.7 <- lmer(logNP~scale(AREA_HA)*limitation*TROPHIC_STATE + year + scale(PCT_DEVELOPED_BSN)+ (scale(PCT_DEVELOPED_BSN)|ECO_REG_NAME), limits1|> filter(SITE_ID != "NLA17_WA-10052"))
 performance::r2(m.7) # marginal 0.485, conditional  0.633
 anova(m.7, m.5) # models were not all fitted to the same size of dataset?? -- had to delete one row of data :( but it worked
 # m.7 is significantly better than m.5
+
+
+
+m.8 <-  lmer(logNP~scale(AREA_HA)*limitation*TROPHIC_STATE + year + scale(PCT_DEVELOPED_BSN) + (1|ECO_REG_NAME), limits1|> filter(SITE_ID != "NLA17_WA-10052"))
+performance::r2(m.8) # marginal 0.484, conditional  0.632
+anova(m.8, m.7) # m.7 is slightly significantly better 
+
+m.9 <- lmer(logNP~scale(AREA_HA)*limitation*TROPHIC_STATE + year + scale(PCT_DEVELOPED_BSN)+ scale(PCT_AGRIC_BSN)+ (scale(PCT_DEVELOPED_BSN)|ECO_REG_NAME), limits1|> filter(SITE_ID != "NLA17_WA-10052"))
+performance::r2(m.9) # marginal 0.485, conditional  0.633
+anova(m.9, m.7) # no significant difference; but m.7 has lower AIC
+
+
+
+m.10 <- lmer(logNP~scale(AREA_HA)*limitation*TROPHIC_STATE + year + scale(PCT_DEVELOPED_BSN)+ scale(PCT_AGRIC_BSN)+ (scale(PCT_DEVELOPED_BSN)|ECO_REG_NAME) + (scale(PCT_AGRIC_BSN)|ECO_REG_NAME), limits1|> filter(SITE_ID != "NLA17_WA-10052"))
+summary(m.10)
+anova(m.10)
+performance::r2(m.10) # marginal 0.529, conditional  0.595
+anova(m.10, m.7) # significant difference; m.10 has AIC ~30 vs m.7 AIC of ~40
+
+
+
+
+m.11 <- lmer(logNP~scale(AREA_HA)*limitation*TROPHIC_STATE + year + scale(PCT_AGRIC_BSN)+ (scale(PCT_AGRIC_BSN)|ECO_REG_NAME), limits1|> filter(SITE_ID != "NLA17_WA-10052"))
+performance::r2(m.11) # marginal 0.483, conditional  0.627
+anova(m.11, m.9) # no significant difference using agriculture over development -- using both seems best 
+
+m.12 <-  lmer(logNP~scale(AREA_HA)*limitation*TROPHIC_STATE + year + scale(PCT_AGRIC_BSN) + (1|ECO_REG_NAME), limits1|> filter(SITE_ID != "NLA17_WA-10052"))
+performance::r2(m.12) # marginal 0.484, conditional  0.632
+anova(m.12, m.8) # no significant difference using agriculture over development -- using both seems best 

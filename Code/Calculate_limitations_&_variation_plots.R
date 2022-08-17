@@ -1,5 +1,5 @@
 
-## Script to calculate whether lakes are N, P, or co-limited
+## Script to calculate whether lakes are N, P, or co-limited & look at trends
 
 # call datasets and libraries 
 source("Data/NLA/Call_NLA_data.R")
@@ -207,7 +207,6 @@ ggsave("Figures/Qlim.Figs/nolakes_by_ts_lim2017.png", height = 4.5, width = 6.5,
 #### Limitation shifts over time ####
 library(spsurvey) 
 
-# how to the nutrient limitations change from 2007 to 2012?
 limits_change_prep <- limits|> # total 3066 lakes for this analysis 
   filter(VISIT_NO == 1) |># for this analysis, we are using just the first visit from each lake
   filter(WGT_NLA > 0) # the sp survey package is not designed to use the reference lakes, so those are ignored when using this package for analyses.
