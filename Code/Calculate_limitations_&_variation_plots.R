@@ -91,7 +91,8 @@ proportional_columns <- function( year1, filename) {
     theme_bw() +
     scale_fill_manual("", values = c(palette_OkabeIto[2], palette_OkabeIto[4], palette_OkabeIto[3], palette_OkabeIto[1])) +
     labs(x = "",
-         y = "% lakes in each limitation type")  +
+         y = "% lakes in each limitation type",
+         title = year1)  +
     facet_wrap(~ECO_REG_NAME, ncol = 3) +
     theme(axis.text.x = element_text(angle = 45, vjust = 1, hjust=1))
   ggsave(paste("Figures/Qlim.Figs/", filename, ".png", sep = ""), height = 4.5, width = 6.5, units = "in", dpi = 500)
@@ -202,6 +203,9 @@ ggplot(no.lim.ts |> filter(year == "2017"), aes(TROPHIC_STATE, wgt_lim, fill = l
   theme_minimal() +
   labs(x = "", y = "(Weighted) number of lakes")
 ggsave("Figures/Qlim.Figs/nolakes_by_ts_lim2017.png", height = 4.5, width = 6.5, units = "in", dpi = 500) 
+
+
+
 
 
 #### Limitation shifts over time ####

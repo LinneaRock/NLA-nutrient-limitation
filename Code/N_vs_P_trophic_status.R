@@ -42,11 +42,20 @@ limits_wide <- limits |>
   pivot_longer(cols = c(PTL_PPB, NTL_PPB), names_to = "nutrient", values_to = "concentration") 
   
 
-ggplot(limits_wide, aes(log10(concentration), log10(CHLA_PPB))) +
-  geom_point(aes(fill = nutrient, shape = limitation)) +
+ggplot(limits_wide, aes(log10(concentration), log10(CHLA_PPB), color = limitation)) +
+  geom_point(alpha = 0.25) +
+  geom_smooth(method = "lm", se = FALSE, aes(group = limitation)) +
   geom_abline(slope = 0, intercept = log10(2)) +
   geom_abline(slope = 0, intercept = log10(7)) +
-  geom_abline(slope = 0, intercept = log10(30))
+  geom_abline(slope = 0, intercept = log10(30)) +
+  facet_wrap(~nutrient, scales = "free_x") +
+  theme_minimal() +
+  scale_color_manual("",values = palette_OkabeIto[5:7])
+
+m.0 <- lm(log10(CHLA_PPB)~log10(concentration) * nutrient * limitation, limits_wide |> filter(is.finite(log10(CHLA_PPB))))
+summary(m.0) #adj R = 0.5364
+anova(m.0)
+coef(m.0)
 
 
 
