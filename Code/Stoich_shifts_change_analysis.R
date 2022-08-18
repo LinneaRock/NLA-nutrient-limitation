@@ -46,21 +46,21 @@ change_dat <- limits|> # total 3066 lakes for this analysis
 stoich_change_fun <- function(data, name, year1, year2) {
   
   change_ecoreg<- change_analysis(data |> filter(year %in% c(year1, year2),
-                                                 ECO_REG_NAME == name), siteID = "UNIQUE_ID", vars_cat = "tn.tp", surveyID = "year", weight = "WGT_NLA", xcoord = "LON_DD", ycoord = "LAT_DD")
+                                                 ECO_REG_NAME == name), siteID = "UNIQUE_ID", vars_cont = "tn.tp", surveyID = "year", weight = "WGT_NLA", xcoord = "LON_DD", ycoord = "LAT_DD")
   
-  change_ecoreg.1 <- change_ecoreg[["catsum"]]  |>
-    select(Subpopulation, Category, Indicator, DiffEst.P, StdError.P) |>
-    mutate(ECO_REG = name) |>
-    rename(Trophic.State = Subpopulation)
-  
-  
-  change_national <- change_analysis(data |> filter(year %in% c(year1, year2)), siteID = "UNIQUE_ID", vars_cat = "tn.tp", surveyID = "year", weight = "WGT_NLA", xcoord = "LON_DD", ycoord = "LAT_DD")
+  change_ecoreg.1 <- change_ecoreg[["contsum_mean"]]  |>
+    dplyr::select(Subpopulation, Indicator, DiffEst, StdError) |>
+    mutate(ECO_REG = name) #|>
+    #rename(Trophic.State = Subpopulation)
   
   
-  change_national.1 <- change_national[["catsum"]] |>
-    select(Subpopulation, Category, Indicator, DiffEst.P, StdError.P) |>
-    mutate(ECO_REG = "National") |>
-    rename(Trophic.State = Subpopulation) 
+  change_national <- change_analysis(data |> filter(year %in% c(year1, year2)), siteID = "UNIQUE_ID", vars_cont = "tn.tp", surveyID = "year", weight = "WGT_NLA", xcoord = "LON_DD", ycoord = "LAT_DD")
+  
+  
+  change_national.1 <- change_national[["contsum_mean"]] |>
+    dplyr::select(Subpopulation, Indicator, DiffEst, StdError) |>
+    mutate(ECO_REG = "National") #|>
+   # rename(Trophic.State = Subpopulation) 
   
   final <- bind_rows(change_national.1, change_ecoreg.1)
   
