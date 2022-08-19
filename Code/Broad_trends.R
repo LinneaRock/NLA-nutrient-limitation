@@ -126,6 +126,23 @@ leg
 ggsave("Figures/Qtrend.Figs/ecoreglegend.png", height = 4.5, width = 6.5, units = "in", dpi = 500)
 
 
+#### Map of N vs P as predictor (information discovered in N_vs_P_trophic_status.R script) ####
+WSA9_NAME <- as.vector(all_NLA |> select(ECO_REG_NAME) |> distinct())[["ECO_REG_NAME"]]
+best_predictor <- as.vector(c("TN", "TP", "TP", "TP", "TP", "TN", "TN", "TN", "TP"))
+add <- cbind(data.frame(WSA9_NAME), data.frame(best_predictor))
+
+regions.sf1 <- regions.sf |>
+  mutate(WSA9_NAME = ifelse(WSA9_NAME == "Temporate Plains", "Temperate Plains", WSA9_NAME)) |>
+  left_join(add)
+  
+
+ggplot() +
+  geom_sf(data = regions.sf1, aes(fill = best_predictor)) +
+  theme_minimal() +
+  scale_fill_manual("Better predictor of trophic state", values=c("#084c61", "#ffc857")) 
+
+ggsave("Figures/QNvsP.Figs/N_vs_P_map.png", height = 4.5, width = 6.5, units = "in", dpi = 500) 
+
 
 #### relationships between limits, stoich, trophic state ####
 

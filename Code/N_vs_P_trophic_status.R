@@ -42,20 +42,118 @@ limits_wide <- limits |>
   pivot_longer(cols = c(PTL_PPB, NTL_PPB), names_to = "nutrient", values_to = "concentration") 
   
 
-ggplot(limits_wide, aes(log10(concentration), log10(CHLA_PPB), color = limitation)) +
+ggplot(limits_wide, aes(log10(concentration), log10(CHLA_PPB), color = nutrient)) +
   geom_point(alpha = 0.25) +
-  geom_smooth(method = "lm", se = FALSE, aes(group = limitation)) +
+  geom_smooth(method = "lm", se = FALSE) +
   geom_abline(slope = 0, intercept = log10(2)) +
   geom_abline(slope = 0, intercept = log10(7)) +
   geom_abline(slope = 0, intercept = log10(30)) +
+  geom_vline(xintercept = 0) +
   facet_wrap(~nutrient, scales = "free_x") +
-  theme_minimal() +
-  scale_color_manual("",values = palette_OkabeIto[5:7])
+  theme_bw() +
+  facet_wrap(~ECO_REG_NAME, ncol = 3) +
+  labs(y = "log10(chlorophyll-a concentration)",
+       x = "log10(nutrient concentration)") +
+  scale_color_manual("", labels = c("TN", "TP"), values=c("#084c61", "#ffc857"))
+ggsave("Figures/QNvsP.Figs/ecoregion_linearmodels.png", height = 4.5, width = 6.5, units = "in", dpi = 500) 
 
-m.0 <- lm(log10(CHLA_PPB)~log10(concentration) * nutrient * limitation, limits_wide |> filter(is.finite(log10(CHLA_PPB))))
+
+
+m.0 <- aov(log10(CHLA_PPB)~log10(concentration) * nutrient, limits_wide |> filter(is.finite(log10(CHLA_PPB))))
 summary(m.0) #adj R = 0.5364
 anova(m.0)
 coef(m.0)
+library(broom)
+tidy(m.0)
+glance(m.0)
+
+m.0region <- aov(log10(CHLA_PPB)~log10(concentration) * nutrient * ECO_REG_NAME, limits_wide |> filter(is.finite(log10(CHLA_PPB))))
+summary(m.0region) #adj R = 0.5916
+anova(m.0, m.0region) # adding Ecoregion is a significantly better model
+#plot(TukeyHSD(m.0region, conf.level = 0.95), las = 2)
+
+
+#### Table of values from linear models ####
+# first get info from national model
+m.P <- lm(log10(CHLA_PPB)~log10(concentration), limits_wide |> filter(is.finite(log10(CHLA_PPB)), nutrient == "PTL_PPB"))
+m.N <- lm(log10(CHLA_PPB)~log10(concentration), limits_wide |> filter(is.finite(log10(CHLA_PPB)), nutrient == "NTL_PPB"))
+
+
+slopeP <- coef(m.P)[2] # slope of linear model of Chla vs. P
+slopeN <- coef(m.N)[2] # slope of linear model of Chla vs. N
+intP <- coef(m.P)[1] # intercept of linear model of Chla vs. P
+intN <- coef(m.N)[1] # intercept of linear model of Chla vs. N
+rP <- as.numeric(glance(m.P)[2]) # adj. r-squraed of linear model of Chla vs. P
+rN <- as.numeric(glance(m.N)[2]) # adj. r-squraed of linear model of Chla vs. N
+pP <- as.numeric(glance(m.P)[5]) # p-value of linear model of Chla vs. P
+pN <- as.numeric(glance(m.N)[5]) # p-value of linear model of Chla vs. N
+
+
+Ecoregion <- c("National", "National")
+`Model Predictor` <- c("TP", "TN")
+Slope <- c(slopeP, slopeN)
+Intercept <- c(intP, intN)
+`r-squared` <- c(rP, rN)
+`p-value` <- c(pP, pN)
+
+# by ecoregion
+list <- as.vector(all_NLA |> select(ECO_REG_NAME) |> distinct())[["ECO_REG_NAME"]]
+
+#add national information
+lm_ecoreg_df <- data.frame()
+lm_ecoreg_df <- cbind(data.frame(Ecoregion), data.frame(`Model Predictor`), data.frame(Slope), data.frame(Intercept), data.frame(`r-squared`), data.frame(`p-value`))
+
+# add ecoregional information
+for(name in list) {
+  m.P <- lm(log10(CHLA_PPB)~log10(concentration), limits_wide |> filter(is.finite(log10(CHLA_PPB)), ECO_REG_NAME == name, nutrient == "PTL_PPB"))
+  m.N <- lm(log10(CHLA_PPB)~log10(concentration), limits_wide |> filter(is.finite(log10(CHLA_PPB)), ECO_REG_NAME == name, nutrient == "NTL_PPB"))
+  
+  
+  slopeP <- coef(m.P)[2] # slope of linear model of Chla vs. P
+  slopeN <- coef(m.N)[2] # slope of linear model of Chla vs. N
+  intP <- coef(m.P)[1] # intercept of linear model of Chla vs. P
+  intN <- coef(m.N)[1] # intercept of linear model of Chla vs. N
+  rP <- as.numeric(glance(m.P)[2]) # adj. r-squraed of linear model of Chla vs. P
+  rN <- as.numeric(glance(m.N)[2]) # adj. r-squraed of linear model of Chla vs. N
+  pP <- as.numeric(glance(m.P)[5]) # p-value of linear model of Chla vs. P
+  pN <- as.numeric(glance(m.N)[5]) # p-value of linear model of Chla vs. N
+  
+  
+  Ecoregion <- c(name, name)
+  `Model Predictor` <- c("TP", "TN")
+  Slope <- c(slopeP, slopeN)
+  Intercept <- c(intP, intN)
+  `r-squared` <- c(rP, rN)
+  `p-value` <- c(pP, pN)
+ 
+  tmp <- cbind(data.frame(Ecoregion), data.frame(`Model Predictor`), data.frame(Slope), data.frame(Intercept), data.frame(`r-squared`), data.frame(`p-value`))
+  
+  lm_ecoreg_df <- bind_rows(lm_ecoreg_df, tmp) |>
+    distinct()
+  
+}
+
+lm_ecoreg_df1 <- lm_ecoreg_df |>
+  mutate(p.value = "<0.0001")
+
+#create a pretty table
+library(gt)
+gt_tbl <- gt(lm_ecoreg_df1)
+simpleregtable <- gt_tbl %>%
+  cols_label(
+    Ecoregion = "Ecoregion",
+    Model.Predictor = "Model Predictor",
+    Slope = "Slope",
+    Intercept = "Intercept",
+    r.squared = "r-squared",
+    p.value = "p-value"
+  ) %>%
+  tab_header(
+    title = "Chlorophyll concentration (proxy for trophic status) vs nutrient concentration relationships",
+    subtitle = "Log10(chlorophyll-a) - Log(nutrient) used in linear models"
+  ); simpleregtable
+gtsave(simpleregtable, "Figures/QNvsP.Figs/ecoregion_linearmodels_table.png") 
+
 
 
 
