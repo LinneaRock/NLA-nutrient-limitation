@@ -56,3 +56,7 @@ crossover2007_2017 <- unique_2007 |>
 crossover2007_2012_2017 <- crossover2007_2012|>
   inner_join(unique_2017 |> select(UNIQUE_ID) |>
                distinct()) |> distinct() # 234
+
+
+mean(all_NLA$tn.tp) # 59.48564
+sd(all_NLA$tn.tp) # 113.4884

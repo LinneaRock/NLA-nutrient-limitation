@@ -65,12 +65,25 @@ anova(m.0)
 coef(m.0)
 library(broom)
 tidy(m.0)
-glance(m.0)
+glance(m.0) # r =0.507, AIC = 9356
 
 m.0region <- aov(log10(CHLA_PPB)~log10(concentration) * nutrient * ECO_REG_NAME, limits_wide |> filter(is.finite(log10(CHLA_PPB))))
-summary(m.0region) #adj R = 0.5916
+summary(m.0region) #adj R = 0.594
+anova(m.0region) # all variables including the interactions are significant, meaning the slopes and intercepts among groups are different. 
 anova(m.0, m.0region) # adding Ecoregion is a significantly better model
 #plot(TukeyHSD(m.0region, conf.level = 0.95), las = 2)
+glance(m.0region) # r = 0.594, AIC = 7975
+performance::r2(m.0region)
+
+
+# library(lme4)
+# m.1region <- lmer(log10(CHLA_PPB)~log10(concentration) * nutrient + (1|ECO_REG_NAME), limits_wide |> filter(is.finite(log10(CHLA_PPB))))
+# summary(m.1region) #adj R = 0.570
+# anova(m.1region) # all variables including the interactions are significant, meaning the slopes and intercepts among groups are different. 
+# anova(m.1region, m.0region) # adding Ecoregion is a significantly better model
+# #plot(TukeyHSD(m.0region, conf.level = 0.95), las = 2)
+# glance(m.1region) # r = 0.594, AIC = 7975
+# performance::r2(m.1region)
 
 
 #### Table of values from linear models ####
@@ -135,6 +148,10 @@ for(name in list) {
 
 lm_ecoreg_df1 <- lm_ecoreg_df |>
   mutate(p.value = "<0.0001")
+
+
+compare_r_values <- lm_ecoreg_df |>
+  pivot_wider(names_from = "Model.Predictor", values_from = "r.squared")
 
 #create a pretty table
 library(gt)
