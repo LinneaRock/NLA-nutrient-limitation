@@ -287,7 +287,7 @@ ggplot(changes.final |>
   geom_errorbar(aes(year.shift, DiffEst, ymin = DiffEst-StdError, ymax = DiffEst+StdError, color = year.shift), width = 0.2, position=position_dodge(width=0.5))  + 
   theme_bw() +
   facet_grid(~year.shift, scales = "free_x") +
-  facet_wrap(~ECO_REG, ncol = 3) +
+  facet_wrap(~ECO_REG, ncol = 3, scales = "free_y") +
   #theme(strip.background = element_rect(color = "black", fill = c(palette_OkabeIto[2], palette_OkabeIto[4], palette_OkabeIto[3], palette_OkabeIto[1]), size = 1.5, linetype = "solid")) +
   scale_fill_manual("", values = c("red4", "#336a98")) +
   scale_color_manual("", values = c("red4", "#336a98")) +
@@ -321,8 +321,8 @@ ggplot(changes.finalts |>
   geom_point(aes(Trophic.State, DiffEst, fill = year.shift), color = "black", pch = 21, size = 1, position=position_dodge(width=0.5)) +
   geom_errorbar(aes(Trophic.State, DiffEst, ymin = DiffEst-StdError, ymax = DiffEst+StdError, color = year.shift), width = 0.2, position=position_dodge(width=0.5))  + 
   theme_bw() +
-  facet_grid(~Trophic.State, scales = "free_y") +
-  facet_wrap(~ECO_REG, ncol = 3) +
+  facet_grid(~Trophic.State) +
+  facet_wrap(~ECO_REG, ncol = 3, scales = "free_y") +
   #theme(strip.background = element_rect(color = "black", fill = c(palette_OkabeIto[2], palette_OkabeIto[4], palette_OkabeIto[3], palette_OkabeIto[1]), size = 1.5, linetype = "solid")) +
   scale_fill_manual("", values = c("red4", "#336a98")) +
   scale_color_manual("", values = c("red4", "#336a98")) +
@@ -337,7 +337,8 @@ ggsave("Figures/Qtrend.Figs/ts_stoich_shift_regional.png", height = 4.5, width =
 #*******************************************************************# 
 
 ggplot(changes.finallim |>
-         filter(ECO_REG == "National")) +
+         filter(ECO_REG == "National") |>
+         mutate(Limitation = ifelse(Limitation == "Potential co-nutrient limitation", "Potential co-limitation", Limitation))) +
   geom_point(aes(Limitation, DiffEst, fill = year.shift), color = "black", pch = 21, size = 1, position=position_dodge(width=0.5)) +
   geom_errorbar(aes(Limitation, DiffEst, ymin = DiffEst-StdError, ymax = DiffEst+StdError, color = year.shift), width = 0.2, position=position_dodge(width=0.5))  + 
   theme_bw() +
@@ -354,17 +355,19 @@ ggsave("Figures/Qtrend.Figs/lim_stoich_shift_national.png", height = 4.5, width 
 
 # ecoregion plots 
 ggplot(changes.finallim |>
-         filter(ECO_REG != "National")) +
+         filter(ECO_REG != "National") |>
+         mutate(Limitation = ifelse(Limitation == "Potential co-nutrient limitation", "Potential co-limitation", Limitation))) +
   geom_point(aes(Limitation, DiffEst, fill = year.shift), color = "black", pch = 21, size = 1, position=position_dodge(width=0.5)) +
   geom_errorbar(aes(Limitation, DiffEst, ymin = DiffEst-StdError, ymax = DiffEst+StdError, color = year.shift), width = 0.2, position=position_dodge(width=0.5))  + 
   theme_bw() +
-  facet_grid(~Limitation, scales = "free_y") +
-  facet_wrap(~ECO_REG, ncol = 3) +
+  facet_grid(~Limitation) +
+  facet_wrap(~ECO_REG, ncol = 3, scales = "free_y") +
   #theme(strip.background = element_rect(color = "black", fill = c(palette_OkabeIto[2], palette_OkabeIto[4], palette_OkabeIto[3], palette_OkabeIto[1]), size = 1.5, linetype = "solid")) +
   scale_fill_manual("", values = c("red4", "#336a98")) +
   scale_color_manual("", values = c("red4", "#336a98")) +
   geom_hline(yintercept = 0) +
   labs(x = "",
        y = "% Difference in N:P stoichiometry") +
-  theme(axis.text.x = element_text(angle = 45))
+  scale_x_discrete(labels = c("Co-lim", "N-lim", "P-lim"))
+ # theme(axis.text.x = element_text(angle = 45))
 ggsave("Figures/Qtrend.Figs/lim_stoich_shift_regional.png", height = 4.5, width = 6.5, units = "in", dpi = 500) 
