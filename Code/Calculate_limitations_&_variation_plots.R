@@ -319,7 +319,7 @@ ggplot(changes.final |>
   geom_errorbar(aes(Trophic.State, DiffEst.P, ymin = DiffEst.P-StdError.P, ymax = DiffEst.P+StdError.P, color = year.shift), width = 0.2, position=position_dodge(width=0.5))  + 
   theme_bw() +
   facet_grid(~Trophic.State, scales = "free_x") +
-  facet_wrap(~ECO_REG, ncol = 3) +
+  facet_wrap(~ECO_REG, ncol = 3, scales = "free_y") +
   #theme(strip.background = element_rect(color = "black", fill = c(palette_OkabeIto[2], palette_OkabeIto[4], palette_OkabeIto[3], palette_OkabeIto[1]), size = 1.5, linetype = "solid")) +
   scale_fill_manual("", values = c("red4", "#336a98")) +
   scale_color_manual("", values = c("red4", "#336a98")) +
@@ -356,7 +356,7 @@ ggplot(changes.final |>
   geom_errorbar(aes(Trophic.State, DiffEst.P, ymin = DiffEst.P-StdError.P, ymax = DiffEst.P+StdError.P, color = year.shift), width = 0.2, position=position_dodge(width=0.5))  + 
   theme_bw() +
   facet_grid(~Trophic.State, scales = "free_x") +
-  facet_wrap(~ECO_REG, ncol = 3) +
+  facet_wrap(~ECO_REG, ncol = 3, scales = "free_y") +
   #theme(strip.background = element_rect(color = "black", fill = c(palette_OkabeIto[2], palette_OkabeIto[4], palette_OkabeIto[3], palette_OkabeIto[1]), size = 1.5, linetype = "solid")) +
   scale_fill_manual("", values = c("red4", "#336a98")) +
   scale_color_manual("", values = c("red4", "#336a98")) +
@@ -394,7 +394,7 @@ ggplot(changes.final |>
   geom_errorbar(aes(Trophic.State, DiffEst.P, ymin = DiffEst.P-StdError.P, ymax = DiffEst.P+StdError.P, color = year.shift), width = 0.2, position=position_dodge(width=0.5))  + 
   theme_bw() +
   facet_grid(~Trophic.State, scales = "free_x") +
-  facet_wrap(~ECO_REG, ncol = 3) +
+  facet_wrap(~ECO_REG, ncol = 3, scales = "free_y") +
   #theme(strip.background = element_rect(color = "black", fill = c(palette_OkabeIto[2], palette_OkabeIto[4], palette_OkabeIto[3], palette_OkabeIto[1]), size = 1.5, linetype = "solid")) +
   scale_fill_manual("", values = c("red4", "#336a98")) +
   scale_color_manual("", values = c("red4", "#336a98")) +
@@ -406,4 +406,94 @@ ggsave("Figures/Qlim.Figs/no_limitation_changes_percentdiff_regional.png", heigh
 
 
 
+###############################################################
+#### # Percent lakes in each ecoregion ####
 
+
+years <- c("2007", "2012", "2017")
+final <- data.frame()
+
+for(i in 1:length(years)) {
+  data <- limits_change_prep |>
+    filter(year == years[i])
+  
+  tmp <- cat_analysis(
+    data,
+    siteID = "UNIQUE_ID",
+    vars = "limitation",
+    weight = "WGT_NLA",
+    subpops = "ECO_REG_NAME",
+    xcoord = "LON_DD",
+    ycoord = "LAT_DD"
+  )
+  
+  tmp <- tmp |>
+    mutate(year = years[i])
+  
+  final <- rbind(final, tmp)
+}
+
+nat <- cat_analysis(
+  limits_change_prep,
+  siteID = "UNIQUE_ID",
+  vars = "limitation",
+  weight = "WGT_NLA",
+  subpops = "year",
+  xcoord = "LON_DD",
+  ycoord = "LAT_DD"
+)
+
+nat1 <- nat |>
+  mutate(year = Subpopulation,
+         Subpopulation = "National")
+
+final1 <- rbind(final, nat1)
+
+
+
+
+p1 <- ggplot(final1 |> filter(year == "2007",
+                              Category != "Total"), aes(Subpopulation, Estimate.P, fill = Category)) +
+  geom_bar(stat = "identity", position = position_dodge()) +
+  geom_errorbar(aes(ymin = Estimate.P - StdError.P, ymax = Estimate.P + StdError.P), width = 0.2, position=position_dodge(width=0.9)) +
+  scale_fill_manual("", values = palette_OkabeIto[5:7]) +
+  theme_minimal() +
+  coord_flip() +
+  labs(x = "",
+       y = "Percent of lakes",
+       title = "2007") +
+  theme(legend.position = "none")
+
+
+
+p2 <- ggplot(final1 |> filter(year == "2012",
+                              Category != "Total"), aes(Subpopulation, Estimate.P, fill = Category)) +
+  geom_bar(stat = "identity", position = position_dodge()) +
+  geom_errorbar(aes(ymin = Estimate.P - StdError.P, ymax = Estimate.P + StdError.P), width = 0.2, position=position_dodge(width=0.9)) +
+  scale_fill_manual("", values = palette_OkabeIto[5:7]) +
+  theme_minimal() +
+  coord_flip() +
+  labs(x = "",
+       y = "Percent of lakes",
+       title = "2012") +
+  theme(legend.position = "bottom",
+        axis.text.y = element_blank())
+
+
+
+
+p3 <- ggplot(final1 |> filter(year == "2017",
+                              Category != "Total"), aes(Subpopulation, Estimate.P, fill = Category)) +
+  geom_bar(stat = "identity", position = position_dodge()) +
+  geom_errorbar(aes(ymin = Estimate.P - StdError.P, ymax = Estimate.P + StdError.P), width = 0.2, position=position_dodge(width=0.9)) +
+  scale_fill_manual("", values = palette_OkabeIto[5:7]) +
+  theme_minimal() +
+  coord_flip() +
+  labs(x = "",
+       y = "Percent of lakes",
+       title = "2017") +
+  theme(legend.position = "none",
+        axis.text.y = element_blank())
+
+(p1 | p2 | p3)
+ggsave("Figures/Qlim.Figs/limitations_yearly.png", height = 4.5, width = 6.5, units = "in", dpi = 500) 

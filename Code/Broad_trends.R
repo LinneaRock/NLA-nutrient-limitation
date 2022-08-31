@@ -221,7 +221,7 @@ anova(m.6, m.5) # m.5 is a better fit model
 
 
 
-m.7 <- lmer(logNP~scale(AREA_HA)*limitation*TROPHIC_STATE + year + scale(PCT_DEVELOPED_BSN)+ (scale(PCT_DEVELOPED_BSN)|ECO_REG_NAME), limits1|> filter(SITE_ID != "NLA17_WA-10052"))
+m.7 <- lmer(logNP~scale(AREA_HA)*limitation*TROPHIC_STATE + year + scale(PCT_DEVELOPED_BSN)+ (scale(PCT_DEVELOPED_BSN)|ECO_REG_NAME), limits1|> filter(SITE_ID != "NLA17_WA-10052")) # have to remove one site that does not have basin characteristics.
 performance::r2(m.7) # marginal 0.485, conditional  0.633
 anova(m.7, m.5) # models were not all fitted to the same size of dataset?? -- had to delete one row of data :( but it worked
 # m.7 is significantly better than m.5
@@ -254,3 +254,10 @@ anova(m.11, m.9) # no significant difference using agriculture over development 
 m.12 <-  lmer(logNP~scale(AREA_HA)*limitation*TROPHIC_STATE + year + scale(PCT_AGRIC_BSN) + (1|ECO_REG_NAME), limits1|> filter(SITE_ID != "NLA17_WA-10052"))
 performance::r2(m.12) # marginal 0.484, conditional  0.632
 anova(m.12, m.8) # no significant difference using agriculture over development -- using both seems best 
+
+
+
+
+m.13 <- lmer(logNP~scale(AREA_HA)*limitation*TROPHIC_STATE + year + scale(PCT_DEVELOPED_BSN)+ scale(PCT_AGRIC_BSN)+ (1|ECO_REG_NAME), limits1|> filter(SITE_ID != "NLA17_WA-10052"))
+performance::r2(m.13) # marginal 0.484, conditional  0.632
+anova(m.9, m.13) # m.9 slightly significantly better. 
