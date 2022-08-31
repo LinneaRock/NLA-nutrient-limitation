@@ -287,7 +287,7 @@ ggplot(changes.final |>
   geom_errorbar(aes(year.shift, DiffEst, ymin = DiffEst-StdError, ymax = DiffEst+StdError, color = year.shift), width = 0.2, position=position_dodge(width=0.5))  + 
   theme_bw() +
   facet_grid(~year.shift, scales = "free_x") +
-  facet_wrap(~ECO_REG, ncol = 3) +
+  facet_wrap(~ECO_REG, ncol = 3, scales = "free_y") +
   #theme(strip.background = element_rect(color = "black", fill = c(palette_OkabeIto[2], palette_OkabeIto[4], palette_OkabeIto[3], palette_OkabeIto[1]), size = 1.5, linetype = "solid")) +
   scale_fill_manual("", values = c("red4", "#336a98")) +
   scale_color_manual("", values = c("red4", "#336a98")) +
