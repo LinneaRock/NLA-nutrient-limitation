@@ -448,6 +448,8 @@ nat1 <- nat |>
          Subpopulation = "National")
 
 final1 <- rbind(final, nat1)
+final1$Subpopulation = factor(final1$Subpopulation,
+                                  levels = c("National", "Northern Appalachians", "Southern Appalachians", "Coastal Plains", "Temperate Plains", "Upper Midwest", "Northern Plains", "Southern Plains", "Xeric", "Western Mountains"))
 
 
 
@@ -460,9 +462,10 @@ p1 <- ggplot(final1 |> filter(year == "2007",
   theme_minimal() +
   coord_flip() +
   labs(x = "",
-       y = "Percent of lakes",
+       y = "% lakes",
        title = "2007") +
-  theme(legend.position = "none")
+  theme(legend.position = "none")  +
+  scale_x_discrete(limits=rev)
 
 
 
@@ -474,10 +477,11 @@ p2 <- ggplot(final1 |> filter(year == "2012",
   theme_minimal() +
   coord_flip() +
   labs(x = "",
-       y = "Percent of lakes",
+       y = "% lakes",
        title = "2012") +
   theme(legend.position = "bottom",
-        axis.text.y = element_blank())
+        axis.text.y = element_blank())  +
+  scale_x_discrete(limits=rev)
 
 
 
@@ -490,10 +494,11 @@ p3 <- ggplot(final1 |> filter(year == "2017",
   theme_minimal() +
   coord_flip() +
   labs(x = "",
-       y = "Percent of lakes",
+       y = "% lakes",
        title = "2017") +
   theme(legend.position = "none",
-        axis.text.y = element_blank())
+        axis.text.y = element_blank()) +
+  scale_x_discrete(limits=rev)
 
 (p1 | p2 | p3)
 ggsave("Figures/Qlim.Figs/limitations_yearly.png", height = 4.5, width = 6.5, units = "in", dpi = 500) 

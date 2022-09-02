@@ -41,10 +41,14 @@ limits_wide <- limits |>
   mutate(NTL_PPB = NTL_PPM / 1000) |>
   pivot_longer(cols = c(PTL_PPB, NTL_PPB), names_to = "nutrient", values_to = "concentration") 
   
+limits_wide$ECO_REG_NAME = factor(limits_wide$ECO_REG_NAME,
+                              levels = c("Northern Appalachians", "Southern Appalachians", "Coastal Plains", "Temperate Plains", "Upper Midwest", "Northern Plains", "Southern Plains", "Xeric", "Western Mountains"))
 
-ggplot(limits_wide, aes(log10(concentration), log10(CHLA_PPB), color = nutrient)) +
-  geom_point(alpha = 0.25) +
-  geom_smooth(method = "lm", se = FALSE) +
+library(ggpubr) # to annotate the plots
+
+ggplot(limits_wide, aes(log10(concentration), log10(CHLA_PPB))) +
+  geom_point(alpha = 0.25, aes(color = nutrient)) +
+  geom_smooth(method = "lm", se = FALSE, aes(group = nutrient), color = "grey60") +
   geom_abline(slope = 0, intercept = log10(2)) +
   geom_abline(slope = 0, intercept = log10(7)) +
   geom_abline(slope = 0, intercept = log10(30)) +
@@ -56,7 +60,6 @@ ggplot(limits_wide, aes(log10(concentration), log10(CHLA_PPB), color = nutrient)
        x = "log10(nutrient concentration)") +
   scale_color_manual("", labels = c("TN", "TP"), values=c("#084c61", "#ffc857"))
 ggsave("Figures/QNvsP.Figs/ecoregion_linearmodels.png", height = 4.5, width = 6.5, units = "in", dpi = 500) 
-
 
 
 m.0 <- aov(log10(CHLA_PPB)~log10(concentration) * nutrient, limits_wide |> filter(is.finite(log10(CHLA_PPB))))
@@ -76,14 +79,14 @@ glance(m.0region) # r = 0.594, AIC = 7975
 performance::r2(m.0region)
 
 
-# library(lme4)
-# m.1region <- lmer(log10(CHLA_PPB)~log10(concentration) * nutrient + (1|ECO_REG_NAME), limits_wide |> filter(is.finite(log10(CHLA_PPB))))
-# summary(m.1region) #adj R = 0.570
-# anova(m.1region) # all variables including the interactions are significant, meaning the slopes and intercepts among groups are different. 
-# anova(m.1region, m.0region) # adding Ecoregion is a significantly better model
-# #plot(TukeyHSD(m.0region, conf.level = 0.95), las = 2)
-# glance(m.1region) # r = 0.594, AIC = 7975
-# performance::r2(m.1region)
+library(lme4)
+m.1region <- lmer(log10(CHLA_PPB)~log10(concentration) * nutrient * factor(year) + (1|ECO_REG_NAME), limits_wide |> filter(is.finite(log10(CHLA_PPB))))
+summary(m.1region) 
+anova(m.1region) 
+anova(m.1region, m.0region) #m.0region has lower AIC
+#plot(TukeyHSD(m.0region, conf.level = 0.95), las = 2)
+library(broom)
+performance::r2(m.1region) #Conditional R2: 0.570, Marginal R2: 0.481
 
 
 #### Table of values from linear models ####
@@ -138,7 +141,7 @@ for(name in list) {
   Intercept <- c(intP, intN)
   `r-squared` <- c(rP, rN)
   `p-value` <- c(pP, pN)
- 
+  
   tmp <- cbind(data.frame(Ecoregion), data.frame(`Model Predictor`), data.frame(Slope), data.frame(Intercept), data.frame(`r-squared`), data.frame(`p-value`))
   
   lm_ecoreg_df <- bind_rows(lm_ecoreg_df, tmp) |>
@@ -147,11 +150,15 @@ for(name in list) {
 }
 
 lm_ecoreg_df1 <- lm_ecoreg_df |>
-  mutate(p.value = "<0.0001")
+  select(-p.value)
 
 
 compare_r_values <- lm_ecoreg_df |>
   pivot_wider(names_from = "Model.Predictor", values_from = "r.squared")
+
+lm_ecoreg_df1$Ecoregion = factor(lm_ecoreg_df1$Ecoregion,
+                                  levels = c("National","Northern Appalachians", "Southern Appalachians", "Coastal Plains", "Temperate Plains", "Upper Midwest", "Northern Plains", "Southern Plains", "Xeric", "Western Mountains"))
+
 
 #create a pretty table
 library(gt)
@@ -162,14 +169,14 @@ simpleregtable <- gt_tbl %>%
     Model.Predictor = "Model Predictor",
     Slope = "Slope",
     Intercept = "Intercept",
-    r.squared = "r-squared",
-    p.value = "p-value"
+    r.squared = "r-squared"
   ) %>%
   tab_header(
     title = "Chlorophyll concentration (proxy for trophic status) vs nutrient concentration relationships",
     subtitle = "Log10(chlorophyll-a) - Log(nutrient) used in linear models"
   ); simpleregtable
 gtsave(simpleregtable, "Figures/QNvsP.Figs/ecoregion_linearmodels_table.png") 
+
 
 
 
