@@ -52,3 +52,8 @@ all_NLA$TSTATE_TP = factor(all_NLA$TSTATE_TP,
 all_NLA$TSTATE_CHL = factor(all_NLA$TSTATE_CHL,
                             levels = c("OLIGOTROPHIC (<= 2 ug/L)", "MESOTROPHIC (2-7 ug/L)","EUTROPHIC (7-30 ug/L)","HYPEREUTROPHIC (> 30 ug/L)"))
 
+all_NLA$ECO_REG_NAME = factor(all_NLA$ECO_REG_NAME,
+                              levels = c("Northern Appalachians", "Southern Appalachians", "Coastal Plains", "Temperate Plains", "Upper Midwest", "Northern Plains", "Southern Plains", "Xeric", "Western Mountains"))
+
+all_NLA$ECO_REG = factor(all_NLA$ECO_REG,
+                              levels = c("NAP", "SAP", "CPL", "TPL", "UMW", "NPL", "SPL", "XER", "WMT"))
