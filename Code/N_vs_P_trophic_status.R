@@ -103,6 +103,8 @@ rP <- as.numeric(glance(m.P)[2]) # adj. r-squraed of linear model of Chla vs. P
 rN <- as.numeric(glance(m.N)[2]) # adj. r-squraed of linear model of Chla vs. N
 pP <- as.numeric(glance(m.P)[5]) # p-value of linear model of Chla vs. P
 pN <- as.numeric(glance(m.N)[5]) # p-value of linear model of Chla vs. N
+aicP <- AIC(m.P)
+aicN <- AIC(m.N)
 
 
 Ecoregion <- c("National", "National")
@@ -111,13 +113,14 @@ Slope <- c(slopeP, slopeN)
 Intercept <- c(intP, intN)
 `r-squared` <- c(rP, rN)
 `p-value` <- c(pP, pN)
+AIC <- c(aicP, aicN)
 
 # by ecoregion
 list <- as.vector(all_NLA |> select(ECO_REG_NAME) |> distinct())[["ECO_REG_NAME"]]
 
 #add national information
 lm_ecoreg_df <- data.frame()
-lm_ecoreg_df <- cbind(data.frame(Ecoregion), data.frame(`Model Predictor`), data.frame(Slope), data.frame(Intercept), data.frame(`r-squared`), data.frame(`p-value`))
+lm_ecoreg_df <- cbind(data.frame(Ecoregion), data.frame(`Model Predictor`), data.frame(Slope),  data.frame(AIC), data.frame(`r-squared`), data.frame(`p-value`))
 
 # add ecoregional information
 for(name in list) {
@@ -133,6 +136,8 @@ for(name in list) {
   rN <- as.numeric(glance(m.N)[2]) # adj. r-squraed of linear model of Chla vs. N
   pP <- as.numeric(glance(m.P)[5]) # p-value of linear model of Chla vs. P
   pN <- as.numeric(glance(m.N)[5]) # p-value of linear model of Chla vs. N
+  aicP <- AIC(m.P)
+  aicN <- AIC(m.N)
   
   
   Ecoregion <- c(name, name)
@@ -141,8 +146,9 @@ for(name in list) {
   Intercept <- c(intP, intN)
   `r-squared` <- c(rP, rN)
   `p-value` <- c(pP, pN)
+  AIC <- c(aicP, aicN)
   
-  tmp <- cbind(data.frame(Ecoregion), data.frame(`Model Predictor`), data.frame(Slope), data.frame(Intercept), data.frame(`r-squared`), data.frame(`p-value`))
+  tmp <- cbind(data.frame(Ecoregion), data.frame(`Model Predictor`), data.frame(Slope), data.frame(AIC), data.frame(`r-squared`), data.frame(`p-value`))
   
   lm_ecoreg_df <- bind_rows(lm_ecoreg_df, tmp) |>
     distinct()
@@ -168,8 +174,11 @@ simpleregtable <- gt_tbl %>%
     Ecoregion = "Ecoregion",
     Model.Predictor = "Model Predictor",
     Slope = "Slope",
-    Intercept = "Intercept",
+    AIC = "AIC",
     r.squared = "r-squared"
+  ) %>%
+  cols_align(
+    align = "left"
   ) %>%
   tab_header(
     title = "Chlorophyll concentration (proxy for trophic status) vs nutrient concentration relationships",
