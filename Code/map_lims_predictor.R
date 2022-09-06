@@ -6,6 +6,7 @@ source("Data/NLA/Call_NLA_data.R")
 library(colorblindr)
 library(sf)
 library(patchwork)
+
 regions.sf <- read_sf("Data/aggr_ecoregions_2015/Aggr_Ecoregions_2015.shp")
 nla_locations.sf <- st_as_sf(limits, coords = c("LON_DD", "LAT_DD"), crs = 4326)
 
@@ -80,72 +81,83 @@ centers2 <- cbind(centers1, names) |>
   rename(WSA9_NAME = final2.WSA9_NAME) 
 
 final3 <- left_join(final2, centers2) |>
-  pivot_wider(names_from = Category, values_from = Estimate.P)
+  dplyr::select(year, Category, Estimate.P, WSA9_NAME, LAT, LON) |>
+  pivot_wider(names_from = Category, values_from = Estimate.P) |>
+  unnest(cols = c(`Potential co-nutrient limitation`, `Potential N-limitation`, 
+                  `Potential P-limitation`))
 
 
 
-#### create the base map ####
-library(scatterpie)
+####  ####
 base <- ggplot() +
- # geom_sf(data = regions.sf1, aes(fill = best_predictor)) +
-  geom_scatterpie(aes(x=LON, y=LAT, group = WSA9_NAME), data = final3 |> filter(year == "2007"), cols = c("Potential N-limitation", "Potential P-limitation", "Potential co-nutrient limitation")) +
-  coord_equal()
- # theme_minimal() +
- # scale_fill_manual("Better predictor of trophic state", values=c("#084c61", "#ffc857")) 
-
-#### pie charts of limitations per year ####
-ggplot(final1 |> filter(year == "2007",
-                              Category != "Total"), aes(x= 1, y = Estimate.P, fill = Category)) +
-  facet_wrap(~Subpopulation, ncol = 3) +
-  geom_col() +
-  coord_polar(theta = 'y') +
-  scale_fill_manual("", values = palette_OkabeIto[5:7]) +
+  geom_sf(data = regions.sf1, aes(fill = best_predictor)) +
   theme_minimal() +
-  labs(x = "", y = "", title = "2007") +
-  theme(axis.text = element_blank())
+  scale_fill_manual("Better predictor of trophic state", values=c("#084c61", "#ffc857")) 
+  
+final4 <- final3 |>
+  rename(colim = `Potential co-nutrient limitation`) |>
+  drop_na() |>
+  st_as_sf(coords = c("LON", "LAT"), crs = 4326)
 
 
 
-ggplot(final1 |> filter(year == "2012",
-                        Category != "Total"), aes(x= 1, y = Estimate.P, fill = Category)) +
-  facet_wrap(~Subpopulation, ncol = 3) +
-  geom_col() +
-  coord_polar(theta = 'y') +
-  scale_fill_manual("", values = palette_OkabeIto[5:7]) +
+library(scatterpie)
+pies_2007 <- ggplot() +
+  geom_scatterpie(aes(x=LON, y=LAT, group = WSA9_NAME), data = final3 |> filter(year == "2007") |> drop_na(), cols = c("Potential N-limitation", "Potential P-limitation", "Potential co-nutrient limitation"), pie_scale = 1) +
+  coord_equal() +
   theme_minimal() +
-  labs(x = "", y = "", title = "2012") +
-  theme(axis.text = element_blank())
+  scale_fill_manual("", values = c(palette_OkabeIto[6], palette_OkabeIto[7], palette_OkabeIto[5])) 
 
-
-
-ggplot(final1 |> filter(year == "2017",
-                        Category != "Total"), aes(x= 1, y = Estimate.P, fill = Category)) +
-  facet_wrap(~Subpopulation, ncol = 3) +
-  geom_col() +
-  coord_polar(theta = 'y') +
-  scale_fill_manual("", values = palette_OkabeIto[5:7]) +
+pies_2012 <- ggplot() +
+  #geom_sf(data = regions.sf1, aes(fill = best_predictor)) +
+  geom_scatterpie(aes(x=LON, y=LAT, group = WSA9_NAME), data = final3 |> filter(year == "2012") |> drop_na(), cols = c("Potential N-limitation", "Potential P-limitation", "Potential co-nutrient limitation"), pie_scale = 1) +
+  coord_equal() +
   theme_minimal() +
-  labs(x = "", y = "", title = "2017") +
-  theme(axis.text = element_blank())
+  # scale_fill_manual("Better predictor of trophic state", values=c("#084c61", "#ffc857")) +
+  scale_fill_manual("", values = c(palette_OkabeIto[6], palette_OkabeIto[7], palette_OkabeIto[5])) 
 
-library(plyr)
-pies_2007 <- dlply(final2 |> filter(year == "2007"), .(WSA9_NAME), function(z)
-  ggplot(final1 |> filter(year == "2007"), aes(x= 1, y = Estimate.P, fill = Category)) +
-    #facet_wrap(~Subpopulation, ncol = 3) +
-    geom_col() +
-    coord_polar(theta = 'y') +
-    scale_fill_manual("", values = palette_OkabeIto[5:7]) +
-    theme_minimal() +
-    labs(x = "", y = "", title = "2007") +
-    theme(axis.text = element_blank(),
-          legend.position = "none")
-  )
-detach("package:plyr", unload=TRUE) # plyr causes so much trouble...
-
-n <- length(pies_2007)
-for(i in 1:n) {
-  nms <- names(pies_2007)[i]
-}
+pies_2017 <- ggplot() +
+  #geom_sf(data = regions.sf1, aes(fill = best_predictor)) +
+  geom_scatterpie(aes(x=LON, y=LAT, group = WSA9_NAME), data = final3 |> filter(year == "2017") |> drop_na(), cols = c("Potential N-limitation", "Potential P-limitation", "Potential co-nutrient limitation"), pie_scale = 1) +
+  coord_equal() +
+  theme_minimal() +
+  # scale_fill_manual("Better predictor of trophic state", values=c("#084c61", "#ffc857")) +
+  scale_fill_manual("", values = c(palette_OkabeIto[6], palette_OkabeIto[7], palette_OkabeIto[5])) 
 
 
+# ggplot() +
+#   geom_sf(data = regions.sf1, aes(fill = best_predictor)) +
+#  # theme_minimal() +
+#  # scale_fill_manual("Better predictor of trophic state", values=c("#084c61", "#ffc857")) +
+#   #geom_sf(data = regions.sf1, aes(fill = best_predictor)) +
+#   geom_scatterpie(aes(x=LON, y=LAT, group = WSA9_NAME), data = final3 |> filter(year == "2007") |> drop_na(), cols = c("Potential N-limitation", "Potential P-limitation", "Potential co-nutrient limitation"), pie_scale = 1) +
+#   #coord_equal() +
+#   theme_minimal()# +
+#   # scale_fill_manual("Better predictor of trophic state", values=c("#084c61", "#ffc857")) +
+#   #scale_fill_manual("", values = c(palette_OkabeIto[6], palette_OkabeIto[7], palette_OkabeIto[5])) 
 
+# crs(final3)
+# crs(regions.sf1)$projargs
+# library(raster)
+# 
+# 
+# plot_locations_HARV <- read.csv("geometries.csv") |> drop_na()
+# str(plot_locations_HARV)
+# latlong <- st_crs(regions.sf1)
+# latlong
+# class(latlong)
+# #convert df to spatial object
+# plot_locations_sp_HARV <- st_as_sf(plot_locations_HARV,
+#                                    coords= c("LON", "LAT"),
+#                                    crs=latlong) #pode usar tb um codigo EPSG referente a essa zona, olhar Google
+# class(regions.sf1)
+# class(plot_locations_sp_HARV)
+# 
+# ggplot() +
+#   geom_sf(data = regions.sf1, aes()) +
+#   geom_sf(data = plot_locations_sp_HARV, aes(color = Potential.N.limitation))
+#   
+#   geom_scatterpie(aes(), data = plot_locations_sp_HARV |> filter(year == "2007") |> drop_na(), cols = c("Potential.N.limitation", "Potential.P.limitation", "Potential.co.nutrient.limitation"), pie_scale = 1)
+# 
+#   base + pies_2012
+  
