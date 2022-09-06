@@ -39,7 +39,7 @@ limits <- all_NLA |>
                                     ifelse(is.na(limitation), "Potential co-nutrient limitation", limitation))))
 
 
-#### base map ####
+#### prep the spatial data ####
 WSA9_NAME <- as.vector(all_NLA |> select(ECO_REG_NAME) |> distinct())[["ECO_REG_NAME"]]
 best_predictor <- as.vector(c("TN", "TP", "TP", "TP", "TP", "TN", "TN", "TN", "TP"))
 add <- cbind(data.frame(WSA9_NAME), data.frame(best_predictor))
@@ -54,6 +54,7 @@ final2 <- final1 |>
   rename(WSA9_NAME = Subpopulation) |>
   left_join(regions.sf1) 
 
+# get the centroids of the ecoregion shapes
 centers <- st_as_sf(final2) |>
   group_by(WSA9_NAME) |>
   st_centroid(geometry) %>% 
@@ -68,17 +69,29 @@ centers1 <- data.frame(unlist(centers)) |>
   distinct() |>
   rename(coord = unlist.centers.) |>
   filter(coord != "NaN") |>
-  mutate(coord = as.numeric(coord))
+ # mutate(coord = as.character(coord)) |>
+  pivot_wider(names_from = geom, values_from = coord) |>
+  unnest()
 
-names <- final2$WSA9_NAME
+names <- data.frame(final2$WSA9_NAME) |> distinct() |> filter(final2.WSA9_NAME != "National")
   
 centers2 <- cbind(centers1, names) |>
-  distinct()
+  distinct() |>
+  rename(WSA9_NAME = final2.WSA9_NAME) 
 
+final3 <- left_join(final2, centers2) |>
+  pivot_wider(names_from = Category, values_from = Estimate.P)
+
+
+
+#### create the base map ####
+library(scatterpie)
 base <- ggplot() +
-  geom_sf(data = regions.sf1, aes(fill = best_predictor)) +
-  theme_minimal() +
-  scale_fill_manual("Better predictor of trophic state", values=c("#084c61", "#ffc857")) 
+ # geom_sf(data = regions.sf1, aes(fill = best_predictor)) +
+  geom_scatterpie(aes(x=LON, y=LAT, group = WSA9_NAME), data = final3 |> filter(year == "2007"), cols = c("Potential N-limitation", "Potential P-limitation", "Potential co-nutrient limitation")) +
+  coord_equal()
+ # theme_minimal() +
+ # scale_fill_manual("Better predictor of trophic state", values=c("#084c61", "#ffc857")) 
 
 #### pie charts of limitations per year ####
 ggplot(final1 |> filter(year == "2007",
@@ -128,3 +141,11 @@ pies_2007 <- dlply(final2 |> filter(year == "2007"), .(WSA9_NAME), function(z)
           legend.position = "none")
   )
 detach("package:plyr", unload=TRUE) # plyr causes so much trouble...
+
+n <- length(pies_2007)
+for(i in 1:n) {
+  nms <- names(pies_2007)[i]
+}
+
+
+
