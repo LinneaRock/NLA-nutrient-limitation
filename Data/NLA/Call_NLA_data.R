@@ -40,7 +40,8 @@ all_NLA <- bind_rows(NLA07, NLA12, NLA17) |>
                                         ifelse(startsWith(TSTATE_CHL,"EUTROPHIC"), "Eutro.",
                                                ifelse(startsWith(TSTATE_CHL, "HYPEREUTROPHIC"), "Hyper.", TROPHIC_STATE))))) |>
   mutate(TROPHIC_STATE = factor(TROPHIC_STATE, levels = c("Oligo.", "Meso.", "Eutro.", "Hyper."))) |>
-  drop_na(TROPHIC_STATE)
+  drop_na(TROPHIC_STATE) |>
+  mutate(DIN.TP = DIN_mol/TP_mol)
 
 
 all_NLA$TSTATE_TN = factor(all_NLA$TSTATE_TN,

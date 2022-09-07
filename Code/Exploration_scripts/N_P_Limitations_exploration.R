@@ -131,9 +131,13 @@ ref_np <- all_NLA |>
 
 # get some information about the entire dataset
 averages_np <- all_NLA |>
+  mutate(DIN.TP = DIN_mol/TP_mol) |>
+  mutate(logDINP = log(DIN.TP)) |>
+  filter(is.finite(logDINP)) |>
   group_by(ECO_REG_NAME) |>
   summarise(
             meanlogNP = mean(log(tn.tp)),
+            meanlogDINP = mean(log(DIN.TP), na.rm= TRUE), 
             meanNP_t = mean(tn.tp),
             meanNP = (mean(TN_mol)/mean(TP_mol)),
             medianNP = (median(TN_mol)/median(TP_mol)),
@@ -202,9 +206,9 @@ limits <- all_NLA |>
                              ifelse(NTL_PPM > percentile25TN_PPM & log(tn.tp) > meanlogNP, "Potential P-limitation",
                                     ifelse(is.na(limitation), "Potential co-nutrient limitation", limitation))))
 
-nrow(limits |> filter(limitation == "Potential P-limitation")) # 1285
-nrow(limits |> filter(limitation == "Potential N-limitation")) # 1727
-nrow(limits |> filter(limitation == "Potential co-nutrient limitation")) #641
+nrow(limits |> filter(limitation == "Potential P-limitation")) # 1264
+nrow(limits |> filter(limitation == "Potential N-limitation")) # 1746
+nrow(limits |> filter(limitation == "Potential co-nutrient limitation")) #643
 
 
 
@@ -240,6 +244,38 @@ ggplot(limits) +
 ggsave("Figures/Q1.Figs/Limits_attempt3.png", height = 4.5, width = 6.5, units = "in", dpi = 500) 
 
 
+### ATTEMPT 4 #### - overwrite the lmits df
+# uses 25th percentile nutrient thresholds for each ecoregion and logged average DIN:P for each ecoregion 
+
+limitsdin <- all_NLA |>
+  left_join(averages_np) |>
+  mutate(DIN.TP = DIN_mol/TP_mol) |>
+  mutate(limitation = NA) |>
+  mutate(limitation = ifelse(PTL_PPB > percentile25TP_PPB & log(DIN.TP) < meanlogDINP, "Potential N-limitation", 
+                             ifelse(NTL_PPM > percentile25TN_PPM & log(DIN.TP) > meanlogDINP, "Potential P-limitation",
+                                    ifelse(is.na(limitation), "Potential co-nutrient limitation", limitation))))
+
+nrow(limits |> filter(limitation == "Potential P-limitation")) # 1285 #1035
+nrow(limits |> filter(limitation == "Potential N-limitation")) # 1727 #1771
+nrow(limits |> filter(limitation == "Potential co-nutrient limitation")) #641 #736
+
+limsdin <- limitsdin |>
+  select(SITE_ID, ECO_REG_NAME, limitation) |>
+  rename(limitation_din = limitation)
+
+diff <- left_join(limits, limsdin) |>
+  select(SITE_ID, ECO_REG_NAME, limitation, limitation_din) |>
+  mutate(same = ifelse(limitation == limitation_din, "Y", "N"))
+
+
+
+ggplot(limits) +
+  geom_point(aes(log(PTL_PPB, base = 10), log(NTL_PPM, base = 10), fill = limitation), size = 2.5, shape = 21, alpha = 0.8) +
+  theme_minimal() +
+  scale_fill_manual("",values = palette_OkabeIto[5:7]) +
+  labs(y = "Log TN"~(m*g~L^-1), x = "Log TP"~(mu*g~L^-1))
+ggsave("Figures/Q1.Figs/Limits_attempt2b.png", height = 4.5, width = 6.5, units = "in", dpi = 500) 
+  
 
 
 
