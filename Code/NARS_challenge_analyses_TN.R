@@ -5,16 +5,19 @@ library(broom)
 library(lme4)
 library(gt)
 library(spsurvey)
+# library(sf) - messes with dplyr. So call and detach after use written in code
+library(ggrepel)
 
 source("Data/NLA/Call_NLA_data.R")
 nla_data_subset <- all_NLA |>
   select(ECO_REG_NAME, UNIQUE_ID, DATE_COL, VISIT_NO, NTL_PPM, PTL_PPB, DIN_PPM, tn.tp, DIN.TP, CHLA_PPB, TROPHIC_STATE, year,WGT_NLA, LON_DD, LAT_DD, AREA_HA, ELEV_PT, PCT_DEVELOPED_BSN, PCT_AGRIC_BSN, SITE_TYPE, URBAN, LAKE_ORIGIN) |>
   rename(DIN.TP_molar = DIN.TP,
          TN.TP_molar = tn.tp) |>
-  filter(year != "2012")
+  filter(year != "2012") |>
+  distinct()
 
 
-#### Calculate limitations ####
+#### 1. Calculate limitations ####
 # get information about the refernece lakes
 ref_np <- nla_data_subset |>
   filter(SITE_TYPE %in% c("REF_Lake", "HAND")) |> # subset of 230 lakes
@@ -77,7 +80,7 @@ ggsave("Figures/TN_analyses/limitedlakes_TN.png", height = 4.5, width = 6.5, uni
 
 
 
-#### Nutrient correlations with eutrophication ####
+#### 2. Nutrient correlations with eutrophication ####
 # use logged parameters
 # create wide dataframe with nutrient as a column
 limits_wide_TN <- limitsTN |>
@@ -192,15 +195,11 @@ lm_ecoreg_df1 <- lm_ecoreg_df |>
   select(-p.value)
 
 
-compare_r_values <- lm_ecoreg_df |>
-  pivot_wider(names_from = "Model.Predictor", values_from = "r.squared")
-
 lm_ecoreg_df1$Ecoregion = factor(lm_ecoreg_df1$Ecoregion,
                                  levels = c("National","Northern Appalachians", "Southern Appalachians", "Coastal Plains", "Temperate Plains", "Upper Midwest", "Northern Plains", "Southern Plains", "Xeric", "Western Mountains"))
 
 
 #create a pretty table
-library(gt)
 gt_tbl <- gt(lm_ecoreg_df1)
 simpleregtable <- gt_tbl %>%
   cols_label(
@@ -221,27 +220,52 @@ gtsave(simpleregtable, "Figures/TN_analyses/linreg_TN.png")
 
 # NOTE: I also ran these for just 2007 and just 2017 data. 
 
+# create a map of the better predictor in each ecoregion
+library(sf)
+#read in the ecoregion shapefiles
+regions.sf <- read_sf("Data/aggr_ecoregions_2015/Aggr_Ecoregions_2015.shp") |>
+  mutate(WSA9_NAME = ifelse(WSA9_NAME == "Temporate Plains", "Temperate Plains", WSA9_NAME))
+
+#determine better predictor in each
+compare_r_values <- lm_ecoreg_df |>
+  select(-Slope, - p.value) |>
+  pivot_wider(names_from = "Model.Predictor", values_from = c("AIC", "r.squared")) |>
+  mutate(best_predictor = ifelse(
+    AIC_TP < AIC_TN & r.squared_TP > r.squared_TN, "TP", "TN"
+  )) |>
+  rename(WSA9_NAME = Ecoregion)
+
+# combine shapefiles with better predictor information
+regions.sf1 <- left_join(regions.sf, compare_r_values)
 
 
+# create the map
+ggplot(data = regions.sf1) +
+  geom_sf(aes(fill = best_predictor)) +
+  theme_minimal() +
+  geom_sf_label(aes(label = WSA9_NAME)) +
+  scale_fill_manual("Better predictor of trophic state", values=c("#084c61", "#ffc857")) 
+detach(package:sf, unload=TRUE)
 
-#### Spatial, temporal distribution of limitations ####
+
+#### 3. Spatial, temporal distribution of limitations ####
 # Percent lakes in each ecoregion 
 # use categorical analysis from spsurvey package
 # prep the data
-limits_change_prep_TN <- limitsTN|> # total 2033 lakes for this analysis 
+limits_survey_prep_TN <- limitsTN|> # total 2033 lakes for this analysis 
   filter(VISIT_NO == 1) |># for this analysis, we are using just the first visit from each lake
   filter(WGT_NLA > 0) # the sp survey package is not designed to use the reference lakes, so those are ignored when using this package for analyses.
 
 # lakes with limitations considered for this analysis now 
-nrow(limits_change_prep_TN |> filter(limitation == "P-limitation")) # 679 
-nrow(limits_change_prep_TN |> filter(limitation == "N-limitation")) # 1020
-nrow(limits_change_prep_TN |> filter(limitation == "Co-nutrient limitation")) # 334
+nrow(limits_survey_prep_TN |> filter(limitation == "P-limitation")) # 679 
+nrow(limits_survey_prep_TN |> filter(limitation == "N-limitation")) # 1020
+nrow(limits_survey_prep_TN |> filter(limitation == "Co-nutrient limitation")) # 334
 
 years <- c("2007", "2017")
 percent_lim <- data.frame()
 
 for(i in 1:length(years)) {
-  data <- limits_change_prep_TN |>
+  data <- limits_survey_prep_TN |>
     filter(year == years[i])
   
   tmp <- cat_analysis(
@@ -261,7 +285,7 @@ for(i in 1:length(years)) {
 }
 
 nat <- cat_analysis(
-  limits_change_prep_TN,
+  limits_survey_prep_TN,
   siteID = "UNIQUE_ID",
   vars = "limitation",
   weight = "WGT_NLA",
@@ -297,3 +321,140 @@ ggplot(percent_lim1 |>
   labs(x = "", y = "% lakes")
 ggsave("Figures/TN_analyses/limbars_national.png", height = 4.5, width = 6.5, units = "in", dpi = 500)
 
+
+
+
+#### 4. Limitations change analysis ####
+# prep the data
+# find only sites that are sampled in both 2007 and 2017
+crossover <- limits_survey_prep_TN |>
+  select(year, UNIQUE_ID) |>
+  filter(year == "2007") |>
+  rename(year1 = year) |>
+  distinct() |>
+  inner_join(limits_survey_prep_TN |>
+               select(year, UNIQUE_ID) |>
+               filter(year == "2017") |>
+               rename(year2 = year) |>
+               distinct()) |>
+  select(UNIQUE_ID) # 239 sites
+
+limits_change_prep_TN <- limits_survey_prep_TN |> # analysis has same restrictions as categorical analysis
+  inner_join(crossover) # this keeps only resampled sites
+
+# use change_analysis from the spsurvey package
+# ecoregional change analysis
+change_ecoreg <- change_analysis(limits_change_prep_TN, subpops = "ECO_REG_NAME", siteID = "UNIQUE_ID", vars_cat = "limitation", surveyID = "year", weight = "WGT_NLA", xcoord = "LON_DD", ycoord = "LAT_DD")
+change_ecoreg.1 <- change_ecoreg[["catsum"]]  |>
+  select(Subpopulation, Category, Indicator, DiffEst.P, StdError.P) 
+warnprnt()
+# national change analysis
+change_nat <- change_analysis(limits_change_prep_TN, siteID = "UNIQUE_ID", vars_cat = "limitation", surveyID = "year", weight = "WGT_NLA", xcoord = "LON_DD", ycoord = "LAT_DD")
+change_nat.1 <- change_nat[["catsum"]]  |>
+  select(Subpopulation, Category, Indicator, DiffEst.P, StdError.P)  |>
+  mutate(Subpopulation = "National")
+warnprnt()
+
+
+lim_change0717 <- rbind(change_ecoreg.1, change_nat.1)|>
+  mutate(year.shift = "2007-2017")
+lim_change0717$Subpopulation = factor(lim_change0717$Subpopulation,
+                                      levels = c("National","Northern Appalachians", "Southern Appalachians", "Coastal Plains", "Temperate Plains", "Upper Midwest", "Northern Plains", "Southern Plains", "Xeric", "Western Mountains"))
+
+
+
+ggplot(lim_change0717 |>
+         filter(Subpopulation != "National")) +
+  geom_point(aes(Category,DiffEst.P, fill = Category), color = "black", pch = 21, size = 1, position=position_dodge(width=0.5)) +
+  geom_errorbar(aes(Category, DiffEst.P, ymin = DiffEst.P-StdError.P, ymax = DiffEst.P+StdError.P, color = Category), width = 0.2, position=position_dodge(width=0.5))  + 
+  theme_bw() +
+  #facet_grid(~Trophic.State, scales = "free_x") +
+  facet_wrap(~Subpopulation, ncol = 3, scales = "free_y") +
+  geom_hline(yintercept = 0) +
+  labs(x = "",
+       y = "% Difference in lakes") +
+  scale_color_manual("",values = palette_OkabeIto[5:7])  +
+  scale_fill_manual("",values = palette_OkabeIto[5:7]) 
+ggsave("Figures/TN_analyses/ecoregion_limchanges_TN_repeatlakes.png", height = 4.5, width = 6.5, units = "in", dpi = 500) 
+
+
+ggplot(lim_change0717 |>
+         filter(Subpopulation == "National")) +
+  geom_point(aes(Category,DiffEst.P, fill = Category), color = "black", pch = 21, size = 1, position=position_dodge(width=0.5)) +
+  geom_errorbar(aes(Category, DiffEst.P, ymin = DiffEst.P-StdError.P, ymax = DiffEst.P+StdError.P, color = Category), width = 0.2, position=position_dodge(width=0.5))  + 
+  theme_bw() +
+  #facet_grid(~Trophic.State, scales = "free_x") +
+  #facet_wrap(~Subpopulation, ncol = 3, scales = "free_y") +
+  geom_hline(yintercept = 0) +
+  labs(x = "",
+       y = "% Difference in lakes") +
+  scale_color_manual("",values = palette_OkabeIto[5:7])  +
+  scale_fill_manual("",values = palette_OkabeIto[5:7]) 
+ggsave("Figures/TN_analyses/national_limchanges_TN_repeatlakes.png", height = 4.5, width = 6.5, units = "in", dpi = 500) 
+
+## TRY this way too to compare
+# skip the resampled step to compare
+# crossover <- limits_survey_prep_TN |>
+#   select(year, UNIQUE_ID) |>
+#   filter(year == "2007") |>
+#   rename(year1 = year) |>
+#   distinct() |>
+#   inner_join(limits_survey_prep_TN |>
+#                select(year, UNIQUE_ID) |>
+#                filter(year == "2017") |>
+#                rename(year2 = year) |>
+#                distinct()) |>
+#   select(UNIQUE_ID)
+
+limits_change_prep_TN <- limits_survey_prep_TN #|> # analysis has same restrictions as categorical analysis
+#inner_join(crossover) # this keeps only resampled sites
+
+# use change_analysis from the spsurvey package
+# ecoregional change analysis
+change_ecoreg <- change_analysis(limits_change_prep_TN, subpops = "ECO_REG_NAME", siteID = "UNIQUE_ID", vars_cat = "limitation", surveyID = "year", weight = "WGT_NLA", xcoord = "LON_DD", ycoord = "LAT_DD")
+change_ecoreg.1 <- change_ecoreg[["catsum"]]  |>
+  select(Subpopulation, Category, Indicator, DiffEst.P, StdError.P) 
+warnprnt()
+# national change analysis
+change_nat <- change_analysis(limits_change_prep_TN, siteID = "UNIQUE_ID", vars_cat = "limitation", surveyID = "year", weight = "WGT_NLA", xcoord = "LON_DD", ycoord = "LAT_DD")
+change_nat.1 <- change_nat[["catsum"]]  |>
+  select(Subpopulation, Category, Indicator, DiffEst.P, StdError.P)  |>
+  mutate(Subpopulation = "National")
+warnprnt()
+
+
+lim_change0717_allSITES <- rbind(change_ecoreg.1, change_nat.1)|>
+  mutate(year.shift = "2007-2017")
+
+lim_change0717_allSITES$Subpopulation = factor(lim_change0717_allSITES$Subpopulation,
+                                               levels = c("National","Northern Appalachians", "Southern Appalachians", "Coastal Plains", "Temperate Plains", "Upper Midwest", "Northern Plains", "Southern Plains", "Xeric", "Western Mountains"))
+
+
+
+ggplot(lim_change0717_allSITES |>
+         filter(Subpopulation != "National")) +
+  geom_point(aes(Category,DiffEst.P, fill = Category), color = "black", pch = 21, size = 1, position=position_dodge(width=0.5)) +
+  geom_errorbar(aes(Category, DiffEst.P, ymin = DiffEst.P-StdError.P, ymax = DiffEst.P+StdError.P, color = Category), width = 0.2, position=position_dodge(width=0.5))  + 
+  theme_bw() +
+  #facet_grid(~Trophic.State, scales = "free_x") +
+  facet_wrap(~Subpopulation, ncol = 3, scales = "free_y") +
+  geom_hline(yintercept = 0) +
+  labs(x = "",
+       y = "% Difference in lakes") +
+  scale_color_manual("",values = palette_OkabeIto[5:7])  +
+  scale_fill_manual("",values = palette_OkabeIto[5:7]) 
+ggsave("Figures/TN_analyses/ecoregion_limchanges_TN_allSITES.png", height = 4.5, width = 6.5, units = "in", dpi = 500) 
+
+ggplot(lim_change0717_allSITES |>
+         filter(Subpopulation == "National")) +
+  geom_point(aes(Category,DiffEst.P, fill = Category), color = "black", pch = 21, size = 1, position=position_dodge(width=0.5)) +
+  geom_errorbar(aes(Category, DiffEst.P, ymin = DiffEst.P-StdError.P, ymax = DiffEst.P+StdError.P, color = Category), width = 0.2, position=position_dodge(width=0.5))  + 
+  theme_bw() +
+  #facet_grid(~Trophic.State, scales = "free_x") +
+  #facet_wrap(~Subpopulation, ncol = 3, scales = "free_y") +
+  geom_hline(yintercept = 0) +
+  labs(x = "",
+       y = "% Difference in lakes") +
+  scale_color_manual("",values = palette_OkabeIto[5:7])  +
+  scale_fill_manual("",values = palette_OkabeIto[5:7]) 
+ggsave("Figures/TN_analyses/national_limchanges_TN_allSITES.png", height = 4.5, width = 6.5, units = "in", dpi = 500) 
