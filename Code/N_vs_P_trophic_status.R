@@ -36,7 +36,7 @@ limits <- all_NLA |>
 
 #### Visual representation of relationships ####
 # use logged parameters
-# create long dataframe with nutrient as a column
+# create wide dataframe with nutrient as a column
 limits_wide <- limits |>
   mutate(NTL_PPB = NTL_PPM / 1000) |>
   pivot_longer(cols = c(PTL_PPB, NTL_PPB), names_to = "nutrient", values_to = "concentration") 
@@ -44,7 +44,7 @@ limits_wide <- limits |>
 limits_wide$ECO_REG_NAME = factor(limits_wide$ECO_REG_NAME,
                               levels = c("Northern Appalachians", "Southern Appalachians", "Coastal Plains", "Temperate Plains", "Upper Midwest", "Northern Plains", "Southern Plains", "Xeric", "Western Mountains"))
 
-library(ggpubr) # to annotate the plots
+
 
 ggplot(limits_wide, aes(log10(concentration), log10(CHLA_PPB))) +
   geom_point(alpha = 0.25, aes(color = nutrient)) +
