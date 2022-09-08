@@ -1,6 +1,7 @@
 
 library(tidyverse)
 library(colorblindr)
+library(spsurvey)
 library(broom)
 library(lme4)
 library(gt)
@@ -20,51 +21,49 @@ nla_data_subset <- all_NLA |>
 ref_np <- nla_data_subset |>
   filter(SITE_TYPE %in% c("REF_Lake", "HAND")) |> # subset of 230 lakes
   group_by(ECO_REG_NAME) |>
-  summarise(medianDINP = median(DIN.TP_molar, na.rm = TRUE),
-            medianNP = (median(TN.TP_molar)),
-            medianTN_PPM = median(NTL_PPM),
-            medianTP_PPB = median(PTL_PPB),
-            medianDIN_PPM = median(DIN_PPM)) |>
+  summarise(percentile75TN_PPM = quantile(NTL_PPM, probs = 0.75),
+            percentile75TP_PPB = quantile(PTL_PPB, probs = 0.75),
+            percentile75DIN_PPM = quantile(DIN_PPM, probs = 0.75)) |>
   ungroup()
 
 # get some information about the entire dataset
 averages_np <- nla_data_subset |>
   filter(is.finite(log(DIN.TP_molar))) |>
   group_by(ECO_REG_NAME) |>
-  mutate(
-    meanlogNP = mean(log(TN.TP_molar)),
+  summarise(meanlogNP = mean(log(TN.TP_molar)),
     meanlogDINP = mean(log(DIN.TP_molar), na.rm = TRUE),
-    medianlogNP = median(log(TN.TP_molar)),
-    medianTN_PPM = median(NTL_PPM),
-    medianTP_PPB = median(PTL_PPB),
-    medianDIN_PPM = median(DIN_PPM),
     percentile25TN_PPM = quantile(NTL_PPM, probs = 0.25),
     percentile25TP_PPB = quantile(PTL_PPB, probs = 0.25),
     percentile25DIN_PPM = quantile(DIN_PPM, probs = 0.25)) |>
   ungroup() |>
-  select(ECO_REG_NAME, meanlogNP, meanlogDINP, percentile25TN_PPM, percentile25TP_PPB, percentile25DIN_PPM) |>
+ # select(ECO_REG_NAME, meanlogNP, meanlogDINP, percentile25TN_PPM, percentile25TP_PPB, percentile25DIN_PPM) |>
   distinct()
 
 
-# How do the lower 25th percentiles of TN and TP compare the the median concentrations of TN and TP in the reference lakes? 
-t.test(ref_np$medianTN_PPM, averages_np$percentile25TN_PPM) # these are similar to each other!! 
-t.test(ref_np$medianTP_PPB, averages_np$percentile25TP_PPB) # these are similar to each other!!
-t.test(ref_np$medianDIN_PPM, averages_np$percentile25DIN_PPM) # these are similar to each other!!
+# How do the lower 25th percentiles of TN and TP compare the the 75th percentile concentrations of TN and TP in the reference lakes? 
+t.test(ref_np$percentile75TN_PPM, averages_np$percentile25TN_PPM) # p = 0.218
+t.test(ref_np$percentile75TP_PPB, averages_np$percentile25TP_PPB) # p = 0.1772
+t.test(ref_np$percentile75DIN_PPM, averages_np$percentile25DIN_PPM) # p = 0.05004 -- use TN for threshold, this may not be reliable
 
+criteria <- left_join(averages_np, ref_np) |>
+  group_by(ECO_REG_NAME) |>
+  mutate(TP_threshold = median(c(percentile75TP_PPB, percentile25TP_PPB)),
+         TN_threshold = median(c(percentile75TN_PPM, percentile25TN_PPM)),
+         DIN_threshold = median(c(percentile75DIN_PPM, percentile25DIN_PPM)))
 
 # uses 25th percentile nutrient thresholds for each ecoregion and logged average DIN:TP for each ecoregion 
 limitsDIN <- nla_data_subset|>
   filter(is.finite(log(DIN.TP_molar))) |>
-  filter(!is.na(DIN_PPM)) |> # 2445 lakes
-  left_join(averages_np) |>
+  filter(!is.na(DIN_PPM)) |> # 2371 lakes, loss of 74 lakes from analysis
+  left_join(criteria) |>
   mutate(limitation = NA) |>
-  mutate(limitation = ifelse(PTL_PPB > percentile25TP_PPB & log(DIN.TP_molar) < meanlogDINP, "N-limitation", 
-                             ifelse(NTL_PPM > percentile25TN_PPM & log(DIN.TP_molar) > meanlogDINP, "P-limitation",
+  mutate(limitation = ifelse(PTL_PPB > TP_threshold & log(DIN.TP_molar) < meanlogDINP, "N-limitation", 
+                             ifelse(DIN_PPM > DIN_threshold & log(DIN.TP_molar) > meanlogDINP, "P-limitation",
                                     ifelse(is.na(limitation), "Co-nutrient limitation", limitation))))
 
-nrow(limitsDIN |> filter(limitation == "P-limitation")) # 682 
-nrow(limitsDIN |> filter(limitation == "N-limitation")) # 1195
-nrow(limitsDIN |> filter(limitation == "Co-nutrient limitation")) # 494
+nrow(limitsDIN |> filter(limitation == "P-limitation")) # 732
+nrow(limitsDIN |> filter(limitation == "N-limitation")) # 1056
+nrow(limitsDIN |> filter(limitation == "Co-nutrient limitation")) # 538
 
 
 ## Plot the limited lakes
