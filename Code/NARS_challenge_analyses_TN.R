@@ -21,45 +21,46 @@ nla_data_subset <- all_NLA |>
 # get information about the refernece lakes
 ref_np <- nla_data_subset |>
   filter(SITE_TYPE %in% c("REF_Lake", "HAND")) |> # subset of 230 lakes
-  group_by(ECO_REG_NAME) |>
-  summarise(medianDINP = median(DIN.TP_molar, na.rm = TRUE),
-            medianNP = (median(TN.TP_molar)),
-            medianTN_PPM = median(NTL_PPM),
-            medianTP_PPB = median(PTL_PPB),
-            medianDIN_PPM = median(DIN_PPM)) |>
+  group_by(ECO_REG_NAME, year) |>
+  summarise(percentile75TN_PPM = quantile(NTL_PPM, probs = 0.75),
+            percentile75TP_PPB = quantile(PTL_PPB, probs = 0.75),
+            percentile75DIN_PPM = quantile(DIN_PPM, probs = 0.75)) |>
   ungroup()
 
 # get some information about the entire dataset
 averages_np <- nla_data_subset |>
   filter(is.finite(log(DIN.TP_molar))) |>
-  group_by(ECO_REG_NAME) |>
-  mutate(
-    meanlogNP = mean(log(TN.TP_molar)),
-    meanlogDINP = mean(log(DIN.TP_molar), na.rm = TRUE),
-    medianlogNP = median(log(TN.TP_molar)),
-    medianTN_PPM = median(NTL_PPM),
-    medianTP_PPB = median(PTL_PPB),
-    medianDIN_PPM = median(DIN_PPM),
-    percentile25TN_PPM = quantile(NTL_PPM, probs = 0.25),
-    percentile25TP_PPB = quantile(PTL_PPB, probs = 0.25),
-    percentile25DIN_PPM = quantile(DIN_PPM, probs = 0.25)) |>
+  group_by(ECO_REG_NAME, year) |>
+  summarise(meanlogNP = mean(log(TN.TP_molar)),
+            meanlogDINP = mean(log(DIN.TP_molar), na.rm = TRUE),
+            percentile25TN_PPM = quantile(NTL_PPM, probs = 0.25),
+            percentile25TP_PPB = quantile(PTL_PPB, probs = 0.25),
+            percentile25DIN_PPM = quantile(DIN_PPM, probs = 0.25)) |>
   ungroup() |>
-  select(ECO_REG_NAME, meanlogNP, meanlogDINP, percentile25TN_PPM, percentile25TP_PPB, percentile25DIN_PPM) |>
+  # select(ECO_REG_NAME, meanlogNP, meanlogDINP, percentile25TN_PPM, percentile25TP_PPB, percentile25DIN_PPM) |>
   distinct()
 
 
-# How do the lower 25th percentiles of TN and TP compare the the median concentrations of TN and TP in the reference lakes? 
-t.test(ref_np$medianTN_PPM, averages_np$percentile25TN_PPM) # these are similar to each other!! 
-t.test(ref_np$medianTP_PPB, averages_np$percentile25TP_PPB) # these are similar to each other!!
-t.test(ref_np$medianDIN_PPM, averages_np$percentile25DIN_PPM) # these are similar to each other!!
+# How do the lower 25th percentiles of TN and TP compare the the 75th percentile concentrations of TN and TP in the reference lakes? 
+t.test(ref_np$percentile75TN_PPM, averages_np$percentile25TN_PPM) # p = 0.218
+t.test(ref_np$percentile75TP_PPB, averages_np$percentile25TP_PPB) # p = 0.1772
+t.test(ref_np$percentile75DIN_PPM, averages_np$percentile25DIN_PPM) # p = 0.05004 -- use TN for threshold, this may not be reliable
 
+criteria <- left_join(averages_np, ref_np) |>
+  group_by(ECO_REG_NAME, year) |>
+  mutate(TP_threshold = median(c(percentile75TP_PPB, percentile25TP_PPB)),
+         TN_threshold = median(c(percentile75TN_PPM, percentile25TN_PPM)),
+         DIN_threshold = median(c(percentile75DIN_PPM, percentile25DIN_PPM))) |>
+  mutate(TP_threshold = ifelse(is.na(TP_threshold), percentile25TP_PPB, TP_threshold),
+         TN_threshold = ifelse(is.na(TN_threshold), percentile25TN_PPM, TN_threshold),
+         DIN_threshold = ifelse(is.na(DIN_threshold), percentile25DIN_PPM, DIN_threshold))
 
 # uses 25th percentile nutrient thresholds for each ecoregion and logged average TN:TP for each ecoregion 
 limitsTN <- nla_data_subset|> #2520 lakes
-  left_join(averages_np) |>
+  left_join(criteria) |>
   mutate(limitation = NA) |>
-  mutate(limitation = ifelse(PTL_PPB > percentile25TP_PPB & log(TN.TP_molar) < meanlogNP, "N-limitation", 
-                             ifelse(NTL_PPM > percentile25TN_PPM & log(TN.TP_molar) > meanlogNP, "P-limitation",
+  mutate(limitation = ifelse(PTL_PPB > TP_threshold & log(TN.TP_molar) < meanlogNP, "N-limitation", 
+                             ifelse(NTL_PPM > TN_threshold & log(TN.TP_molar) > meanlogNP, "P-limitation",
                                     ifelse(is.na(limitation), "Co-nutrient limitation", limitation))))
 
 nrow(limitsTN |> filter(limitation == "P-limitation")) # 830

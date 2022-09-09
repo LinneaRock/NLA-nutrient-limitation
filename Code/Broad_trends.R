@@ -147,44 +147,49 @@ ggsave("Figures/QNvsP.Figs/N_vs_P_map.png", height = 4.5, width = 6.5, units = "
 #### relationships between limits, stoich, trophic state ####
 
 limits1 <- limits |>
-  mutate(logNP = log10(tn.tp)) |>
+  mutate(logDINP = log10(DIN.TP_molar)) |>
   mutate(year = as.factor(year))
 
-ggplot(limits1, aes(year, logNP)) +
+ggplot(limits1, aes(year, logDINP)) +
   geom_boxplot()
-anova(aov(logNP~year, limits1)) # p < 2.2e-16 
-TukeyHSD(aov(logNP~year, limits1), conf.level = 0.95) # p < 0.001 - all groups are different at the 95% CI
-plot(TukeyHSD(aov(logNP~year, limits1), conf.level = 0.95), las = 2)
+anova(aov(logDINP~year, limits1)) # p < 2.2e-16 
+TukeyHSD(aov(logDINP~year, limits1), conf.level = 0.95) # p < 0.001 - all groups are different at the 95% CI
+plot(TukeyHSD(aov(logDINP~year, limits1), conf.level = 0.95), las = 2)
 
-ggplot(limits1, aes(limitation, logNP)) +
+ggplot(limits1, aes(limitation, logDINP)) +
   geom_boxplot()
- anova(aov(logNP~limitation, limits1)) # p < 2.2e-16 
-TukeyHSD(aov(logNP~limitation, limits1), conf.level = 0.95) # p < 0.001 - all groups are different at the 95% CI
-plot(TukeyHSD(aov(logNP~limitation, limits1), conf.level = 0.95), las = 2)
+ anova(aov(logDINP~limitation, limits1)) # p < 2.2e-16 
+TukeyHSD(aov(logDINP~limitation, limits1), conf.level = 0.95) # p < 0.001 - all groups are different at the 95% CI
+plot(TukeyHSD(aov(logDINP~limitation, limits1), conf.level = 0.95), las = 2)
 
-ggplot(limits1, aes(TROPHIC_STATE, logNP)) +
+ggplot(limits1, aes(TROPHIC_STATE, logDINP)) +
   geom_boxplot()
-anova(aov(logNP~TROPHIC_STATE, limits1)) # p < 2.2e-16 
-TukeyHSD(aov(logNP~TROPHIC_STATE, limits1), conf.level = 0.95) # p < 0.001 - all groups are different EXCEPT comparing meso-oligo
-plot(TukeyHSD(aov(logNP~TROPHIC_STATE, limits1), conf.level = 0.95), las = 2)
+anova(aov(logDINP~TROPHIC_STATE, limits1)) # p < 2.2e-16 
+TukeyHSD(aov(logDINP~TROPHIC_STATE, limits1), conf.level = 0.95) # p < 0.001 - all groups are different EXCEPT comparing meso-oligo
+plot(TukeyHSD(aov(logDINP~TROPHIC_STATE, limits1), conf.level = 0.95), las = 2)
 
-ggplot(limits1, aes(limitation, logNP, color = TROPHIC_STATE)) +
+ggplot(limits1, aes(limitation, logDINP, color = TROPHIC_STATE)) +
   geom_boxplot()
-anova(aov(logNP~limitation*TROPHIC_STATE, limits1)) # p < 2.2e-16 
-TukeyHSD(aov(logNP~limitation*TROPHIC_STATE, limits1), conf.level = 0.95) # various, some p < 0.05, many p <0.0001. 14 relationships are not significantly different
-plot(TukeyHSD(aov(logNP~limitation*TROPHIC_STATE, limits1), conf.level = 0.95), las = 2)
+anova(aov(logDINP~limitation*TROPHIC_STATE, limits1)) # p < 2.2e-16 
+TukeyHSD(aov(logDINP~limitation*TROPHIC_STATE, limits1), conf.level = 0.95) # various, some p < 0.05, many p <0.0001. 14 relationships are not significantly different
+plot(TukeyHSD(aov(logDINP~limitation*TROPHIC_STATE, limits1), conf.level = 0.95), las = 2)
 
-ggplot(limits1, aes(limitation, logNP, color = ECO_REG_NAME)) +
+ggplot(limits1, aes(ECO_REG_NAME, limitation)) +
   geom_boxplot() # check out patterns!!
-anova(aov(logNP~limitation*ECO_REG_NAME, limits1)) # p < 2.2e-16 
-TukeyHSD(aov(logNP~limitation*ECO_REG_NAME, limits1), conf.level = 0.95) # various, some p < 0.05, many p <0.0001. Good amount are not significantly different (over 100 relationships compared)
-plot(TukeyHSD(aov(logNP~limitation*ECO_REG_NAME, limits1), conf.level = 0.95), las = 2)
+anova(aov(logDINP~ECO_REG_NAME, limits1)) # p < 2.2e-16 
+TukeyHSD(aov(logDINP~ECO_REG_NAME, limits1), conf.level = 0.95) 
 
-ggplot(limits1, aes(TROPHIC_STATE, logNP, color = ECO_REG_NAME)) +
+ggplot(limits1, aes(limitation, logDINP, color = ECO_REG_NAME)) +
+  geom_boxplot() # check out patterns!!
+anova(aov(logDINP~limitation*ECO_REG_NAME, limits1)) # p < 2.2e-16 
+TukeyHSD(aov(logDINP~limitation*ECO_REG_NAME, limits1), conf.level = 0.95) # various, some p < 0.05, many p <0.0001. Good amount are not significantly different (over 100 relationships compared)
+plot(TukeyHSD(aov(logDINP~limitation*ECO_REG_NAME, limits1), conf.level = 0.95), las = 2)
+
+ggplot(limits1, aes(TROPHIC_STATE, logDINP, color = ECO_REG_NAME)) +
   geom_boxplot() # check out patterns!! - OVERALL N:P highest in oligo and decreases to Hyper   
-anova(aov(logNP~TROPHIC_STATE*ECO_REG_NAME, limits1)) # p < 2.2e-16 
-TukeyHSD(aov(logNP~TROPHIC_STATE*ECO_REG_NAME, limits1), conf.level = 0.95) # good amount are not significantly different (over 400 relationships compared)
-plot(TukeyHSD(aov(logNP~TROPHIC_STATE*ECO_REG_NAME, limits1), conf.level = 0.95), las = 2)
+anova(aov(logDINP~TROPHIC_STATE*ECO_REG_NAME, limits1)) # p < 2.2e-16 
+TukeyHSD(aov(logDINP~TROPHIC_STATE*ECO_REG_NAME, limits1), conf.level = 0.95) # good amount are not significantly different (over 400 relationships compared)
+plot(TukeyHSD(aov(logDINP~TROPHIC_STATE*ECO_REG_NAME, limits1), conf.level = 0.95), las = 2)
 
 library(lme4)
 m.1 <- lmer(logNP~limitation*TROPHIC_STATE + (1|ECO_REG_NAME), limits1)

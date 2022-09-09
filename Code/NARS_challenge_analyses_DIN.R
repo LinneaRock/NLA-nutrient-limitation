@@ -14,13 +14,17 @@ nla_data_subset <- all_NLA |>
   filter(year != "2012") |>
   distinct()
 
-  
+check <- nla_data_subset |>
+  filter(year == "2007" &
+           ECO_REG_NAME == "Northern Plains") |>
+  select(UNIQUE_ID, ECO_REG_NAME, year) |>
+  distinct()
   
 #### 1. Calculate limitations ####
 # get information about the refernece lakes
 ref_np <- nla_data_subset |>
   filter(SITE_TYPE %in% c("REF_Lake", "HAND")) |> # subset of 230 lakes
-  group_by(ECO_REG_NAME) |>
+  group_by(ECO_REG_NAME, year) |>
   summarise(percentile75TN_PPM = quantile(NTL_PPM, probs = 0.75),
             percentile75TP_PPB = quantile(PTL_PPB, probs = 0.75),
             percentile75DIN_PPM = quantile(DIN_PPM, probs = 0.75)) |>
@@ -29,7 +33,7 @@ ref_np <- nla_data_subset |>
 # get some information about the entire dataset
 averages_np <- nla_data_subset |>
   filter(is.finite(log(DIN.TP_molar))) |>
-  group_by(ECO_REG_NAME) |>
+  group_by(ECO_REG_NAME, year) |>
   summarise(meanlogNP = mean(log(TN.TP_molar)),
     meanlogDINP = mean(log(DIN.TP_molar), na.rm = TRUE),
     percentile25TN_PPM = quantile(NTL_PPM, probs = 0.25),
@@ -46,24 +50,32 @@ t.test(ref_np$percentile75TP_PPB, averages_np$percentile25TP_PPB) # p = 0.1772
 t.test(ref_np$percentile75DIN_PPM, averages_np$percentile25DIN_PPM) # p = 0.05004 -- use TN for threshold, this may not be reliable
 
 criteria <- left_join(averages_np, ref_np) |>
-  group_by(ECO_REG_NAME) |>
+  group_by(ECO_REG_NAME, year) |>
   mutate(TP_threshold = median(c(percentile75TP_PPB, percentile25TP_PPB)),
          TN_threshold = median(c(percentile75TN_PPM, percentile25TN_PPM)),
-         DIN_threshold = median(c(percentile75DIN_PPM, percentile25DIN_PPM)))
+         DIN_threshold = median(c(percentile75DIN_PPM, percentile25DIN_PPM))) |>
+  mutate(TP_threshold = ifelse(is.na(TP_threshold), percentile25TP_PPB, TP_threshold),
+         TN_threshold = ifelse(is.na(TN_threshold), percentile25TN_PPM, TN_threshold),
+         DIN_threshold = ifelse(is.na(DIN_threshold), percentile25DIN_PPM, DIN_threshold)) 
+
+
+criteria$ECO_REG_NAME = factor(criteria$ECO_REG_NAME, levels = c("Northern Appalachians", "Southern Appalachians", "Coastal Plains", "Temperate Plains", "Upper Midwest", "Northern Plains", "Southern Plains", "Xeric", "Western Mountains"))
+
+write.csv(criteria, "criteria.csv")
 
 # uses 25th percentile nutrient thresholds for each ecoregion and logged average DIN:TP for each ecoregion 
 limitsDIN <- nla_data_subset|>
   filter(is.finite(log(DIN.TP_molar))) |>
-  filter(!is.na(DIN_PPM)) |> # 2371 lakes, loss of 74 lakes from analysis
+  filter(!is.na(DIN_PPM)) |> # 2371 observations, loss of 74 observations from analysis
   left_join(criteria) |>
   mutate(limitation = NA) |>
   mutate(limitation = ifelse(PTL_PPB > TP_threshold & log(DIN.TP_molar) < meanlogDINP, "N-limitation", 
                              ifelse(DIN_PPM > DIN_threshold & log(DIN.TP_molar) > meanlogDINP, "P-limitation",
                                     ifelse(is.na(limitation), "Co-nutrient limitation", limitation))))
 
-nrow(limitsDIN |> filter(limitation == "P-limitation")) # 732
-nrow(limitsDIN |> filter(limitation == "N-limitation")) # 1056
-nrow(limitsDIN |> filter(limitation == "Co-nutrient limitation")) # 538
+nrow(limitsDIN |> filter(limitation == "P-limitation")) # 718
+nrow(limitsDIN |> filter(limitation == "N-limitation")) # 1034
+nrow(limitsDIN |> filter(limitation == "Co-nutrient limitation")) # 619
 
 
 ## Plot the limited lakes
@@ -276,10 +288,13 @@ percent_lim1 <- rbind(percent_lim, nat1) |>
 percent_lim1$Subpopulation = factor(percent_lim1$Subpopulation,
                                     levels = c("National", "Northern Appalachians", "Southern Appalachians", "Coastal Plains", "Temperate Plains", "Upper Midwest", "Northern Plains", "Southern Plains", "Xeric", "Western Mountains"))
 
+
+  
+
 ggplot(percent_lim1 |>
-         filter(Subpopulation != "National"), aes(year, Estimate.P, fill = Category)) +
+         filter(Subpopulation != "National"), mapping = aes(year, Estimate.P, fill = Category)) +
   geom_bar(stat = "identity") +
-  facet_wrap(~Subpopulation) +
+   facet_wrap(~Subpopulation) +
   scale_fill_manual("", values = palette_OkabeIto[5:7]) +
   theme_bw() +
   labs(x = "", y = "% lakes")
