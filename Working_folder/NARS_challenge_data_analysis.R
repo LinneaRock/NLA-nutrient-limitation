@@ -64,7 +64,7 @@ correlations_data <- nla_data_subset |>
   mutate(NTL_PPB = NTL_PPM / 1000) |>
   pivot_longer(cols = c(PTL_PPB, NTL_PPB), names_to = "nutrient", values_to = "concentration") 
 
-correlations_data $ECO_REG_NAME = factor(correlations_data $ECO_REG_NAME,
+correlations_data$ECO_REG_NAME = factor(correlations_data $ECO_REG_NAME,
                                      levels = c("Northern Appalachians", "Southern Appalachians", "Coastal Plains", "Temperate Plains", "Upper Midwest", "Northern Plains", "Southern Plains", "Xeric", "Western Mountains"))
 
 m.0 <- aov(log10(CHLA_PPB)~log10(concentration) * nutrient, correlations_data  |> filter(is.finite(log10(CHLA_PPB))))
@@ -197,6 +197,8 @@ ggplot(correlations_data, aes(log10(concentration), log10(CHLA_PPB))) +
   geom_vline(xintercept = 0) +
   facet_wrap(~nutrient, scales = "free_x") +
   theme_bw() +
+  theme(panel.grid.major = element_blank(), 
+        panel.grid.minor = element_blank()) +
   facet_wrap(~ECO_REG_NAME, ncol = 3) +
   labs(y = "log10(chlorophyll-a concentration)",
        x = "log10(nutrient concentration)",
@@ -229,7 +231,7 @@ compare_r_values <- lm_ecoreg_df |>
 regions.sf1 <- left_join(regions.sf, compare_r_values)
 
 
-## does TN:TP correlate with chlorophyll-a? 
+## does N:TP correlate with chlorophyll-a? 
 ggplot(limits) +
   geom_point(aes(log10(TN.TP_molar), log10(CHLA_PPB))) +
   geom_smooth(method = "lm", se = FALSE, aes(log10(TN.TP_molar), log10(CHLA_PPB))) +
@@ -244,7 +246,7 @@ ggplot(limits) +
 ggplot(data = regions.sf1) +
   geom_sf(aes(fill = best_predictor)) +
   theme_minimal() +
-  geom_sf_label(aes(label = WSA9_NAME), size = 1) +
+  geom_sf_label(aes(label = WSA9_NAME), size = 1.5) +
   labs(x = "", y = "",
        caption = "Figure 2. Map displaying the better nutrient predictor of trophic state in each (labelled) ecoregion.") +
   scale_fill_manual("Better predictor \n of trophic state", values=c("red4", "#336a98")) +
@@ -255,7 +257,7 @@ ggsave("Figures/F2_Map.png", height = 4.5, width = 6.5, units = "in", dpi = 500)
 detach(package:sf, unload=TRUE)
 
 
-# ## Create a beautiful plot
+# ## Create a beautiful plot -- too big to save well
 # (map / lm_plots) +
 #   plot_annotation(tag_levels = 'a', tag_suffix = ')',
 #                   caption = "Figure 1. a) Map displaying the better nutrient predictor of trophic state in each (labelled) ecoregion.
@@ -287,8 +289,10 @@ averages_np <- nla_data_subset |>
   # 25th percentile of nutrient concentrations from total assessed lakes and mean ratios
   summarise(meanlogNP = mean(log(TN.TP_molar)),
             meanlogDINP = mean(log(DIN.TP_molar), na.rm = TRUE),
+            medianlogDINP = median(log(DIN.TP_molar), na.rm = TRUE),
             meanNP = mean((TN.TP_molar)),
             meanDINP = mean((DIN.TP_molar), na.rm = TRUE),
+            medianDINP = median(DIN.TP_molar, na.rm = TRUE),
             percentile25TN_PPM = quantile(NTL_PPM, probs = 0.25),
             percentile25TP_PPB = quantile(PTL_PPB, probs = 0.25),
             percentile25DIN_PPM = quantile(DIN_PPM, probs = 0.25)) |>
@@ -319,22 +323,24 @@ limits <- nla_data_subset|>
   filter(!is.na(DIN_PPM)) |> # 2371 observations, loss of 74 observations from analysis
   left_join(criteria) |>
   mutate(limitation = NA) |>
-  mutate(limitation = ifelse(PTL_PPB > TP_threshold & log(DIN.TP_molar) < meanlogDINP, "N-limitation", 
-                             ifelse(DIN_PPM > DIN_threshold & log(DIN.TP_molar) > meanlogDINP, "P-limitation",
+  mutate(limitation = ifelse(PTL_PPB > TP_threshold & log(DIN.TP_molar) < medianlogDINP, "N-limitation", 
+                             ifelse(DIN_PPM > DIN_threshold & log(DIN.TP_molar) > medianlogDINP, "P-limitation",
                                     ifelse(is.na(limitation), "Co-nutrient limitation", limitation))))
 
-nrow(limits |> filter(limitation == "P-limitation")) # 718 ##### when run with TN rather than DIN, 584
-nrow(limits |> filter(limitation == "N-limitation")) # 1034 ##### when run with TN rather than DIN, 1007
-nrow(limits |> filter(limitation == "Co-nutrient limitation")) # 619 ##### when run with TN rather than DIN, 780
+nrow(limits |> filter(limitation == "P-limitation")) # 753 ##### when run with TN rather than DIN, 584
+nrow(limits |> filter(limitation == "N-limitation")) # 980 ##### when run with TN rather than DIN, 1007
+nrow(limits |> filter(limitation == "Co-nutrient limitation")) # 638 ##### when run with TN rather than DIN, 780
 
 ## plot the limited lakes
 ggplot(limits) +
   geom_point(aes(log(PTL_PPB, base = 10), log(NTL_PPM, base = 10), fill = limitation), size = 2.5, shape = 21, alpha = 0.8) +
-  theme_minimal() +
+  theme_bw() +
+  theme(panel.grid.major = element_blank(), 
+        panel.grid.minor = element_blank()) +
   scale_fill_manual("",values = c("grey60","red4", "#336a98")) +
   labs(y = "Log TN"~(m*g~L^-1), x = "Log TP"~(mu*g~L^-1),
-       caption = "Figure 3. N-limited, P-limited, and co-nutrient limited lakes across the total assessed lakes dataset. Plotted as TN vs TP rather than DIN vs 
-TP becaue of better correlation between the total nutrients.") +
+       caption = "Figure 3. N-limited, P-limited, and co-nutrient limited lakes across the total assessed lakes dataset. Plotted as TN vs 
+TP rather than DIN vs TP becaue of better correlation between the total nutrients.") +
   theme(plot.caption.position = "plot",
         plot.caption = element_text(hjust = 0))
 ggsave("Figures/F3_limitedlakes.png", height = 4.5, width = 6.5, units = "in", dpi = 500) 
@@ -351,9 +357,9 @@ limits_survey_prep <- limits|> # total 2033 lakes for this analysis
   filter(WGT_NLA > 0) # the sp survey package is not designed to use the reference lakes, so those are ignored when using this package for analyses.
 
 # lakes with limitations considered for this analysis now 
-nrow(limits_survey_prep |> filter(limitation == "P-limitation")) # 607
-nrow(limits_survey_prep |> filter(limitation == "N-limitation")) # 868
-nrow(limits_survey_prep |> filter(limitation == "Co-nutrient limitation")) # 478
+nrow(limits_survey_prep |> filter(limitation == "P-limitation")) # 637
+nrow(limits_survey_prep |> filter(limitation == "N-limitation")) # 820
+nrow(limits_survey_prep |> filter(limitation == "Co-nutrient limitation")) # 496
 
 # use categorical analysis from spsurvey package
 years <- c("2007", "2017")
@@ -400,123 +406,33 @@ percent_lim1$Subpopulation = factor(percent_lim1$Subpopulation,
 
 text_percents <- percent_lim1 |>
   select(year, Subpopulation, Category, Estimate.P) |>
-  mutate(perc = paste0(round(Estimate.P, digits = 1), "%"))
+  filter(Estimate.P > 10) |>
+  mutate(perc = paste0(round(Estimate.P, digits = 1), "%")) 
 
 
-ggplot(percent_lim1 |>
-         filter(Subpopulation != "National"), aes(year, Estimate.P, fill = Category)) +
+
+ggplot(percent_lim1, aes(year, Estimate.P, fill = Category)) +
   geom_bar(stat = "identity") +
-  geom_text(text_percents|>
-              filter(Subpopulation != "National"), mapping = aes(label = perc), position = position_stack(vjust = 0.5), size = 3) +
+  geom_text(text_percents, mapping = aes(label = perc), position = position_stack(vjust = 0.5), size = 3) +
   facet_wrap(~Subpopulation) +
   scale_fill_manual("", values = c("grey60","red4", "#336a98")) +
   theme_bw() +
+  theme(panel.grid.major = element_blank(), 
+        panel.grid.minor = element_blank(),
+        strip.text.x = element_text(size = 6.5)) +
   labs(x = "", y = "% lakes",
-       caption = "Figure 4. Percent of lakes in each ecoregion in each nutrient limitation category per year. Percents were extrapolated 
-from the indidvudal lakes in the dataset to represent lakes across the conterminous US using the weights. Each bar is 
-labelled with the percent of lakes in that category.")  +
+       caption = "Figure 4. Percent of lakes nationally and in each ecoregion in each nutrient limitation
+category per year. Percents were extrapolated from the indidvudal lakes in the dataset
+to represent lakes across the conterminous U.S. using the weights. Each bar is labelled 
+with the percent of lakes in that category (percents <10% were not labelled).")  +
   theme(plot.caption.position = "plot",
         plot.caption = element_text(hjust = 0))
 ggsave("Figures/F4_limitbars_ecoreg.png", height = 4.5, width = 6.5, units = "in", dpi = 500)
 
-# national plot 
-ggplot(percent_lim1 |>
-         filter(Subpopulation == "National"), aes(year, Estimate.P, fill = Category)) +
-  geom_bar(stat = "identity") +
-  geom_text(text_percents|>
-              filter(Subpopulation == "National"), mapping = aes(label = perc), position = position_stack(vjust = 0.5), size = 3) +
-  #scale_fill_manual("", values = c("grey60","red4", "#336a98")) +
-  theme_bw() +
-  labs(x = "", y = "% lakes")
-#ggsave("Figures/limitbars_national.png", height = 4.5, width = 6.5, units = "in", dpi = 500)
 
 
 
-
-
-#### 4. Spatial, temporal distribution of trophic state ####
-# Percent lakes in each ecoregion 
-# use categorical analysis from spsurvey package
-years <- c("2007", "2017")
-percent_TS <- data.frame()
-
-for(i in 1:length(years)) {
-  data <- limits_survey_prep |>
-    filter(year == years[i])
-  
-  tmp <- cat_analysis(
-    data,
-    siteID = "UNIQUE_ID",
-    vars = "TROPHIC_STATE",
-    weight = "WGT_NLA",
-    subpops = "ECO_REG_NAME",
-    xcoord = "LON_DD",
-    ycoord = "LAT_DD"
-  )
-  
-  tmp <- tmp |>
-    mutate(year = years[i])
-  
-  percent_TS <- rbind(percent_TS, tmp)
-}
-
-nat <- cat_analysis(
-  limits_survey_prep,
-  siteID = "UNIQUE_ID",
-  vars = "TROPHIC_STATE",
-  weight = "WGT_NLA",
-  subpops = "year",
-  xcoord = "LON_DD",
-  ycoord = "LAT_DD"
-)
-
-nat1 <- nat |>
-  mutate(year = Subpopulation,
-         Subpopulation = "National")
-
-percent_TS1 <- rbind(percent_TS, nat1) |>
-  filter(Category != "Total")
-percent_TS1$Subpopulation = factor(percent_TS1$Subpopulation,
-                                    levels = c("National", "Northern Appalachians", "Southern Appalachians", "Coastal Plains", "Temperate Plains", "Upper Midwest", "Northern Plains", "Southern Plains", "Xeric", "Western Mountains"))
-percent_TS1$Category = factor(percent_TS1$Category,
-                                         levels = c("Oligo.", "Meso.", "Eutro.", "Hyper."))
-
-
-text_percents <- percent_TS1 |>
-  select(year, Subpopulation, Category, Estimate.P) |>
-  mutate(perc = paste0(round(Estimate.P, digits = 1), "%"))
-
-
-ggplot(percent_TS1 |>
-         filter(Subpopulation != "National"), aes(year, Estimate.P, fill = Category)) +
-  geom_bar(stat = "identity") +
-  geom_text(text_percents|>
-              filter(Subpopulation != "National"), mapping = aes(label = perc), position = position_stack(vjust = 0.5), size = 3) +
-  facet_wrap(~Subpopulation) +
-  scale_fill_manual("", values = c(palette_OkabeIto[2], palette_OkabeIto[4], palette_OkabeIto[3], palette_OkabeIto[1])) +
-  theme_bw() +
-  labs(x = "", y = "% lakes",
-       caption = "Figure 5. Percent of lakes in each ecoregion in each trophic state per year. Percents were extrapolated 
-from the indidvudal lakes in the dataset to represent lakes across the conterminous US using the weights. Each bar is 
-labelled with the percent of lakes in that category.")  +
-  theme(plot.caption.position = "plot",
-        plot.caption = element_text(hjust = 0))
-ggsave("Figures/F5_TSbars_ecoreg.png", height = 4.5, width = 6.5, units = "in", dpi = 500)
-
-# national plot 
-ggplot(percent_TS1 |>
-         filter(Subpopulation == "National"), aes(year, Estimate.P, fill = Category)) +
-  geom_bar(stat = "identity") +
-  geom_text(text_percents|>
-              filter(Subpopulation == "National"), mapping = aes(label = perc), position = position_stack(vjust = 0.5), size = 3) +
-  #scale_fill_manual("", values = c("grey60","red4", "#336a98")) +
-  theme_bw() +
-  labs(x = "", y = "% lakes")
-
-
-
-
-#### 5. Limitations change analysis ####
+#### 4. Limitations change analysis ####
 ## find only sites that are sampled in both 2007 and 2017
 crossover <- limits_survey_prep |>
   select(year, UNIQUE_ID) |>
@@ -580,22 +496,24 @@ lim_change0717_allSITES$Subpopulation = factor(lim_change0717_allSITES$Subpopula
 
 
 ## Combine the resampled with the full population into one graph for easier comparison?!
-lim_changes_fullset <- rbind(lim_change0717 |> mutate(sample_set = "Resampled lakes"), lim_change0717_allSITES |> mutate(sample_set = "Full population lakes"))
+lim_changes_fullset <- rbind(lim_change0717 |> mutate(sample_set = "Resampled lakes"), lim_change0717_allSITES |> mutate(sample_set = "All surveyed lakes"))
 
 ecoreg_plot <- ggplot(lim_changes_fullset |>
          filter(Subpopulation != "National")) +
   geom_point(aes(Category,DiffEst.P, fill = Category), color = "black", pch = 21, size = 1, position=position_dodge(width=0.5)) +
   geom_errorbar(aes(Category, DiffEst.P, ymin = DiffEst.P-StdError.P, ymax = DiffEst.P+StdError.P, color = Category, linetype = sample_set), width = 0.2)  + 
   theme_bw() +
+  theme(panel.grid.major = element_blank(), 
+        panel.grid.minor = element_blank()) +
   #facet_grid(~Trophic.State, scales = "free_x") +
   facet_wrap(~Subpopulation, ncol = 3, scales = "free_y") +
   geom_hline(yintercept = 0) +
   labs(x = "",
        y = "% Difference lakes, 2007-2017",
-       caption = "Figure 6. Change in nutrient limitation status across lakes a) nationally, and b) in the nine aggregated ecoregions
+       caption = "Figure 5. Change in nutrient limitation status across lakes a) nationally, and b) in the nine aggregated ecoregions
 from 2007-2017. The change is represented as a percent difference in the population (point) with standard error 
-bars. Change bars that cross zero are insignificant. The dotted lines are the entire population of lakes from the 
-dataset, and the solid lines are the resampled lakes in both surveys only.") + 
+bars. Change bars that cross zero are not statistically significant. The dotted lines are the entire population 
+of all surveyed lakes, and the solid lines are the resampled lakes in both surveys only.") + 
   scale_color_manual("",values = c("grey60","red4", "#336a98"))  +
   scale_fill_manual("",values = c("grey60","red4", "#336a98")) +
   theme(axis.text.x = element_text(angle = 49, vjust = 1, hjust =1),
@@ -611,6 +529,8 @@ nat_plot <- ggplot(lim_changes_fullset |>
   geom_point(aes(Category,DiffEst.P, fill = Category), color = "black", pch = 21, size = 1, position=position_dodge(width=0.5)) +
   geom_errorbar(aes(Category, DiffEst.P, ymin = DiffEst.P-StdError.P, ymax = DiffEst.P+StdError.P, color = Category, linetype = sample_set), width = 0.2)  + 
   theme_bw() +
+  theme(panel.grid.major = element_blank(), 
+        panel.grid.minor = element_blank()) +
   #facet_grid(~Trophic.State, scales = "free_x") +
   #facet_wrap(~Subpopulation, ncol = 3, scales = "free_y") +
   geom_hline(yintercept = 0) +
@@ -631,7 +551,80 @@ nat_plot/ecoreg_plot +
   plot_layout(guides = "collect",
               design = layout) +
   plot_annotation(tag_levels = 'a', tag_suffix = ')') 
-ggsave("Figures/F6_limchanges.png", height = 8.5, width = 6.5, units = "in", dpi = 500) 
+ggsave("Figures/F5_limchanges.png", height = 8.5, width = 6.5, units = "in", dpi = 500) 
+
+
+#### 5. Spatial, temporal distribution of trophic state ####
+# Percent lakes in each ecoregion 
+# use categorical analysis from spsurvey package
+years <- c("2007", "2017")
+percent_TS <- data.frame()
+
+for(i in 1:length(years)) {
+  data <- limits_survey_prep |>
+    filter(year == years[i])
+  
+  tmp <- cat_analysis(
+    data,
+    siteID = "UNIQUE_ID",
+    vars = "TROPHIC_STATE",
+    weight = "WGT_NLA",
+    subpops = "ECO_REG_NAME",
+    xcoord = "LON_DD",
+    ycoord = "LAT_DD"
+  )
+  
+  tmp <- tmp |>
+    mutate(year = years[i])
+  
+  percent_TS <- rbind(percent_TS, tmp)
+}
+
+nat <- cat_analysis(
+  limits_survey_prep,
+  siteID = "UNIQUE_ID",
+  vars = "TROPHIC_STATE",
+  weight = "WGT_NLA",
+  subpops = "year",
+  xcoord = "LON_DD",
+  ycoord = "LAT_DD"
+)
+
+nat1 <- nat |>
+  mutate(year = Subpopulation,
+         Subpopulation = "National")
+
+percent_TS1 <- rbind(percent_TS, nat1) |>
+  filter(Category != "Total")
+percent_TS1$Subpopulation = factor(percent_TS1$Subpopulation,
+                                   levels = c("National", "Northern Appalachians", "Southern Appalachians", "Coastal Plains", "Temperate Plains", "Upper Midwest", "Northern Plains", "Southern Plains", "Xeric", "Western Mountains"))
+percent_TS1$Category = factor(percent_TS1$Category,
+                              levels = c("Oligo.", "Meso.", "Eutro.", "Hyper."))
+
+
+text_percents <- percent_TS1 |>
+  select(year, Subpopulation, Category, Estimate.P) |>
+  filter(Estimate.P > 10) |>
+  mutate(perc = paste0(round(Estimate.P, digits = 1), "%"))
+
+
+ggplot(percent_TS1, aes(year, Estimate.P, fill = Category)) +
+  geom_bar(stat = "identity") +
+  geom_text(text_percents, mapping = aes(label = perc), position = position_stack(vjust = 0.5), size = 3) +
+  facet_wrap(~Subpopulation) +
+  scale_fill_manual("", values = c(palette_OkabeIto[2], palette_OkabeIto[4], palette_OkabeIto[3], palette_OkabeIto[1])) +
+  theme_bw() +
+  theme(panel.grid.major = element_blank(), 
+        panel.grid.minor = element_blank(),
+        strip.text.x = element_text(size = 6.5)) +
+  labs(x = "", y = "% lakes",
+       caption = "Figure 6. Percent of lakes nationally and in each ecoregion in each trophic state per year. Percents 
+were extrapolated from the indidvudal lakes in the dataset to represent lakes across the conterminous 
+U.S. using the weights. Each bar is labelled with the percent of lakes in that category (percents <10%
+were not labelled).")  +
+  theme(plot.caption.position = "plot",
+        plot.caption = element_text(hjust = 0))
+ggsave("Figures/F6_TSbars_ecoreg.png", height = 4.5, width = 6.5, units = "in", dpi = 500)
 
 
 
@@ -685,6 +678,8 @@ ggplot(TS_changes_fullset) +
   geom_point(aes(Category,DiffEst.P, fill = Category), color = "black", pch = 21, size = 1, position=position_dodge(width=0.5)) +
   geom_errorbar(aes(Category, DiffEst.P, ymin = DiffEst.P-StdError.P, ymax = DiffEst.P+StdError.P, color = Category, linetype = sample_set), width = 0.2)  + 
   theme_bw() +
+  theme(panel.grid.major = element_blank(), 
+        panel.grid.minor = element_blank()) +
   facet_grid(~Subpopulation, scales = "free_x") +
   #facet_wrap(~Subpopulation, ncol = 3, scales = "free_y") +
   geom_hline(yintercept = 0) +
@@ -692,8 +687,8 @@ ggplot(TS_changes_fullset) +
        y = "% Difference lakes, 2007-2017",
        caption = "Figure 7. Change in trophic state across lakes nationally from 2007-2017, separated into their limitation category.
 The change is represented as a percent difference in the population (point) with standard error bars. Change 
-bars that cross zero are insignificant. The dotted lines are the entire population of lakes from the dataset,
-and the solid lines are the resampled lakes in both surveys only.") + 
+bars that cross zero are not statistically significant. The dotted lines are the entire population of all 
+surveyed lakes, and the solid lines are the resampled lakes in both surveys only.") + 
   scale_color_manual("", values = c(palette_OkabeIto[2], palette_OkabeIto[4], palette_OkabeIto[3], palette_OkabeIto[1]))  +
   scale_fill_manual("", values = c(palette_OkabeIto[2], palette_OkabeIto[4], palette_OkabeIto[3], palette_OkabeIto[1])) +
   theme(axis.text.x = element_text(angle = 49, vjust = 1, hjust =1),
