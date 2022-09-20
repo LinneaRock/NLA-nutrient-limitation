@@ -493,8 +493,6 @@ lim_change0717_allSITES$Subpopulation = factor(lim_change0717_allSITES$Subpopula
                                                levels = c("National","Northern Appalachians", "Southern Appalachians", "Coastal Plains", "Temperate Plains", "Upper Midwest", "Northern Plains", "Southern Plains", "Xeric", "Western Mountains"))
 
 
-
-
 ## Combine the resampled with the full population into one graph for easier comparison?!
 lim_changes_fullset <- rbind(lim_change0717 |> mutate(sample_set = "Resampled lakes"), lim_change0717_allSITES |> mutate(sample_set = "All surveyed lakes"))
 
@@ -651,10 +649,18 @@ change_nat <- change_analysis(TS_change_prep, subpops = "limitation", siteID = "
 change_nat.1 <- change_nat[["catsum"]]  |>
   select(Subpopulation, Category, Indicator, DiffEst.P, StdError.P)  
 warnprnt()
+# also get changes without limitation status defined:
+change_nat_full <- change_analysis(TS_change_prep, siteID = "UNIQUE_ID", vars_cat = "TROPHIC_STATE", surveyID = "year", weight = "WGT_NLA", xcoord = "LON_DD", ycoord = "LAT_DD")
+change_nat_full.1 <- change_nat_full[["catsum"]]  |>
+  select(Category, Indicator, DiffEst.P, StdError.P) |>
+  mutate(Subpopulation = "All lakes & limitations")
+warnprnt()
 
-TS_change0717 <- change_nat.1
+TS_change0717 <- rbind(change_nat.1, change_nat_full.1)
 TS_change0717$Category = factor(TS_change0717$Category,
                                          levels = c("Oligo.", "Meso.", "Eutro.", "Hyper."))
+
+
 
 #### Now use the full population of lakes, not just resampled. 
 TS_change_prep <- limits_survey_prep #|> # analysis has same restrictions as categorical analysis
@@ -665,11 +671,22 @@ change_nat <- change_analysis(TS_change_prep, subpops = "limitation", siteID = "
 change_nat.1 <- change_nat[["catsum"]]  |>
   select(Subpopulation, Category, Indicator, DiffEst.P, StdError.P)  
 warnprnt()
+# also get changes without limitation status defined:
+change_nat_full <- change_analysis(TS_change_prep, siteID = "UNIQUE_ID", vars_cat = "TROPHIC_STATE", surveyID = "year", weight = "WGT_NLA", xcoord = "LON_DD", ycoord = "LAT_DD")
+change_nat_full.1 <- change_nat_full[["catsum"]]  |>
+  select(Category, Indicator, DiffEst.P, StdError.P) |>
+  mutate(Subpopulation = "All lakes & limitations")
+warnprnt()
 
-
-TS_change0717_allSITES <- change_nat.1
+TS_change0717_allSITES <- rbind(change_nat.1, change_nat_full.1)
 TS_change0717_allSITES$Category = factor(TS_change0717_allSITES$Category,
                                               levels = c("Oligo.", "Meso.", "Eutro.", "Hyper."))
+
+
+## Combine the resampled with the full population into one graph for easier comparison?!
+TS_changes_fullset  <- rbind(TS_change0717 |> mutate(sample_set = "Resampled lakes"), TS_change0717_allSITES |> mutate(sample_set = "All surveyed lakes"))
+TS_changes_fullset$Category = factor(TS_changes_fullset$Category,
+                                         levels = c("Oligo.", "Meso.", "Eutro.", "Hyper."))
 
 
 
@@ -680,15 +697,16 @@ ggplot(TS_changes_fullset) +
   theme_bw() +
   theme(panel.grid.major = element_blank(), 
         panel.grid.minor = element_blank()) +
-  facet_grid(~Subpopulation, scales = "free_x") +
+  facet_wrap(~Subpopulation, scales = "free_y", ncol = 2) +
   #facet_wrap(~Subpopulation, ncol = 3, scales = "free_y") +
   geom_hline(yintercept = 0) +
   labs(x = "",
-       y = "% Difference lakes, 2007-2017",
-       caption = "Figure 7. Change in trophic state across lakes nationally from 2007-2017, separated into their limitation category.
-The change is represented as a percent difference in the population (point) with standard error bars. Change 
-bars that cross zero are not statistically significant. The dotted lines are the entire population of all 
-surveyed lakes, and the solid lines are the resampled lakes in both surveys only.") + 
+       y = "% Difference lakes, 2007-2017",                                                 
+       caption = "Figure 7. Change in trophic state across lakes nationally from 2007-2017, panels separated to show all lakes at all 
+limitations and separated by limitation category. The change is represented as a percent difference in the population 
+(point) with standard error bars. Change bars that cross zero are not statistically significant. The dotted lines are 
+the entire population of all surveyed lakes, and the solid lines are the resampled lakes in both surveys only. Note 
+there is a difference in y-axis scales.") + 
   scale_color_manual("", values = c(palette_OkabeIto[2], palette_OkabeIto[4], palette_OkabeIto[3], palette_OkabeIto[1]))  +
   scale_fill_manual("", values = c(palette_OkabeIto[2], palette_OkabeIto[4], palette_OkabeIto[3], palette_OkabeIto[1])) +
   theme(axis.text.x = element_text(angle = 49, vjust = 1, hjust =1),
