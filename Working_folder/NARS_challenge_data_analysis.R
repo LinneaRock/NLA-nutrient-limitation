@@ -248,8 +248,9 @@ ggplot(data = regions.sf1) +
   theme_minimal() +
   geom_sf_label(aes(label = WSA9_NAME), size = 1.5) +
   labs(x = "", y = "",
-       caption = "Figure 2. Map displaying the better nutrient predictor of trophic state in each (labelled) ecoregion.") +
-  scale_fill_manual("Better predictor \n of trophic state", values=c("red4", "#336a98")) +
+       caption = "Figure 2. Map displaying the best correlation variable of the chlorophyll-a (eutrophication proxy) vs nutrient linear 
+models in each (labelled) ecoregion.") +
+  scale_fill_manual("", values=c("red4", "#336a98")) +
   theme(plot.caption.position = "plot",
         plot.caption = element_text(hjust = 0))
 ggsave("Figures/F2_Map.png", height = 4.5, width = 6.5, units = "in", dpi = 500) 
@@ -492,6 +493,10 @@ lim_change0717_allSITES <- rbind(change_ecoreg.1, change_nat.1)|>
 lim_change0717_allSITES$Subpopulation = factor(lim_change0717_allSITES$Subpopulation,
                                                levels = c("National","Northern Appalachians", "Southern Appalachians", "Coastal Plains", "Temperate Plains", "Upper Midwest", "Northern Plains", "Southern Plains", "Xeric", "Western Mountains"))
 
+# compare standard error between all surveyed lakes and resampled lakes
+t.test((lim_changes_fullset |> filter(sample_set == "Resampled lakes"))$StdError.P, (lim_changes_fullset |> filter(sample_set != "Resampled lakes"))$StdError.P) # p = 0.007492
+ggplot(lim_changes_fullset, aes(sample_set, StdError.P)) +
+  geom_boxplot()
 
 ## Combine the resampled with the full population into one graph for easier comparison?!
 lim_changes_fullset <- rbind(lim_change0717 |> mutate(sample_set = "Resampled lakes"), lim_change0717_allSITES |> mutate(sample_set = "All surveyed lakes"))
@@ -688,6 +693,11 @@ TS_changes_fullset  <- rbind(TS_change0717 |> mutate(sample_set = "Resampled lak
 TS_changes_fullset$Category = factor(TS_changes_fullset$Category,
                                          levels = c("Oligo.", "Meso.", "Eutro.", "Hyper."))
 
+
+# compare standard error between all surveyed lakes and resampled lakes
+t.test((TS_changes_fullset |> filter(sample_set == "Resampled lakes"))$StdError.P, (TS_changes_fullset |> filter(sample_set != "Resampled lakes"))$StdError.P) # p = 0.007492
+ggplot(TS_changes_fullset, aes(sample_set, StdError.P)) +
+  geom_boxplot()
 
 
 #national plot
