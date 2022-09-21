@@ -328,9 +328,9 @@ limits <- nla_data_subset|>
                              ifelse(DIN_PPM > DIN_threshold & log(DIN.TP_molar) > medianlogDINP, "P-limitation",
                                     ifelse(is.na(limitation), "Co-nutrient limitation", limitation))))
 
-nrow(limits |> filter(limitation == "P-limitation")) # 753 ##### when run with TN rather than DIN, 584
-nrow(limits |> filter(limitation == "N-limitation")) # 980 ##### when run with TN rather than DIN, 1007
-nrow(limits |> filter(limitation == "Co-nutrient limitation")) # 638 ##### when run with TN rather than DIN, 780
+nrow(limits |> filter(limitation == "P-limitation")) # 753 
+nrow(limits |> filter(limitation == "N-limitation")) # 980 
+nrow(limits |> filter(limitation == "Co-nutrient limitation")) # 638 
 
 ## plot the limited lakes
 ggplot(limits) +
@@ -493,13 +493,15 @@ lim_change0717_allSITES <- rbind(change_ecoreg.1, change_nat.1)|>
 lim_change0717_allSITES$Subpopulation = factor(lim_change0717_allSITES$Subpopulation,
                                                levels = c("National","Northern Appalachians", "Southern Appalachians", "Coastal Plains", "Temperate Plains", "Upper Midwest", "Northern Plains", "Southern Plains", "Xeric", "Western Mountains"))
 
+
+
+## Combine the resampled with the full population into one graph for easier comparison?!
+lim_changes_fullset <- rbind(lim_change0717 |> mutate(sample_set = "Resampled lakes"), lim_change0717_allSITES |> mutate(sample_set = "All surveyed lakes"))
+
 # compare standard error between all surveyed lakes and resampled lakes
 t.test((lim_changes_fullset |> filter(sample_set == "Resampled lakes"))$StdError.P, (lim_changes_fullset |> filter(sample_set != "Resampled lakes"))$StdError.P) # p = 0.007492
 ggplot(lim_changes_fullset, aes(sample_set, StdError.P)) +
   geom_boxplot()
-
-## Combine the resampled with the full population into one graph for easier comparison?!
-lim_changes_fullset <- rbind(lim_change0717 |> mutate(sample_set = "Resampled lakes"), lim_change0717_allSITES |> mutate(sample_set = "All surveyed lakes"))
 
 ecoreg_plot <- ggplot(lim_changes_fullset |>
          filter(Subpopulation != "National")) +
