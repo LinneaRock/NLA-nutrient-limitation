@@ -15,7 +15,6 @@ library(patchwork)
 
 #### Load and subset dataframe ####
 source("Data/NLA/Call_NLA_data.R")
-all_NLA <- distinct(all_NLA)
 nla_data_subset <- all_NLA |>
   select(ECO_REG_NAME, UNIQUE_ID, DATE_COL, VISIT_NO, NTL_PPM, PTL_PPB, DIN_PPM, tn.tp, DIN.TP, CHLA_PPB, TROPHIC_STATE, year,WGT_NLA, LON_DD, LAT_DD, AREA_HA, ELEV_PT, PCT_DEVELOPED_BSN, PCT_AGRIC_BSN, SITE_TYPE, URBAN, LAKE_ORIGIN) |>
   rename(DIN.TP_molar = DIN.TP,
@@ -34,31 +33,35 @@ tinylakes_lake <- tinylakesobs |>
   select(UNIQUE_ID, SITE_TYPE) |>
   distinct() # 211 lakes, 8 of these were reference lakes 
 
+
+
+
+
 #### 1. General trends in the data ####
-limits1 <- nla_data_subset |>
-  mutate(logDINP = log10(DIN.TP_molar)) |>
-  mutate(year = as.factor(year))
-
-#stoichiometry across years
-ggplot(limits1, aes(year, logDINP)) +
-  geom_boxplot()
-anova(aov(logDINP~year, limits1)) # p < 2.2e-16 
-TukeyHSD(aov(logDINP~year, limits1), conf.level = 0.95) # p < 0.001 - all groups are different at the 95% CI
-plot(TukeyHSD(aov(logDINP~year, limits1), conf.level = 0.95), las = 2)
-
-# stoichiometry across limitation categories
-ggplot(limits1, aes(limitation, logDINP)) +
-  geom_boxplot()
-anova(aov(logDINP~limitation, limits1)) # p < 2.2e-16 
-TukeyHSD(aov(logDINP~limitation, limits1), conf.level = 0.95) # p < 0.001 - all groups are different at the 95% CI
-plot(TukeyHSD(aov(logDINP~limitation, limits1), conf.level = 0.95), las = 2)
-
-# stoichioemtery across limitation categories and trophic states 
-ggplot(limits1, aes(limitation, logDINP, color = TROPHIC_STATE)) +
-  geom_boxplot()
-anova(aov(logDINP~limitation*TROPHIC_STATE, limits1)) # p < 2.2e-16 
-TukeyHSD(aov(logDINP~limitation*TROPHIC_STATE, limits1), conf.level = 0.95) # various, some p < 0.05, many p <0.0001. 14 relationships are not significantly different
-plot(TukeyHSD(aov(logDINP~limitation*TROPHIC_STATE, limits1), conf.level = 0.95), las = 2)
+# limits1 <- nla_data_subset |>
+#   mutate(logDINP = log10(DIN.TP_molar)) |>
+#   mutate(year = as.factor(year))
+# 
+# #stoichiometry across years
+# ggplot(limits1, aes(year, logDINP)) +
+#   geom_boxplot()
+# anova(aov(logDINP~year, limits1)) # p < 2.2e-16 
+# TukeyHSD(aov(logDINP~year, limits1), conf.level = 0.95) # p < 0.001 - all groups are different at the 95% CI
+# plot(TukeyHSD(aov(logDINP~year, limits1), conf.level = 0.95), las = 2)
+# 
+# # stoichiometry across limitation categories
+# ggplot(limits1, aes(limitation, logDINP)) +
+#   geom_boxplot()
+# anova(aov(logDINP~limitation, limits1)) # p < 2.2e-16 
+# TukeyHSD(aov(logDINP~limitation, limits1), conf.level = 0.95) # p < 0.001 - all groups are different at the 95% CI
+# plot(TukeyHSD(aov(logDINP~limitation, limits1), conf.level = 0.95), las = 2)
+# 
+# # stoichioemtery across limitation categories and trophic states 
+# ggplot(limits1, aes(limitation, logDINP, color = TROPHIC_STATE)) +
+#   geom_boxplot()
+# anova(aov(logDINP~limitation*TROPHIC_STATE, limits1)) # p < 2.2e-16 
+# TukeyHSD(aov(logDINP~limitation*TROPHIC_STATE, limits1), conf.level = 0.95) # various, some p < 0.05, many p <0.0001. 14 relationships are not significantly different
+# plot(TukeyHSD(aov(logDINP~limitation*TROPHIC_STATE, limits1), conf.level = 0.95), las = 2)
 
 
 
@@ -260,14 +263,14 @@ ggplot(data = regions.sf1) +
   theme_minimal() +
   geom_sf_label(aes(label = WSA9_NAME), size = 1.5) +
   labs(x = "", y = "",
-       caption = "Figure 2. Map displaying the best correlation variable of the chlorophyll-a (eutrophication proxy) vs nutrient linear 
+       caption = "Figure 2. Map displaying the best correlation variable of the chlorophyll-a (trophic state proxy) vs nutrient linear 
 models in each (labelled) ecoregion.") +
   scale_fill_manual("", values=c("red4", "#336a98")) +
   theme(plot.caption.position = "plot",
         plot.caption = element_text(hjust = 0))
 ggsave("Figures/F2_Map.png", height = 4.5, width = 6.5, units = "in", dpi = 500) 
 
-detach(package:sf, unload=TRUE)
+#detach(package:sf, unload=TRUE)
 
 
 # ## Create a beautiful plot -- too big to save well
@@ -326,9 +329,9 @@ criteria <- left_join(averages_np, ref_np) |>
 #write.csv(criteria, "criteria.csv")
 
 # How do the lower 25th percentiles of TN and TP compare the the 75th percentile concentrations of TN and TP in the reference lakes? 
-t.test(criteria$percentile75TN_PPM, criteria$percentile25TN_PPM) # p = 0.1489
-t.test(criteria$percentile75TP_PPB, criteria$percentile25TP_PPB) # p = 0.1582
-t.test(criteria$percentile75DIN_PPM, criteria$percentile25DIN_PPM) # p = 0.1709
+t.test(criteria$percentile75TN_PPM, criteria$percentile25TN_PPM) # p = 0.1459
+t.test(criteria$percentile75TP_PPB, criteria$percentile25TP_PPB) # p = 0.1587
+t.test(criteria$percentile75DIN_PPM, criteria$percentile25DIN_PPM) # p = 0.1718
 # reject the null hypotheses for these tests. The true difference in means is equal to 0.
 
 # generate nutrient limitations
@@ -341,9 +344,9 @@ limits <- nla_data_subset|>
                              ifelse(DIN_PPM > DIN_threshold & log(DIN.TP_molar) > medianlogDINP, "P-limitation",
                                     ifelse(is.na(limitation), "Co-nutrient limitation", limitation))))
 
-nrow(limits |> filter(limitation == "P-limitation")) # 719 
-nrow(limits |> filter(limitation == "N-limitation")) # 919 
-nrow(limits |> filter(limitation == "Co-nutrient limitation")) # 615 
+nrow(limits |> filter(limitation == "P-limitation")) # 700
+nrow(limits |> filter(limitation == "N-limitation")) # 885
+nrow(limits |> filter(limitation == "Co-nutrient limitation")) # 594 
 
 ## plot the limited lakes
 ggplot(limits) +
@@ -361,13 +364,13 @@ ggsave("Figures/F3_limitedlakes.png", height = 4.5, width = 6.5, units = "in", d
 
 # how many of the co-nutrient limited lakes occur in lakes with excess N or P?
 co_lim <- limits |>
-  filter(limitation == "Co-nutrient limitation") |> # 615 obs
+  filter(limitation == "Co-nutrient limitation") |> # 594 obs
   mutate(highDIN = ifelse(DIN_PPM > DIN_threshold, 1, 0),
          highTN = ifelse(NTL_PPM >TN_threshold, 1, 0),
          highTP = ifelse(PTL_PPB > TP_threshold, 1,0)) |>
   filter(highDIN == 1 |
            highTN == 1 |
-           highTP == 1) # 94 obs
+           highTP == 1) # 92 obs
 
 
 
@@ -376,14 +379,14 @@ co_lim <- limits |>
 #### 3. Spatial, temporal distribution of limitations ####
 # Percent lakes in each ecoregion 
 # prep the data
-limits_survey_prep <- limits|> # total 1782 lakes for this analysis 
+limits_survey_prep <- limits|> # total 1773 lakes for this analysis 
   filter(VISIT_NO == 1) |># for this analysis, we are using just the first visit from each lake
   filter(WGT_NLA > 0) # the sp survey package is not designed to use the reference lakes, so those are ignored when using this package for analyses.
 
 # lakes with limitations considered for this analysis now 
-nrow(limits_survey_prep |> filter(limitation == "P-limitation")) # 593
-nrow(limits_survey_prep |> filter(limitation == "N-limitation")) # 730
-nrow(limits_survey_prep |> filter(limitation == "Co-nutrient limitation")) # 459
+nrow(limits_survey_prep |> filter(limitation == "P-limitation")) # 589
+nrow(limits_survey_prep |> filter(limitation == "N-limitation")) # 729
+nrow(limits_survey_prep |> filter(limitation == "Co-nutrient limitation")) # 455
 
 # use categorical analysis from spsurvey package
 years <- c("2007", "2017")
@@ -522,7 +525,7 @@ lim_change0717_allSITES$Subpopulation = factor(lim_change0717_allSITES$Subpopula
 lim_changes_fullset <- rbind(lim_change0717 |> mutate(sample_set = "Resampled lakes"), lim_change0717_allSITES |> mutate(sample_set = "All surveyed lakes"))
 
 # compare standard error between all surveyed lakes and resampled lakes
-t.test((lim_changes_fullset |> filter(sample_set == "Resampled lakes"))$StdError.P, (lim_changes_fullset |> filter(sample_set != "Resampled lakes"))$StdError.P) # p = 0.005177
+t.test((lim_changes_fullset |> filter(sample_set == "Resampled lakes"))$StdError.P, (lim_changes_fullset |> filter(sample_set != "Resampled lakes"))$StdError.P) # p = 0.006251
 ggplot(lim_changes_fullset, aes(sample_set, StdError.P)) +
   geom_boxplot()
 
@@ -537,11 +540,11 @@ ecoreg_plot <- ggplot(lim_changes_fullset |>
   facet_wrap(~Subpopulation, ncol = 3, scales = "free_y") +
   geom_hline(yintercept = 0) +
   labs(x = "",
-       y = "% Difference lakes, 2007-2017",
-       caption = "Figure 5. Change in nutrient limitation status across lakes a) nationally, and b) in the nine aggregated ecoregions
-from 2007-2017. The change is represented as a percent difference in the population (point) with standard error 
-bars. Change bars that cross zero are not statistically significant. The solid lines are the entire population 
-of all surveyed lakes, and the dotted lines are the resampled lakes in both surveys only.") + 
+       y = "% change 2007-2017",
+       caption = "Figure 5. Percent change in lakes in nutrient limitation status a) nationally, and b) in the nine aggregated 
+ecoregions from 2007-2017. The change is represented as a percent difference in the population (point) with 
+standard error bars. Change bars that cross zero are not statistically significant. The solid lines are the 
+entire population of all surveyed lakes, and the dotted lines are the resampled lakes in both surveys only.") + 
   scale_color_manual("",values = c("grey60","red4", "#336a98"))  +
   scale_fill_manual("",values = c("grey60","red4", "#336a98")) +
   theme(axis.text.x = element_text(angle = 49, vjust = 1, hjust =1),
@@ -563,7 +566,7 @@ nat_plot <- ggplot(lim_changes_fullset |>
   #facet_wrap(~Subpopulation, ncol = 3, scales = "free_y") +
   geom_hline(yintercept = 0) +
   labs(x = "",
-       y = "% Difference lakes, 2007-2017",
+       y = "% change 2007-2017",
        title = "National") +
   scale_color_manual("",values = c("grey60","red4", "#336a98"))  +
   scale_fill_manual("",values = c("grey60","red4", "#336a98")) +
@@ -589,10 +592,10 @@ ggsave("Figures/F5_limchanges.png", height = 8.5, width = 6.5, units = "in", dpi
 
 #### 5. Spatial, temporal distribution of trophic state ####
 # how many observations of each trophic state
-nrow(limits |> filter(TROPHIC_STATE == "Oligo.")) # 362
-nrow(limits |> filter(TROPHIC_STATE == "Meso.")) # 716
-nrow(limits |> filter(TROPHIC_STATE == "Eutro.")) # 692
-nrow(limits |> filter(TROPHIC_STATE == "Hyper.")) # 883
+nrow(limits |> filter(TROPHIC_STATE == "Oligo.")) # 348
+nrow(limits |> filter(TROPHIC_STATE == "Meso.")) # 697
+nrow(limits |> filter(TROPHIC_STATE == "Eutro.")) # 676
+nrow(limits |> filter(TROPHIC_STATE == "Hyper.")) # 458
 # Percent lakes in each ecoregion 
 # use categorical analysis from spsurvey package
 years <- c("2007", "2017")
@@ -730,7 +733,7 @@ TS_changes_fullset$Category = factor(TS_changes_fullset$Category,
 
 
 # compare standard error between all surveyed lakes and resampled lakes
-t.test((TS_changes_fullset |> filter(sample_set == "Resampled lakes"))$StdError.P, (TS_changes_fullset |> filter(sample_set != "Resampled lakes"))$StdError.P) # p =0.0008019
+t.test((TS_changes_fullset |> filter(sample_set == "Resampled lakes"))$StdError.P, (TS_changes_fullset |> filter(sample_set != "Resampled lakes"))$StdError.P) # p = 0.0007622
 ggplot(TS_changes_fullset, aes(sample_set, StdError.P)) +
   geom_boxplot()
 
@@ -746,12 +749,12 @@ ggplot(TS_changes_fullset) +
   #facet_wrap(~Subpopulation, ncol = 3, scales = "free_y") +
   geom_hline(yintercept = 0) +
   labs(x = "",
-       y = "% Difference lakes, 2007-2017",                                                 
-       caption = "Figure 7. Change in trophic state across lakes nationally from 2007-2017, panels separated to show all lakes at all 
-limitations and separated by limitation category. The change is represented as a percent difference in the population 
-(point) with standard error bars. Change bars that cross zero are not statistically significant. The solid lines are 
-the entire population of all surveyed lakes, and the dotted lines are the resampled lakes in both surveys only. Note 
-there is a difference in y-axis scales.") + 
+       y = "% change 2007-2017",                                                 
+       caption = "Figure 7. Percent change in trophic state across lakes nationally from 2007-2017, panels separated to show all lakes 
+at all limitations and separated by limitation category. The change is represented as a percent difference in the 
+population (point) with standard error bars. Change bars that cross zero are not statistically significant. The 
+solid lines are the entire population of all surveyed lakes, and the dotted lines are the resampled lakes in both 
+surveys only. Note there is a difference in y-axis scales.") + 
   scale_color_manual("", values = c(palette_OkabeIto[2], palette_OkabeIto[4], palette_OkabeIto[3], palette_OkabeIto[1]))  +
   scale_fill_manual("", values = c(palette_OkabeIto[2], palette_OkabeIto[4], palette_OkabeIto[3], palette_OkabeIto[1])) +
   theme(axis.text.x = element_text(angle = 49, vjust = 1, hjust =1),
