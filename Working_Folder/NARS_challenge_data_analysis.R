@@ -15,14 +15,24 @@ library(patchwork)
 
 #### Load and subset dataframe ####
 source("Data/NLA/Call_NLA_data.R")
+all_NLA <- distinct(all_NLA)
 nla_data_subset <- all_NLA |>
   select(ECO_REG_NAME, UNIQUE_ID, DATE_COL, VISIT_NO, NTL_PPM, PTL_PPB, DIN_PPM, tn.tp, DIN.TP, CHLA_PPB, TROPHIC_STATE, year,WGT_NLA, LON_DD, LAT_DD, AREA_HA, ELEV_PT, PCT_DEVELOPED_BSN, PCT_AGRIC_BSN, SITE_TYPE, URBAN, LAKE_ORIGIN) |>
   rename(DIN.TP_molar = DIN.TP,
          TN.TP_molar = tn.tp) |>
   filter(year != "2012") |>
-  filter(AREA_HA >= 4) # removes 142 observations 
+  filter(AREA_HA >= 4) |> # removes 216 observations 
   distinct()
 
+tinylakesobs <- all_NLA |>
+  distinct() |>
+  filter(year != "2012",
+         AREA_HA < 4) |>
+  distinct() # 216 observations
+
+tinylakes_lake <- tinylakesobs |>
+  select(UNIQUE_ID, SITE_TYPE) |>
+  distinct() # 211 lakes, 8 of these were reference lakes 
 
 #### 1. General trends in the data ####
 limits1 <- nla_data_subset |>
