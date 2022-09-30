@@ -543,7 +543,7 @@ ecoreg_plot <- ggplot(lim_changes_fullset |>
        y = "% change 2007-2017",
        caption = "Figure 5. Percent change in lakes in nutrient limitation status a) nationally, and b) in the nine aggregated 
 ecoregions from 2007-2017. The change is represented as a percent difference in the population (point) with 
-standard error bars. Change bars that cross zero are not statistically significant. The solid lines are the 
+standard error bars. Error bars that cross zero are not statistically significant. The solid lines are the 
 entire population of all surveyed lakes, and the dotted lines are the resampled lakes in both surveys only.") + 
   scale_color_manual("",values = c("grey60","red4", "#336a98"))  +
   scale_fill_manual("",values = c("grey60","red4", "#336a98")) +
