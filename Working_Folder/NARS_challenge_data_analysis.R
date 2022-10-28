@@ -202,10 +202,10 @@ add_corr <- lm_ecoreg_df1 |>
 ggplot(correlations_data, aes(log10(concentration), log10(CHLA_PPB))) +
   geom_point(alpha = 0.25, aes(color = nutrient)) +
   geom_smooth(method = "lm", se = FALSE, aes(group = nutrient), color = "grey60") +
-  geom_text(add_corr |> filter(nutrient == "NTL_PPB"), mapping = aes(x = -5, y = 3.5, label = r.squared), size = 3, vjust = 0.75, hjust = 0) +
-  geom_text(add_corr |> filter(nutrient == "NTL_PPB"), mapping = aes(x = -5, y = 3, label = AIC), size = 3, vjust = 0.75, hjust = 0) +
-  geom_text(add_corr |> filter(nutrient == "PTL_PPB"), mapping = aes(x = 1, y = 3.5, label = r.squared), size = 3, vjust = 0.75, hjust = 0) +
-  geom_text(add_corr |> filter(nutrient == "PTL_PPB"), mapping = aes(x = 1, y = 3, label = AIC), size = 3, vjust = 0.75, hjust = 0) +
+  geom_text(add_corr |> filter(nutrient == "NTL_PPB"), mapping = aes(x = -5, y = 3.5, label = r.squared), size = 2, vjust = 0.75, hjust = 0) +
+  geom_text(add_corr |> filter(nutrient == "NTL_PPB"), mapping = aes(x = -5, y = 3, label = AIC), size = 2, vjust = 0.75, hjust = 0) +
+  geom_text(add_corr |> filter(nutrient == "PTL_PPB"), mapping = aes(x = 1, y = 3.5, label = r.squared), size = 2, vjust = 0.75, hjust = 0) +
+  geom_text(add_corr |> filter(nutrient == "PTL_PPB"), mapping = aes(x = 1, y = 3, label = AIC), size = 2, vjust = 0.75, hjust = 0) +
   geom_abline(slope = 0, intercept = log10(2)) +
   geom_abline(slope = 0, intercept = log10(7)) +
   geom_abline(slope = 0, intercept = log10(30)) +
@@ -218,12 +218,12 @@ ggplot(correlations_data, aes(log10(concentration), log10(CHLA_PPB))) +
   labs(y = "log10(chlorophyll-a concentration)",
        x = "log10(nutrient concentration)",
        caption = "Figure 1. Chlorophyll-a vs. nutrient concentration (log-log) in each ecoregion. Color indicates either total nitrogen or 
-total phosphorus. AIC and adjusted r-squared are displayed on each panel. Horizontal lines indicate trophic state
+total phosphorus. AIC and adjusted r-squared (adj.r) are displayed on each panel. Horizontal lines indicate trophic state
 from oligotrophic (below the lowest line to hypereutrophic (above the highest line).") +
   scale_color_manual("", labels = c("TN", "TP"), values=c("red4", "#336a98")) +
   theme(plot.caption.position = "plot",
-        plot.caption = element_text(hjust = 0))
-ggsave("Figures/F1_linregs.png", height = 4.5, width = 6.4, units = "in", dpi = 500) 
+        plot.caption = element_text(hjust = 0, family = "serif"))
+ggsave("Figures/F1_linregs.png", height = 4.5, width = 6.4, units = "in", dpi = 1200) 
 
 
 # NOTE: I also ran these for just 2007 and just 2017 data. 
@@ -267,8 +267,8 @@ ggplot(data = regions.sf1) +
 models in each (labelled) ecoregion.") +
   scale_fill_manual("", values=c("red4", "#336a98")) +
   theme(plot.caption.position = "plot",
-        plot.caption = element_text(hjust = 0))
-ggsave("Figures/F2_Map.png", height = 4.5, width = 6.5, units = "in", dpi = 500) 
+        plot.caption = element_text(hjust = 0, family = "serif"))
+ggsave("Figures/F2_Map.png", height = 4.5, width = 6.5, units = "in", dpi = 1200) 
 
 #detach(package:sf, unload=TRUE)
 
@@ -356,11 +356,11 @@ ggplot(limits) +
         panel.grid.minor = element_blank()) +
   scale_fill_manual("",values = c("grey60","red4", "#336a98")) +
   labs(y = "Log TN"~(m*g~L^-1), x = "Log TP"~(mu*g~L^-1),
-       caption = "Figure 3. N-limited, P-limited, and co-nutrient limited lakes across the total assessed lakes dataset. Plotted as TN vs 
+       caption = "Figure X. N-limited, P-limited, and co-nutrient limited lakes across the total assessed lakes dataset. Plotted as TN vs 
 TP rather than DIN vs TP becaue of better correlation between the total nutrients.") +
   theme(plot.caption.position = "plot",
-        plot.caption = element_text(hjust = 0))
-ggsave("Figures/F3_limitedlakes.png", height = 4.5, width = 6.5, units = "in", dpi = 500) 
+        plot.caption = element_text(hjust = 0, family = "serif"))
+ggsave("Figures/Forig3_limitedlakes.png", height = 4.5, width = 6.5, units = "in", dpi = 1200) 
 
 # how many of the co-nutrient limited lakes occur in lakes with excess N or P?
 co_lim <- limits |>
@@ -448,13 +448,13 @@ ggplot(percent_lim1, aes(year, Estimate.P, fill = Category)) +
         panel.grid.minor = element_blank(),
         strip.text.x = element_text(size = 6.5)) +
   labs(x = "", y = "% lakes",
-       caption = "Figure 4. Percent of lakes nationally and in each ecoregion in each nutrient limitation
+       caption = "Figure 3. Percent of lakes nationally and in each ecoregion in each nutrient limitation
 category per year. Percents were extrapolated from the indidvudal lakes in the dataset
 to represent lakes across the conterminous U.S. using the weights. Each bar is labelled 
 with the percent of lakes in that category (percents <10% were not labelled).")  +
   theme(plot.caption.position = "plot",
-        plot.caption = element_text(hjust = 0))
-ggsave("Figures/F4_limitbars_ecoreg.png", height = 4.5, width = 6.5, units = "in", dpi = 500)
+        plot.caption = element_text(hjust = 0, family = "serif"))
+ggsave("Figures/F3_limitbars_ecoreg.png", height = 4.5, width = 6.5, units = "in", dpi = 1200)
 
 
 
@@ -541,7 +541,7 @@ ecoreg_plot <- ggplot(lim_changes_fullset |>
   geom_hline(yintercept = 0) +
   labs(x = "",
        y = "% change 2007-2017",
-       caption = "Figure 5. Percent change in lakes in nutrient limitation status a) nationally, and b) in the nine aggregated 
+       caption = "Figure 4. Percent change in lakes in nutrient limitation status a) nationally, and b) in the nine aggregated 
 ecoregions from 2007-2017. The change is represented as a percent difference in the population (point) with 
 standard error bars. Error bars that cross zero are not statistically significant. The solid lines are the 
 entire population of all surveyed lakes, and the dotted lines are the resampled lakes in both surveys only.") + 
@@ -550,7 +550,7 @@ entire population of all surveyed lakes, and the dotted lines are the resampled 
   theme(axis.text.x = element_text(angle = 49, vjust = 1, hjust =1),
         strip.text.x = element_text(size = 7.5),
         plot.caption.position = "plot",
-        plot.caption = element_text(hjust = 0),
+        plot.caption = element_text(hjust = 0, family = "serif"),
         legend.title = element_blank())
 
 
@@ -582,7 +582,7 @@ nat_plot/ecoreg_plot +
   plot_layout(guides = "collect",
               design = layout) +
   plot_annotation(tag_levels = 'a', tag_suffix = ')') 
-ggsave("Figures/F5_limchanges.png", height = 8.5, width = 6.5, units = "in", dpi = 500) 
+ggsave("Figures/F4_limchanges.png", height = 8.5, width = 6.5, units = "in", dpi = 1200) 
 
 
 
@@ -659,13 +659,13 @@ ggplot(percent_TS1, aes(year, Estimate.P, fill = Category)) +
         panel.grid.minor = element_blank(),
         strip.text.x = element_text(size = 6.5)) +
   labs(x = "", y = "% lakes",
-       caption = "Figure 6. Percent of lakes nationally and in each ecoregion in each trophic state per year. Percents 
+       caption = "Figure 5. Percent of lakes nationally and in each ecoregion in each trophic state per year. Percents 
 were extrapolated from the indidvudal lakes in the dataset to represent lakes across the conterminous 
 U.S. using the weights. Each bar is labelled with the percent of lakes in that category (percents <10%
 were not labelled).")  +
   theme(plot.caption.position = "plot",
-        plot.caption = element_text(hjust = 0))
-ggsave("Figures/F6_TSbars_ecoreg.png", height = 4.5, width = 6.5, units = "in", dpi = 500)
+        plot.caption = element_text(hjust = 0, family = "serif"))
+ggsave("Figures/F5_TSbars_ecoreg.png", height = 4.5, width = 6.5, units = "in", dpi = 1200)
 
 
 
@@ -750,7 +750,7 @@ ggplot(TS_changes_fullset) +
   geom_hline(yintercept = 0) +
   labs(x = "",
        y = "% change 2007-2017",                                                 
-       caption = "Figure 7. Percent change in trophic state across lakes nationally from 2007-2017, panels separated to show all lakes 
+       caption = "Figure 6. Percent change in trophic state across lakes nationally from 2007-2017, panels separated to show all lakes 
 at all limitations and separated by limitation category. The change is represented as a percent difference in the 
 population (point) with standard error bars. Change bars that cross zero are not statistically significant. The 
 solid lines are the entire population of all surveyed lakes, and the dotted lines are the resampled lakes in both 
@@ -760,9 +760,9 @@ surveys only. Note there is a difference in y-axis scales.") +
   theme(axis.text.x = element_text(angle = 49, vjust = 1, hjust =1),
         strip.text.x = element_text(size = 7.5),
         plot.caption.position = "plot",
-        plot.caption = element_text(hjust = 0),
+        plot.caption = element_text(hjust = 0, family = "serif"),
         legend.title = element_blank())
-ggsave("Figures/F7_TSchanges.png", height = 4.5, width = 6.5, units = "in", dpi = 500) 
+ggsave("Figures/F6_TSchanges.png", height = 4.5, width = 6.5, units = "in", dpi = 1200) 
 
 
 
