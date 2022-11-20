@@ -61,12 +61,11 @@ TS_map_fun <- function(year1) {
 limit_map_fun <- function(year1) {
   
   ggplot() +
-    geom_sf(data = regions.sf, aes(fill = WSA9_NAME), alpha = 0.25) +
-    geom_sf(data = nla_locations.sf |> filter(year == year1, !is.na(limitation)), aes(color = limitation)) +
+    geom_sf(data = regions.sf, aes(fill = WSA9_NAME), alpha = 0.50) +
+    geom_sf(data = nla_locations.sf |> filter(year == year1, !is.na(limitation)), aes(color = limitation), size =2) +
     theme_minimal() +
     scale_fill_manual("", values = muted) +
-    scale_color_manual("", values = palette_OkabeIto[5:7]) 
-  
+    scale_color_manual("", values = c("grey60","red4", "#336a98")) 
 }
 
 
