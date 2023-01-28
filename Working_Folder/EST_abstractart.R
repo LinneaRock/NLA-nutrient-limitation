@@ -61,7 +61,7 @@ limits <- nla_data_subset|>
   mutate(limitation = NA) |>
   mutate(limitation = ifelse(PTL_PPB > TP_threshold & log(DIN.TP_molar) < medianlogDINP, "N-limitation", 
                              ifelse(DIN_PPM > DIN_threshold & log(DIN.TP_molar) > medianlogDINP, "P-limitation",
-                                    ifelse(is.na(limitation), "Co-nutrient limitation", limitation))))
+                                    ifelse(is.na(limitation), "Co-nutrient limitation", limitation)))) 
 
 
 # Create map ####
@@ -71,13 +71,21 @@ muted <- c("#CC6677", "#332288", "#DDCC77", "#117733", "#88CCEE", "#882255", "#4
 
 
 ggplot() +
-  geom_sf(data = regions.sf, aes(fill = WSA9_NAME), alpha = 0.25) +
-  geom_sf(data = nla_locations.sf |> filter(year == '2017', !is.na(limitation)), aes(color = limitation)) +
+  geom_sf(data = regions.sf, aes(fill = WSA9_NAME), alpha = 0.15) +
+  geom_sf(data = nla_locations.sf |> filter(year == '2017', limitation %in% c("N-limitation","P-limitation")), aes(color = limitation), size = 0.25) +
+  geom_sf(data = nla_locations.sf |> filter(year == '2017', limitation %in% c("Co-nutrient limitation")), aes(color = limitation), size = 0.25) +
   theme_minimal() +
   scale_fill_manual("", values = muted) +
-  scale_color_manual("", values = c("grey60","red4", "#336a98")) 
+  scale_color_manual("", values = c("grey60","red4", "#336a98"))  +
+  guides(fill = FALSE) +
+  theme(legend.position = c(1, 0.4), 
+        legend.key.size = unit(0.05, 'cm'), #change legend key size
+        legend.key.height = unit(0.05, 'cm'), #change legend key height
+        legend.key.width = unit(0.05, 'cm'), #change legend key width
+        legend.text = element_text(size=3), #change legend text font size
+        axis.text = element_text(size = 4))
 
-ggsave("Figures/AbstractArt_map.png", height = 4.5, width = 6.5, units = "in", dpi = 1200)
+ggsave("Figures/AbstractArt_map.png", height = 3, width = 6, units = "cm", dpi = 1200)
 
 
 

@@ -216,15 +216,15 @@ ggplot(correlations_data, aes(log10(concentration), log10(CHLA_PPB))) +
         panel.grid.minor = element_blank()) +
   facet_wrap(~ECO_REG_NAME, ncol = 3) +
   labs(y = "log10(chlorophyll-a concentration)",
-       x = "log10(nutrient concentration)",
-       caption = "Figure 1. Chlorophyll-a vs. nutrient concentration (log-log) in each ecoregion. Color indicates either total nitrogen or 
-total phosphorus. AIC and adjusted r-squared (adj.r) are displayed on each panel. Horizontal lines indicate trophic state
-from oligotrophic (below the lowest line to hypereutrophic (above the highest line).") +
+       x = "log10(nutrient concentration)") +
+#        caption = "Figure 1. Chlorophyll-a vs. nutrient concentration (log-log) in each ecoregion. Color indicates either total nitrogen or 
+# total phosphorus. AIC and adjusted r-squared (adj.r) are displayed on each panel. Horizontal lines indicate trophic state
+# from oligotrophic (below the lowest line to hypereutrophic (above the highest line).") +
   scale_color_manual("", labels = c("TN", "TP"), values=c("red4", "#336a98")) +
   theme(plot.caption.position = "plot",
         plot.caption = element_text(hjust = 0, family = "serif"))
-ggsave("Figures/F1_linregs.png", height = 4.5, width = 6.4, units = "in", dpi = 1200) 
-
+#ggsave("Figures/F1_linregs.png", height = 4.5, width = 6.4, units = "in", dpi = 1200) 
+ggsave("Figures/F1_linregs_pub.png", height = 4.5, width = 6.4, units = "in", dpi = 1200) 
 
 # NOTE: I also ran these for just 2007 and just 2017 data. 
 
@@ -260,15 +260,17 @@ regions.sf1 <- left_join(regions.sf, compare_r_values)
 # create the map
 ggplot(data = regions.sf1) +
   geom_sf(aes(fill = best_predictor)) +
-  theme_minimal() +
-  geom_sf_label(aes(label = WSA9_NAME), size = 1.5) +
-  labs(x = "", y = "",
-       caption = "Figure 2. Map displaying the best correlation variable of the chlorophyll-a (trophic state proxy) vs nutrient linear 
-models in each (labelled) ecoregion.") +
+  theme_bw() +
+  geom_sf_label(aes(label = WSA9_NAME), size = 2.5) +
+  labs(x = "", y = "") +
+#        caption = "Figure 2. Map displaying the best correlation variable of the chlorophyll-a (trophic state proxy) vs nutrient linear
+# models in each (labelled) ecoregion.") +
   scale_fill_manual("", values=c("red4", "#336a98")) +
   theme(plot.caption.position = "plot",
-        plot.caption = element_text(hjust = 0, family = "serif"))
-ggsave("Figures/F2_Map.png", height = 4.5, width = 6.5, units = "in", dpi = 1200) 
+        plot.caption = element_text(hjust = 0, family = "serif")) +
+  theme(legend.position = c(0.1, 0.2)) 
+#ggsave("Figures/F2_Map.png", height = 4.5, width = 6.5, units = "in", dpi = 1200) 
+ggsave("Figures/F2_Map_pub.png", height = 4.5, width = 6.5, units = "in", dpi = 1200) 
 
 #detach(package:sf, unload=TRUE)
 
@@ -447,15 +449,16 @@ ggplot(percent_lim1, aes(year, Estimate.P, fill = Category)) +
   theme(panel.grid.major = element_blank(), 
         panel.grid.minor = element_blank(),
         strip.text.x = element_text(size = 6.5)) +
-  labs(x = "", y = "% lakes",
-       caption = "Figure 3. Percent of lakes nationally and in each ecoregion in each nutrient limitation
-category per year. Percents were extrapolated from the indidvudal lakes in the dataset
-to represent lakes across the conterminous U.S. using the weights. Each bar is labelled 
-with the percent of lakes in that category (percents <10% were not labelled).")  +
+  labs(x = "", y = "% lakes") +
+#        caption = "Figure 3. Percent of lakes nationally and in each ecoregion in each nutrient limitation
+# category per year. Percents were extrapolated from the indidvudal lakes in the dataset
+# to represent lakes across the conterminous U.S. using the weights. Each bar is labelled 
+# with the percent of lakes in that category (percents <10% were not labelled).")  +
   theme(plot.caption.position = "plot",
-        plot.caption = element_text(hjust = 0, family = "serif"))
-ggsave("Figures/F3_limitbars_ecoreg.png", height = 4.5, width = 6.5, units = "in", dpi = 1200)
-
+        plot.caption = element_text(hjust = 0, family = "serif"),
+        legend.position = c(0.75, 0.175))
+#ggsave("Figures/F3_limitbars_ecoreg.png", height = 4.5, width = 6.5, units = "in", dpi = 1200)
+ggsave("Figures/F3_limitbars_ecoreg_pub.png", height = 4.5, width = 6.5, units = "in", dpi = 1200)
 
 
 
@@ -531,7 +534,7 @@ ggplot(lim_changes_fullset, aes(sample_set, StdError.P)) +
 
 ecoreg_plot <- ggplot(lim_changes_fullset |>
          filter(Subpopulation != "National")) +
-  geom_point(aes(Category,DiffEst.P, fill = Category), color = "black", pch = 21, size = 1, position=position_dodge(width=0.5)) +
+  geom_point(aes(Category,DiffEst.P, fill = Category), color = "black", pch = 21, size = 1, position=position_dodge(width=0.5))+
   geom_errorbar(aes(Category, DiffEst.P, ymin = DiffEst.P-StdError.P, ymax = DiffEst.P+StdError.P, color = Category, linetype = sample_set), width = 0.2)  + 
   theme_bw() +
   theme(panel.grid.major = element_blank(), 
@@ -540,11 +543,11 @@ ecoreg_plot <- ggplot(lim_changes_fullset |>
   facet_wrap(~Subpopulation, ncol = 3, scales = "free_y") +
   geom_hline(yintercept = 0) +
   labs(x = "",
-       y = "% change 2007-2017",
-       caption = "Figure 4. Percent change in lakes in nutrient limitation status a) nationally, and b) in the nine aggregated 
-ecoregions from 2007-2017. The change is represented as a percent difference in the population (point) with 
-standard error bars. Error bars that cross zero are not statistically significant. The solid lines are the 
-entire population of all surveyed lakes, and the dotted lines are the resampled lakes in both surveys only.") + 
+       y = "% change 2007-2017") +
+#        caption = "Figure 4. Percent change in lakes in nutrient limitation status a) nationally, and b) in the nine aggregated 
+# ecoregions from 2007-2017. The change is represented as a percent difference in the population (point) with 
+# standard error bars. Error bars that cross zero are not statistically significant. The solid lines are the 
+# entire population of all surveyed lakes, and the dotted lines are the resampled lakes in both surveys only.") + 
   scale_color_manual("",values = c("grey60","red4", "#336a98"))  +
   scale_fill_manual("",values = c("grey60","red4", "#336a98")) +
   theme(axis.text.x = element_text(angle = 49, vjust = 1, hjust =1),
@@ -582,8 +585,8 @@ nat_plot/ecoreg_plot +
   plot_layout(guides = "collect",
               design = layout) +
   plot_annotation(tag_levels = 'a', tag_suffix = ')') 
-ggsave("Figures/F4_limchanges.png", height = 8.5, width = 6.5, units = "in", dpi = 1200) 
-
+#ggsave("Figures/F4_limchanges.png", height = 8.5, width = 6.5, units = "in", dpi = 1200) 
+ggsave("Figures/F4_limchanges_pub.png", height = 7.5, width = 6.5, units = "in", dpi = 1200) 
 
 
 
@@ -658,15 +661,17 @@ ggplot(percent_TS1, aes(year, Estimate.P, fill = Category)) +
   theme(panel.grid.major = element_blank(), 
         panel.grid.minor = element_blank(),
         strip.text.x = element_text(size = 6.5)) +
-  labs(x = "", y = "% lakes",
-       caption = "Figure 5. Percent of lakes nationally and in each ecoregion in each trophic state per year. Percents 
-were extrapolated from the indidvudal lakes in the dataset to represent lakes across the conterminous 
-U.S. using the weights. Each bar is labelled with the percent of lakes in that category (percents <10%
-were not labelled).")  +
+  labs(x = "", y = "% lakes") +
+#        caption = "Figure 5. Percent of lakes nationally and in each ecoregion in each trophic state per year. Percents 
+# were extrapolated from the indidvudal lakes in the dataset to represent lakes across the conterminous 
+# U.S. using the weights. Each bar is labelled with the percent of lakes in that category (percents <10%
+# were not labelled).")  +
   theme(plot.caption.position = "plot",
-        plot.caption = element_text(hjust = 0, family = "serif"))
-ggsave("Figures/F5_TSbars_ecoreg.png", height = 4.5, width = 6.5, units = "in", dpi = 1200)
-
+        plot.caption = element_text(hjust = 0, family = "serif"),
+        legend.position = c(0.75, 0.175)) +
+  guides(fill = guide_legend(ncol=2))
+#ggsave("Figures/F5_TSbars_ecoreg.png", height = 4.5, width = 6.5, units = "in", dpi = 1200)
+ggsave("Figures/F5_TSbars_ecoreg_pub.png", height = 4.5, width = 6.5, units = "in", dpi = 1200)
 
 
 #### 6. Trophic state change analysis within limitation status at the national level ####
@@ -749,12 +754,12 @@ ggplot(TS_changes_fullset) +
   #facet_wrap(~Subpopulation, ncol = 3, scales = "free_y") +
   geom_hline(yintercept = 0) +
   labs(x = "",
-       y = "% change 2007-2017",                                                 
-       caption = "Figure 6. Percent change in trophic state across lakes nationally from 2007-2017, panels separated to show all lakes 
-at all limitations and separated by limitation category. The change is represented as a percent difference in the 
-population (point) with standard error bars. Change bars that cross zero are not statistically significant. The 
-solid lines are the entire population of all surveyed lakes, and the dotted lines are the resampled lakes in both 
-surveys only. Note there is a difference in y-axis scales.") + 
+       y = "% change 2007-2017")+                                                 
+#        caption = "Figure 6. Percent change in trophic state across lakes nationally from 2007-2017, panels separated to show all lakes 
+# at all limitations and separated by limitation category. The change is represented as a percent difference in the 
+# population (point) with standard error bars. Change bars that cross zero are not statistically significant. The 
+# solid lines are the entire population of all surveyed lakes, and the dotted lines are the resampled lakes in both 
+# surveys only. Note there is a difference in y-axis scales.") + 
   scale_color_manual("", values = c(palette_OkabeIto[2], palette_OkabeIto[4], palette_OkabeIto[3], palette_OkabeIto[1]))  +
   scale_fill_manual("", values = c(palette_OkabeIto[2], palette_OkabeIto[4], palette_OkabeIto[3], palette_OkabeIto[1])) +
   theme(axis.text.x = element_text(angle = 49, vjust = 1, hjust =1),
@@ -762,8 +767,8 @@ surveys only. Note there is a difference in y-axis scales.") +
         plot.caption.position = "plot",
         plot.caption = element_text(hjust = 0, family = "serif"),
         legend.title = element_blank())
-ggsave("Figures/F6_TSchanges.png", height = 4.5, width = 6.5, units = "in", dpi = 1200) 
-
+#ggsave("Figures/F6_TSchanges.png", height = 4.5, width = 6.5, units = "in", dpi = 1200) 
+ggsave("Figures/F6_TSchanges_pub.png", height = 4.5, width = 6.5, units = "in", dpi = 1200) 
 
 
 # library(scales)
