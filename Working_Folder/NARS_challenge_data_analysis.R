@@ -550,11 +550,12 @@ ecoreg_plot <- ggplot(lim_changes_fullset |>
 # entire population of all surveyed lakes, and the dotted lines are the resampled lakes in both surveys only.") + 
   scale_color_manual("",values = c("grey60","red4", "#336a98"))  +
   scale_fill_manual("",values = c("grey60","red4", "#336a98")) +
-  theme(axis.text.x = element_text(angle = 49, vjust = 1, hjust =1),
+  theme(#axis.text.x = element_text(angle = 49, vjust = 1, hjust =1),
         strip.text.x = element_text(size = 7.5),
         plot.caption.position = "plot",
         plot.caption = element_text(hjust = 0, family = "serif"),
-        legend.title = element_blank())
+        legend.title = element_blank(),
+        axis.text.x = element_blank())
 
 
 #national plot
@@ -586,7 +587,7 @@ nat_plot/ecoreg_plot +
               design = layout) +
   plot_annotation(tag_levels = 'a', tag_suffix = ')') 
 #ggsave("Figures/F4_limchanges.png", height = 8.5, width = 6.5, units = "in", dpi = 1200) 
-ggsave("Figures/F4_limchanges_pub.png", height = 7.5, width = 6.5, units = "in", dpi = 1200) 
+ggsave("Figures/F4_limchanges_pub.png", height = 6, width = 6.5, units = "in", dpi = 1200) 
 
 
 
