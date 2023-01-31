@@ -76,16 +76,17 @@ ggplot() +
   geom_sf(data = nla_locations.sf |> filter(year == '2017', limitation %in% c("Co-nutrient limitation")), aes(color = limitation), size = 0.25) +
   theme_minimal() +
   scale_fill_manual("", values = muted) +
-  scale_color_manual("", values = c("grey60","red4", "#336a98"))  +
+  scale_color_manual("", values = c("grey60","red4", "#336a98"), labels = c('Co-nutrient \nlimitation', 'N-limitation', 'P-limitation'))  +
   guides(fill = FALSE) +
   theme(legend.position = c(1, 0.4), 
         legend.key.size = unit(0.05, 'cm'), #change legend key size
         legend.key.height = unit(0.05, 'cm'), #change legend key height
         legend.key.width = unit(0.05, 'cm'), #change legend key width
-        legend.text = element_text(size=3), #change legend text font size
-        axis.text = element_text(size = 4))
+        legend.text = element_text(size=6), #change legend text font size
+        axis.text = element_text(size = 6),
+        legend.title = element_blank())
 
-ggsave("Figures/AbstractArt_map.png", height = 3, width = 6, units = "cm", dpi = 1200)
+ggsave("Figures/AbstractArt_map.png", height = 1.75, width = 3.25, units = "in", dpi = 500)
 
 
 
