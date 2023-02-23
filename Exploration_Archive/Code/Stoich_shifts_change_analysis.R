@@ -5,6 +5,18 @@
 source("Data/NLA/Call_NLA_data.R")
 library(spsurvey)
 
+source("Data/NLA/Call_NLA_data.R")
+nla_data_subset <- all_NLA |>
+  select(ECO_REG_NAME, UNIQUE_ID, DATE_COL, VISIT_NO, NTL_PPM, PTL_PPB, DIN_PPM, tn.tp, DIN.TP, CHLA_PPB, TROPHIC_STATE, year,WGT_NLA, LON_DD, LAT_DD, AREA_HA, ELEV_PT, PCT_DEVELOPED_BSN, PCT_AGRIC_BSN, SITE_TYPE, URBAN, LAKE_ORIGIN) |>
+  rename(DIN.TP_molar = DIN.TP,
+         TN.TP_molar = tn.tp) |>
+  filter(year != "2012") |>
+  filter(AREA_HA >= 4) |> # removes 216 observations 
+  distinct()
+
+all_NLA <- nla_data_subset
+
+
 #### Calculate the limitations first ####
 # get some information about the entire dataset
 averages_np <- all_NLA |>
@@ -36,7 +48,7 @@ limits <- all_NLA |>
 
 #### Prep the data for the change analysis ####
 
-change_dat <- limits|> # total 3066 lakes for this analysis 
+change_dat <- limits|> # total 3066 lakes for this analysis 1773 - lakes with new dataset
   filter(VISIT_NO == 1) |># for this analysis, we are using just the first visit from each lake
   filter(WGT_NLA > 0) # the sp survey package is not designed to use the reference lakes, so those are ignored when using this package for analyses.
 
@@ -46,7 +58,9 @@ change_dat <- limits|> # total 3066 lakes for this analysis
 stoich_change_fun <- function(data, name, year1, year2) {
   
   change_ecoreg<- change_analysis(data |> filter(year %in% c(year1, year2),
-                                                 ECO_REG_NAME == name), siteID = "UNIQUE_ID", vars_cont = "tn.tp", surveyID = "year", weight = "WGT_NLA", xcoord = "LON_DD", ycoord = "LAT_DD")
+                                                 ECO_REG_NAME == name), siteID = "UNIQUE_ID",
+                                vars_cont = "TN.TP_molar", surveyID = "year", weight = "WGT_NLA",
+                                xcoord = "LON_DD", ycoord = "LAT_DD")
   
   change_ecoreg.1 <- change_ecoreg[["contsum_mean"]]  |>
     dplyr::select(Subpopulation, Indicator, DiffEst, StdError) |>
@@ -54,7 +68,9 @@ stoich_change_fun <- function(data, name, year1, year2) {
     #rename(Trophic.State = Subpopulation)
   
   
-  change_national <- change_analysis(data |> filter(year %in% c(year1, year2)), siteID = "UNIQUE_ID", vars_cont = "tn.tp", surveyID = "year", weight = "WGT_NLA", xcoord = "LON_DD", ycoord = "LAT_DD")
+  change_national <- change_analysis(data |> filter(year %in% c(year1, year2)), siteID = "UNIQUE_ID", 
+                                     vars_cont =  "TN.TP_molar", surveyID = "year", weight = "WGT_NLA", 
+                                     xcoord = "LON_DD", ycoord = "LAT_DD")
   
   
   change_national.1 <- change_national[["contsum_mean"]] |>
@@ -72,14 +88,14 @@ stoich_change_fun <- function(data, name, year1, year2) {
 list <- as.vector(change_dat |> select(ECO_REG_NAME) |> distinct())[["ECO_REG_NAME"]]
 
 
-### change in nutrient limitations from 2007 to 2012
-change0712 <- data.frame()
+### change in nutrient limitations from 2007 to 2017
+change0717 <- data.frame()
 
 for(name in list) {
   
-  tmp <- stoich_change_fun(change_dat, name, "2007", "2012")
+  tmp <- stoich_change_fun(change_dat, name, "2007", "2017")
   
-  change0712 <- bind_rows(change0712, tmp) |> 
+  change0717 <- bind_rows(change0717, tmp) |> 
     distinct()
   
 }
