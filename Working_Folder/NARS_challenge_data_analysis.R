@@ -542,12 +542,23 @@ comparison_lim <- lim_changes_fullset |>
   pivot_wider(names_from='sample_set', values_from='values') |>
   unchop(everything()) |>
   group_by(Subpopulation, Category) |>
-  mutate(p.value = t.test(`Resampled lakes`,`All surveyed lakes`)[['p.value']]) 
+  mutate(p.value = t.test(`Resampled lakes`,`All surveyed lakes`)[['p.value']]) |>
+  ungroup() |>
+  filter(p.value <=0.05) |>
+  select(-4,-3) |>
+  unique() |>
+  mutate(p.value = '*') # all values were between 0.01 and 0.05
+
+# add significance to dataset
+lim_changes_fullset <- left_join(lim_changes_fullset, comparison_lim) |>
+  mutate(p.value=ifelse(sample_set!='Resampled lakes', NA, p.value))
 
 ecoreg_plot <- ggplot(lim_changes_fullset |>
          filter(Subpopulation != "National")) +
   geom_point(aes(Category,DiffEst.P, fill = Category), color = "black", pch = 21, size = 1, position=position_dodge(width=0.5))+
   geom_errorbar(aes(Category, DiffEst.P, ymin = DiffEst.P-StdError.P, ymax = DiffEst.P+StdError.P, color = Category, linetype = sample_set), width = 0.2)  +
+  geom_text(lim_changes_fullset|>
+               filter(Subpopulation != "National"), mapping=aes(Category, DiffEst.P, label=p.value), nudge_x=-0.25, nudge_y=0.25) +
   theme_bw() +
   theme(panel.grid.major = element_blank(), 
         panel.grid.minor = element_blank()) +
@@ -575,6 +586,8 @@ nat_plot <- ggplot(lim_changes_fullset |>
          filter(Subpopulation == "National")) +
   geom_point(aes(Category,DiffEst.P, fill = Category), color = "black", pch = 21, size = 1, position=position_dodge(width=0.5)) +
   geom_errorbar(aes(Category, DiffEst.P, ymin = DiffEst.P-StdError.P, ymax = DiffEst.P+StdError.P, color = Category, linetype = sample_set), width = 0.2)  + 
+  geom_text(lim_changes_fullset|>
+              filter(Subpopulation == "National"), mapping=aes(Category, DiffEst.P, label=p.value), nudge_x=-0.25, nudge_y=0.25) +
   theme_bw() +
   theme(panel.grid.major = element_blank(), 
         panel.grid.minor = element_blank()) +
@@ -751,15 +764,37 @@ TS_changes_fullset$Category = factor(TS_changes_fullset$Category,
 
 
 # compare standard error between all surveyed lakes and resampled lakes
-t.test((TS_changes_fullset |> filter(sample_set == "Resampled lakes"))$StdError.P, (TS_changes_fullset |> filter(sample_set != "Resampled lakes"))$StdError.P) # p = 0.0007622
+t.test((TS_changes_fullset |> filter(sample_set == "Resampled lakes"))$StdError.P, (TS_changes_fullset |> filter(sample_set != "Resampled lakes"))$StdError.P) # p = 0.0001986
 ggplot(TS_changes_fullset, aes(sample_set, StdError.P)) +
   geom_boxplot()
+
+# compare all to resampled lakes within each category and region to find statistical differences for plotting
+comparison_ts <- TS_changes_fullset |>
+  mutate(lwr.est = DiffEst.P-StdError.P,
+         upr.est = DiffEst.P+StdError.P) |>
+  pivot_longer(c('DiffEst.P','lwr.est','upr.est'), names_to='est',values_to='values') |>
+  select(-StdError.P, -est, -Indicator) |>
+  pivot_wider(names_from='sample_set', values_from='values') |>
+  unchop(everything()) |>
+  group_by(Subpopulation, Category) |>
+  mutate(p.value = t.test(`Resampled lakes`,`All surveyed lakes`)[['p.value']]) |>
+  ungroup() |>
+  filter(p.value <=0.05) |>
+  select(-4,-3) |>
+  unique() |>
+  mutate(p.value = '*') # all values were between 0.01 and 0.05
+
+# add significance to dataset
+TS_changes_fullset <- left_join(TS_changes_fullset, comparison_ts) |>
+  mutate(p.value=ifelse(sample_set!='Resampled lakes', NA, p.value))
+
 
 
 #national plot
 ggplot(TS_changes_fullset) +
   geom_point(aes(Category,DiffEst.P, fill = Category), color = "black", pch = 21, size = 1, position=position_dodge(width=0.5)) +
   geom_errorbar(aes(Category, DiffEst.P, ymin = DiffEst.P-StdError.P, ymax = DiffEst.P+StdError.P, color = Category, linetype = sample_set), width = 0.2)  + 
+ geom_text(TS_changes_fullset, mapping=aes(Category, DiffEst.P, label=p.value), nudge_x=-0.25, nudge_y=0.25) +
   theme_bw() +
   theme(panel.grid.major = element_blank(), 
         panel.grid.minor = element_blank()) +
