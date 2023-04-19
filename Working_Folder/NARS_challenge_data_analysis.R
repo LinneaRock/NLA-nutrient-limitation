@@ -11,6 +11,7 @@ library(broom)
 library(lme4)
 #library(gt)
 library(patchwork)
+library(ggpubr)
 
 
 #### Load and subset dataframe ####
@@ -532,10 +533,21 @@ t.test((lim_changes_fullset |> filter(sample_set == "Resampled lakes"))$StdError
 ggplot(lim_changes_fullset, aes(sample_set, StdError.P)) +
   geom_boxplot()
 
+# compare all to resampled lakes within each category and region to find statistical differences for plotting
+comparison_lim <- lim_changes_fullset |>
+  mutate(lwr.est = DiffEst.P-StdError.P,
+         upr.est = DiffEst.P+StdError.P) |>
+  pivot_longer(c('DiffEst.P','lwr.est','upr.est'), names_to='est',values_to='values') |>
+  select(-StdError.P, -year.shift, -est, -Indicator) |>
+  pivot_wider(names_from='sample_set', values_from='values') |>
+  unchop(everything()) |>
+  group_by(Subpopulation, Category) |>
+  mutate(p.value = t.test(`Resampled lakes`,`All surveyed lakes`)[['p.value']]) 
+
 ecoreg_plot <- ggplot(lim_changes_fullset |>
          filter(Subpopulation != "National")) +
   geom_point(aes(Category,DiffEst.P, fill = Category), color = "black", pch = 21, size = 1, position=position_dodge(width=0.5))+
-  geom_errorbar(aes(Category, DiffEst.P, ymin = DiffEst.P-StdError.P, ymax = DiffEst.P+StdError.P, color = Category, linetype = sample_set), width = 0.2)  + 
+  geom_errorbar(aes(Category, DiffEst.P, ymin = DiffEst.P-StdError.P, ymax = DiffEst.P+StdError.P, color = Category, linetype = sample_set), width = 0.2)  +
   theme_bw() +
   theme(panel.grid.major = element_blank(), 
         panel.grid.minor = element_blank()) +
