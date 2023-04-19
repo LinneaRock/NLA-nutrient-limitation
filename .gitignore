@@ -2,3 +2,9 @@
 .Rhistory
 .RData
 .Ruserdata
+<<<<<<< HEAD
+=======
+.RDataTmp
+~$criteria_thresholds.xlsx
+~$AFT_outline.docx
+>>>>>>> ff9fd0bca768ecf502548b8466bbc1a82d3775dd
