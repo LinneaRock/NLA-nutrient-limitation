@@ -528,9 +528,9 @@ lim_change0717_allSITES$Subpopulation = factor(lim_change0717_allSITES$Subpopula
 ## Combine the resampled with the full population into one graph for easier comparison?!
 lim_changes_fullset <- rbind(lim_change0717 |> mutate(sample_set = "Resampled lakes"), lim_change0717_allSITES |> mutate(sample_set = "All surveyed lakes"))
 
-# compare standard error between all surveyed lakes and resampled lakes
-t.test((lim_changes_fullset |> filter(sample_set == "Resampled lakes"))$StdError.P, (lim_changes_fullset |> filter(sample_set != "Resampled lakes"))$StdError.P) # p = 0.006251
-ggplot(lim_changes_fullset, aes(sample_set, StdError.P)) +
+# compare confidence interval between all surveyed lakes and resampled lakes
+t.test((lim_changes_fullset |> filter(sample_set == "Resampled lakes"))$MarginofError.P, (lim_changes_fullset |> filter(sample_set != "Resampled lakes"))$MarginofError.P) # p = 0.006251
+ggplot(lim_changes_fullset, aes(sample_set, MarginofError.P)) +
   geom_boxplot()
 
 # compare all to resampled lakes within each category and region to find statistical differences for plotting
@@ -547,7 +547,7 @@ comparison_lim <- lim_changes_fullset |>
   filter(p.value <=0.05) |>
   select(-4,-3) |>
   unique() |>
-  mutate(p.value = '*') # all values were between 0.01 and 0.05
+  mutate(p.value = '*') # no changes were significantly different 
 
 # add significance to dataset
 lim_changes_fullset <- left_join(lim_changes_fullset, comparison_lim) |>
@@ -721,12 +721,12 @@ TS_change_prep <- limits_survey_prep |> # analysis has same restrictions as cate
 # national change analysis
 change_nat <- change_analysis(TS_change_prep, subpops = "limitation", siteID = "UNIQUE_ID", vars_cat = "TROPHIC_STATE", surveyID = "year", weight = "WGT_NLA", xcoord = "LON_DD", ycoord = "LAT_DD")
 change_nat.1 <- change_nat[["catsum"]]  |>
-  select(Subpopulation, Category, Indicator, DiffEst.P, StdError.P)  
+  select(Subpopulation, Category, Indicator, DiffEst.P, MarginofError.P)  
 warnprnt()
 # also get changes without limitation status defined:
 change_nat_full <- change_analysis(TS_change_prep, siteID = "UNIQUE_ID", vars_cat = "TROPHIC_STATE", surveyID = "year", weight = "WGT_NLA", xcoord = "LON_DD", ycoord = "LAT_DD")
 change_nat_full.1 <- change_nat_full[["catsum"]]  |>
-  select(Category, Indicator, DiffEst.P, StdError.P) |>
+  select(Category, Indicator, DiffEst.P, MarginofError.P) |>
   mutate(Subpopulation = "All lakes & limitations")
 warnprnt()
 
@@ -743,12 +743,12 @@ TS_change_prep <- limits_survey_prep #|> # analysis has same restrictions as cat
 # national change analysis
 change_nat <- change_analysis(TS_change_prep, subpops = "limitation", siteID = "UNIQUE_ID", vars_cat = "TROPHIC_STATE", surveyID = "year", weight = "WGT_NLA", xcoord = "LON_DD", ycoord = "LAT_DD")
 change_nat.1 <- change_nat[["catsum"]]  |>
-  select(Subpopulation, Category, Indicator, DiffEst.P, StdError.P)  
+  select(Subpopulation, Category, Indicator, DiffEst.P, MarginofError.P)  
 warnprnt()
 # also get changes without limitation status defined:
 change_nat_full <- change_analysis(TS_change_prep, siteID = "UNIQUE_ID", vars_cat = "TROPHIC_STATE", surveyID = "year", weight = "WGT_NLA", xcoord = "LON_DD", ycoord = "LAT_DD")
 change_nat_full.1 <- change_nat_full[["catsum"]]  |>
-  select(Category, Indicator, DiffEst.P, StdError.P) |>
+  select(Category, Indicator, DiffEst.P, MarginofError.P) |>
   mutate(Subpopulation = "All lakes & limitations")
 warnprnt()
 
@@ -763,17 +763,17 @@ TS_changes_fullset$Category = factor(TS_changes_fullset$Category,
                                          levels = c("Oligo.", "Meso.", "Eutro.", "Hyper."))
 
 
-# compare standard error between all surveyed lakes and resampled lakes
-t.test((TS_changes_fullset |> filter(sample_set == "Resampled lakes"))$StdError.P, (TS_changes_fullset |> filter(sample_set != "Resampled lakes"))$StdError.P) # p = 0.0001986
-ggplot(TS_changes_fullset, aes(sample_set, StdError.P)) +
+# compare confidence interval between all surveyed lakes and resampled lakes
+t.test((TS_changes_fullset |> filter(sample_set == "Resampled lakes"))$MarginofError.P, (TS_changes_fullset |> filter(sample_set != "Resampled lakes"))$MarginofError.P) # p = 0.0001986
+ggplot(TS_changes_fullset, aes(sample_set, MarginofError.P)) +
   geom_boxplot()
 
 # compare all to resampled lakes within each category and region to find statistical differences for plotting
 comparison_ts <- TS_changes_fullset |>
-  mutate(lwr.est = DiffEst.P-StdError.P,
-         upr.est = DiffEst.P+StdError.P) |>
+  mutate(lwr.est = DiffEst.P-MarginofError.P,
+         upr.est = DiffEst.P+MarginofError.P) |>
   pivot_longer(c('DiffEst.P','lwr.est','upr.est'), names_to='est',values_to='values') |>
-  select(-StdError.P, -est, -Indicator) |>
+  select(-MarginofError.P, -est, -Indicator) |>
   pivot_wider(names_from='sample_set', values_from='values') |>
   unchop(everything()) |>
   group_by(Subpopulation, Category) |>
@@ -793,7 +793,7 @@ TS_changes_fullset <- left_join(TS_changes_fullset, comparison_ts) |>
 #national plot
 ggplot(TS_changes_fullset) +
   geom_point(aes(Category,DiffEst.P, fill = Category), color = "black", pch = 21, size = 1, position=position_dodge(width=0.5)) +
-  geom_errorbar(aes(Category, DiffEst.P, ymin = DiffEst.P-StdError.P, ymax = DiffEst.P+StdError.P, color = Category, linetype = sample_set), width = 0.2)  + 
+  geom_errorbar(aes(Category, DiffEst.P, ymin = DiffEst.P-MarginofError.P, ymax = DiffEst.P+MarginofError.P, color = Category, linetype = sample_set), width = 0.2)  + 
  geom_text(TS_changes_fullset, mapping=aes(Category, DiffEst.P, label=p.value), nudge_x=-0.25, nudge_y=0.25) +
   theme_bw() +
   theme(panel.grid.major = element_blank(), 
