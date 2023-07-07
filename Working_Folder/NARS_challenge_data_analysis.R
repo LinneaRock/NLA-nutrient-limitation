@@ -484,12 +484,12 @@ limits_change_prep <- limits_survey_prep |> # analysis has same restrictions as 
 # ecoregional change analysis
 change_ecoreg <- change_analysis(limits_change_prep, subpops = "ECO_REG_NAME", siteID = "UNIQUE_ID", vars_cat = "limitation", surveyID = "year", weight = "WGT_NLA", xcoord = "LON_DD", ycoord = "LAT_DD")
 change_ecoreg.1 <- change_ecoreg[["catsum"]]  |>
-  select(Subpopulation, Category, Indicator, DiffEst.P, StdError.P) 
+  select(Subpopulation, Category, Indicator, DiffEst.P, MarginofError.P) 
 warnprnt()
 # national change analysis
 change_nat <- change_analysis(limits_change_prep, siteID = "UNIQUE_ID", vars_cat = "limitation", surveyID = "year", weight = "WGT_NLA", xcoord = "LON_DD", ycoord = "LAT_DD")
 change_nat.1 <- change_nat[["catsum"]]  |>
-  select(Subpopulation, Category, Indicator, DiffEst.P, StdError.P)  |>
+  select(Subpopulation, Category, Indicator, DiffEst.P, MarginofError.P)  |>
   mutate(Subpopulation = "National")
 warnprnt()
 
@@ -508,12 +508,12 @@ limits_change_prep <- limits_survey_prep #|> # analysis has same restrictions as
 # ecoregional change analysis
 change_ecoreg <- change_analysis(limits_change_prep, subpops = "ECO_REG_NAME", siteID = "UNIQUE_ID", vars_cat = "limitation", surveyID = "year", weight = "WGT_NLA", xcoord = "LON_DD", ycoord = "LAT_DD")
 change_ecoreg.1 <- change_ecoreg[["catsum"]]  |>
-  select(Subpopulation, Category, Indicator, DiffEst.P, StdError.P) 
+  select(Subpopulation, Category, Indicator, DiffEst.P, MarginofError.P) 
 warnprnt()
 # national change analysis
 change_nat <- change_analysis(limits_change_prep, siteID = "UNIQUE_ID", vars_cat = "limitation", surveyID = "year", weight = "WGT_NLA", xcoord = "LON_DD", ycoord = "LAT_DD")
 change_nat.1 <- change_nat[["catsum"]]  |>
-  select(Subpopulation, Category, Indicator, DiffEst.P, StdError.P)  |>
+  select(Subpopulation, Category, Indicator, DiffEst.P, MarginofError.P)  |>
   mutate(Subpopulation = "National")
 warnprnt()
 
@@ -535,10 +535,10 @@ ggplot(lim_changes_fullset, aes(sample_set, StdError.P)) +
 
 # compare all to resampled lakes within each category and region to find statistical differences for plotting
 comparison_lim <- lim_changes_fullset |>
-  mutate(lwr.est = DiffEst.P-StdError.P,
-         upr.est = DiffEst.P+StdError.P) |>
+  mutate(lwr.est = DiffEst.P-MarginofError.P,
+         upr.est = DiffEst.P+MarginofError.P) |>
   pivot_longer(c('DiffEst.P','lwr.est','upr.est'), names_to='est',values_to='values') |>
-  select(-StdError.P, -year.shift, -est, -Indicator) |>
+  select(-MarginofError.P, -year.shift, -est, -Indicator) |>
   pivot_wider(names_from='sample_set', values_from='values') |>
   unchop(everything()) |>
   group_by(Subpopulation, Category) |>
@@ -556,7 +556,7 @@ lim_changes_fullset <- left_join(lim_changes_fullset, comparison_lim) |>
 ecoreg_plot <- ggplot(lim_changes_fullset |>
          filter(Subpopulation != "National")) +
   geom_point(aes(Category,DiffEst.P, fill = Category), color = "black", pch = 21, size = 1, position=position_dodge(width=0.5))+
-  geom_errorbar(aes(Category, DiffEst.P, ymin = DiffEst.P-StdError.P, ymax = DiffEst.P+StdError.P, color = Category, linetype = sample_set), width = 0.2)  +
+  geom_errorbar(aes(Category, DiffEst.P, ymin = DiffEst.P-MarginofError.P, ymax = DiffEst.P+MarginofError.P, color = Category, linetype = sample_set), width = 0.2)  +
   geom_text(lim_changes_fullset|>
                filter(Subpopulation != "National"), mapping=aes(Category, DiffEst.P, label=p.value), nudge_x=-0.25, nudge_y=0.25) +
   theme_bw() +
@@ -585,7 +585,7 @@ ecoreg_plot <- ggplot(lim_changes_fullset |>
 nat_plot <- ggplot(lim_changes_fullset |>
          filter(Subpopulation == "National")) +
   geom_point(aes(Category,DiffEst.P, fill = Category), color = "black", pch = 21, size = 1, position=position_dodge(width=0.5)) +
-  geom_errorbar(aes(Category, DiffEst.P, ymin = DiffEst.P-StdError.P, ymax = DiffEst.P+StdError.P, color = Category, linetype = sample_set), width = 0.2)  + 
+  geom_errorbar(aes(Category, DiffEst.P, ymin = DiffEst.P-MarginofError.P, ymax = DiffEst.P+MarginofError.P, color = Category, linetype = sample_set), width = 0.2)  + 
   geom_text(lim_changes_fullset|>
               filter(Subpopulation == "National"), mapping=aes(Category, DiffEst.P, label=p.value), nudge_x=-0.25, nudge_y=0.25) +
   theme_bw() +
