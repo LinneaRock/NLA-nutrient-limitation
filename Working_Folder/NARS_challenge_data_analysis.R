@@ -819,6 +819,143 @@ ggplot(TS_changes_fullset) +
 ggsave("Figures/F6_TSchanges_pub.png", height = 4.5, width = 6.5, units = "in", dpi = 1200) 
 
 
+
+#### 7. Trophic state change analysis within ecoregions ####
+## find only sites that are sampled in both 2007 and 2017
+crossover <- limits_survey_prep |>
+  select(year, UNIQUE_ID) |>
+  filter(year == "2007") |>
+  rename(year1 = year) |>
+  distinct() |>
+  inner_join(limits_survey_prep |>
+               select(year, UNIQUE_ID) |>
+               filter(year == "2017") |>
+               rename(year2 = year) |>
+               distinct()) |>
+  select(UNIQUE_ID) # 232 sites
+
+TS_change_prep_eco <- limits_survey_prep |> # analysis has same restrictions as categorical analysis
+  inner_join(crossover) # this keeps only resampled sites
+
+# use change_analysis from the spsurvey package
+# ecoregional change analysis
+change_eco <- change_analysis(TS_change_prep_eco, subpops = "ECO_REG_NAME", siteID = "UNIQUE_ID", vars_cat = "TROPHIC_STATE", surveyID = "year", weight = "WGT_NLA", xcoord = "LON_DD", ycoord = "LAT_DD")
+change_eco.1 <- change_eco[["catsum"]]  |>
+  select(Subpopulation, Category, Indicator, DiffEst.P, MarginofError.P)  
+warnprnt()
+
+
+TS_change0717eco <- change_eco.1
+TS_change0717eco$Category = factor(TS_change0717eco$Category,
+                                levels = c("Oligo.", "Meso.", "Eutro.", "Hyper."))
+
+
+
+#### Now use the full population of lakes, not just resampled. 
+TS_change_prep <- limits_survey_prep #|> # analysis has same restrictions as categorical analysis
+#inner_join(crossover) # this keeps only resampled sites
+# use change_analysis from the spsurvey package
+# national change analysis
+change_eco <- change_analysis(TS_change_prep, subpops = "ECO_REG_NAME", siteID = "UNIQUE_ID", vars_cat = "TROPHIC_STATE", surveyID = "year", weight = "WGT_NLA", xcoord = "LON_DD", ycoord = "LAT_DD")
+change_eco.1 <- change_eco[["catsum"]]  |>
+  select(Subpopulation, Category, Indicator, DiffEst.P, MarginofError.P)  
+warnprnt()
+
+
+TS_change0717_allSITESeco <- change_eco.1
+TS_change0717_allSITESeco$Category = factor(TS_change0717_allSITESeco$Category,
+                                         levels = c("Oligo.", "Meso.", "Eutro.", "Hyper."))
+
+
+## Combine the resampled with the full population into one graph for easier comparison?!
+TS_changes_fullseteco  <- rbind(TS_change0717eco |> mutate(sample_set = "Resampled lakes"), TS_change0717_allSITESeco |> mutate(sample_set = "All surveyed lakes"))
+TS_changes_fullseteco$Category = factor(TS_changes_fullseteco$Category,
+                                     levels = c("Oligo.", "Meso.", "Eutro.", "Hyper."))
+
+
+# compare confidence interval between all surveyed lakes and resampled lakes
+t.test((TS_changes_fullseteco |> filter(sample_set == "Resampled lakes"))$MarginofError.P, (TS_changes_fullseteco |> filter(sample_set != "Resampled lakes"))$MarginofError.P) # p =  0.002067
+ggplot(TS_changes_fullseteco, aes(sample_set, MarginofError.P)) +
+  geom_boxplot()
+
+# compare all to resampled lakes within each category and region to find statistical differences for plotting
+comparison_tseco <- TS_changes_fullseteco |>
+  mutate(lwr.est = DiffEst.P-MarginofError.P,
+         upr.est = DiffEst.P+MarginofError.P) |>
+  pivot_longer(c('DiffEst.P','lwr.est','upr.est'), names_to='est',values_to='values') |>
+  select(-MarginofError.P, -est, -Indicator) |>
+  pivot_wider(names_from='sample_set', values_from='values') |>
+  unchop(everything()) |>
+  group_by(Subpopulation, Category) |>
+  mutate(p.value = t.test(`Resampled lakes`,`All surveyed lakes`)[['p.value']]) |>
+  ungroup() |>
+  filter(p.value <=0.05) |>
+  select(-4,-3) |>
+  unique() |>
+  mutate(p.value = '*') 
+
+# add significance to dataset
+TS_changes_fullseteco <- left_join(TS_changes_fullseteco, comparison_tseco) |>
+  mutate(p.value=ifelse(sample_set!='Resampled lakes', NA, p.value))
+
+# factor ecoregion names for consistent plotting
+TS_changes_fullseteco$Subpopulation = factor(TS_changes_fullseteco$Subpopulation,
+                                      levels = c("Northern Appalachians", "Southern Appalachians", "Coastal Plains", "Temperate Plains", "Upper Midwest", "Northern Plains", "Southern Plains", "Xeric", "Western Mountains"))
+
+#national plot
+ggplot(TS_changes_fullseteco) +
+  geom_point(aes(Category,DiffEst.P, fill = Category), color = "black", pch = 21, size = 1, position=position_dodge(width=0.5)) +
+  geom_errorbar(aes(Category, DiffEst.P, ymin = DiffEst.P-MarginofError.P, ymax = DiffEst.P+MarginofError.P, color = Category, linetype = sample_set), width = 0.2)  + 
+  geom_text(TS_changes_fullseteco, mapping=aes(Category, DiffEst.P, label=p.value), nudge_x=-0.25, nudge_y=0.25) +
+  theme_bw() +
+  theme(panel.grid.major = element_blank(), 
+        panel.grid.minor = element_blank()) +
+  facet_wrap(~Subpopulation, scales = "free_y", ncol = 3) +
+  #facet_wrap(~Subpopulation, ncol = 3, scales = "free_y") +
+  geom_hline(yintercept = 0) +
+  labs(x = "",
+       y = "% change 2007-2017")+                                                 
+  scale_color_manual("", values = c(palette_OkabeIto[2], palette_OkabeIto[4], palette_OkabeIto[3], palette_OkabeIto[1]))  +
+  scale_fill_manual("", values = c(palette_OkabeIto[2], palette_OkabeIto[4], palette_OkabeIto[3], palette_OkabeIto[1])) +
+  theme(axis.text.x = element_text(angle = 49, vjust = 1, hjust =1),
+        strip.text.x = element_text(size = 7.5),
+        plot.caption.position = "plot",
+        plot.caption = element_text(hjust = 0, family = "serif"),
+        legend.title = element_blank())
+#ggsave("Figures/F6_TSchanges.png", height = 4.5, width = 6.5, units = "in", dpi = 1200) 
+ggsave("Figures/FX_TSchangesECO.png", height = 4.5, width = 6.5, units = "in", dpi = 1200) 
+
+
+# #### 8. Is there any relationship between trophic state and limitation ####
+# ## combine datasets for boxplots
+# tmp_ts <- percent_TS1 |>
+#   select(Subpopulation, Category, Estimate.P, year) |>
+#   pivot_wider(names_from = Category, values_from = Estimate.P) |>
+#   mutate(perc_eutro = Eutro. + Hyper.,
+#          perc_noteutro = Meso. + Oligo.) |>
+#   select(-Eutro., -Hyper., -Meso., -Oligo.)
+# 
+# tmp_lim <- percent_lim1 |> 
+#   select(Subpopulation, Category, Estimate.P, year) #|>
+#   # pivot_wider(names_from = Category, values_from = Estimate.P) |>
+#   # rename(colim = 3,
+#   #        nlim=4,
+#   #        plim=5)
+# 
+# ts_lim_perc <- left_join(tmp_ts, tmp_lim)
+# 
+# library(lme4)
+# 
+# m.1 <- lmer(perc_eutro ~ Estimate.P + (1|Category), ts_lim_perc)
+# summary(m.1)
+# m.1$coefficients
+# fixef(m.1)
+# ranef(m.1)
+# 
+# ggplot(ts_lim_perc) +
+#   geom_point(aes(Estimate.P, perc_noteutro, color=Category)) +
+#   geom_smooth(aes(Estimate.P, perc_noteutro, color=Category), method='lm')
+
 # library(scales)
 # show_col(c("grey60","red4", "#336a98"))
 # show_col(palette_OkabeIto[5:7])
