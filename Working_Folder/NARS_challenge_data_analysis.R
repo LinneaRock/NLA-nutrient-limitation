@@ -64,11 +64,14 @@ tinylakes_lake <- tinylakesobs |>
 # TukeyHSD(aov(logDINP~limitation*TROPHIC_STATE, limits1), conf.level = 0.95) # various, some p < 0.05, many p <0.0001. 14 relationships are not significantly different
 # plot(TukeyHSD(aov(logDINP~limitation*TROPHIC_STATE, limits1), conf.level = 0.95), las = 2)
 
-
-
-
-
-
+# How many reservoirs are there in the western U.S. vs eastern U.S. NLA?
+reservoir <- nla_data_subset |>
+  select(ECO_REG_NAME, UNIQUE_ID, LAKE_ORIGIN, year) |>
+  distinct() |>
+  mutate(region = ifelse(ECO_REG_NAME %in% c('Western Mountains', 'Xeric', 'Northern Plains', 'Southern Plains'), 'west', 'east')) 
+  
+reservoir |> count(year, LAKE_ORIGIN, region) 
+reservoir |> count(year, region)
 
 
 #### 2. Nutrient correlations with eutrophication ####
