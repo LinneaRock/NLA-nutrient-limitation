@@ -437,7 +437,7 @@ percent_lim1 <- rbind(percent_lim, nat1) |>
 percent_lim1$Subpopulation = factor(percent_lim1$Subpopulation,
                                     levels = c("National", "Northern Appalachians", "Southern Appalachians", "Coastal Plains", "Temperate Plains", "Upper Midwest", "Northern Plains", "Southern Plains", "Xeric", "Western Mountains"))
 
-text_percents <- percent_lim1 |>
+text_percents_lim <- percent_lim1 |>
   select(year, Subpopulation, Category, Estimate.P) |>
   filter(Estimate.P > 10) |>
   mutate(perc = paste0(round(Estimate.P, digits = 1), "%")) 
@@ -446,7 +446,7 @@ text_percents <- percent_lim1 |>
 
 ggplot(percent_lim1, aes(year, Estimate.P, fill = Category)) +
   geom_bar(stat = "identity") +
-  geom_text(text_percents, mapping = aes(label = perc), position = position_stack(vjust = 0.5), size = 3) +
+  geom_text(text_percents_lim, mapping = aes(label = perc), position = position_stack(vjust = 0.5), size = 3) +
   facet_wrap(~Subpopulation) +
   scale_fill_manual("", values = c("grey60","red4", "#336a98")) +
   theme_bw() +
@@ -675,7 +675,7 @@ percent_TS1$Category = factor(percent_TS1$Category,
                               levels = c("Oligo.", "Meso.", "Eutro.", "Hyper."))
 
 
-text_percents <- percent_TS1 |>
+text_percents_ts <- percent_TS1 |>
   select(year, Subpopulation, Category, Estimate.P) |>
   filter(Estimate.P > 10) |>
   mutate(perc = paste0(round(Estimate.P, digits = 1), "%"))
@@ -683,7 +683,7 @@ text_percents <- percent_TS1 |>
 
 ggplot(percent_TS1, aes(year, Estimate.P, fill = Category)) +
   geom_bar(stat = "identity") +
-  geom_text(text_percents, mapping = aes(label = perc), position = position_stack(vjust = 0.5), size = 3) +
+  geom_text(text_percents_ts, mapping = aes(label = perc), position = position_stack(vjust = 0.5), size = 3) +
   facet_wrap(~Subpopulation) +
   scale_fill_manual("", values = c(palette_OkabeIto[2], palette_OkabeIto[4], palette_OkabeIto[3], palette_OkabeIto[1])) +
   theme_bw() +
@@ -929,7 +929,7 @@ ggplot(TS_changes_fullseteco) +
 ggsave("Figures/FX_TSchangesECO.png", height = 4.5, width = 6.5, units = "in", dpi = 1200) 
 
 
-# #### 8. Is there any relationship between trophic state and limitation ####
+# #### 8. Relationship between trophic state and limitation ####
 # ## combine datasets for boxplots
 # tmp_ts <- percent_TS1 |>
 #   select(Subpopulation, Category, Estimate.P, year) |>
@@ -962,3 +962,37 @@ ggsave("Figures/FX_TSchangesECO.png", height = 4.5, width = 6.5, units = "in", d
 # library(scales)
 # show_col(c("grey60","red4", "#336a98"))
 # show_col(palette_OkabeIto[5:7])
+
+
+# 8a. Categorical analysis of trophic states within limitation categories ####
+
+nat_limTS <- cat_analysis(
+  limits_survey_prep,
+  siteID = "UNIQUE_ID",
+  vars = "TROPHIC_STATE",
+  weight = "WGT_NLA",
+  subpops = "limitation",
+  xcoord = "LON_DD",
+  ycoord = "LAT_DD"
+) |>
+  filter(Category != 'Total')
+
+nat_limTS$Category = factor(nat_limTS$Category,
+                                            levels = c("Oligo.", "Meso.", "Eutro.", "Hyper."))
+
+
+ggplot(nat_limTS) +
+  geom_point(aes(Category, Estimate.P)) +
+  facet_wrap(~Subpopulation) +
+  geom_errorbar(aes(Category, Estimate.P, ymin = Estimate.P-MarginofError.P,
+                    ymax = Estimate.P+MarginofError.P, color = Category), width = 0.2) +
+  scale_color_manual("", values = c(palette_OkabeIto[2], palette_OkabeIto[4], palette_OkabeIto[3], palette_OkabeIto[1]))  +
+  scale_fill_manual("", values = c(palette_OkabeIto[2], palette_OkabeIto[4], palette_OkabeIto[3], palette_OkabeIto[1])) +
+  theme_bw() +
+  theme(axis.text.x = element_text(angle = 49, vjust = 1, hjust =1),
+        strip.text.x = element_text(size = 7.5),
+        plot.caption.position = "plot",
+        plot.caption = element_text(hjust = 0, family = "serif"),
+        legend.title = element_blank()) +
+  labs(x = '', y = '% lakes from both surveys')
+ggsave("Figures/F7_trophicstates_bylim.png", height = 4.5, width = 6.5, units = "in", dpi = 1200) 

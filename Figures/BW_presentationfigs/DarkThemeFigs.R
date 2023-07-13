@@ -63,8 +63,8 @@ ggplot(lim_changes_fullset |>
                                sample_set == 'All surveyed lakes')) +
   geom_point(aes(Category,DiffEst.P, fill = Category), color = "white", pch = 21, size = 1, 
              position=position_dodge(width=0.5))+
-  geom_errorbar(aes(Category, DiffEst.P, ymin = DiffEst.P-StdError.P, 
-                    ymax = DiffEst.P+StdError.P, color = Category, linetype = sample_set), width = 0.2)  + 
+  geom_errorbar(aes(Category, DiffEst.P, ymin = DiffEst.P-MarginofError.P, 
+                    ymax = DiffEst.P+MarginofError.P, color = Category, linetype = sample_set), width = 0.2)  + 
   dark_theme_bw() +
   theme(panel.grid.major = element_blank(), 
         panel.grid.minor = element_blank()) +
@@ -92,8 +92,8 @@ ggplot(lim_changes_fullset |>
                             sample_set == 'All surveyed lakes')) +
   geom_point(aes(Category,DiffEst.P, fill = Category), 
              color = "white", pch = 21, size = 1, position=position_dodge(width=0.5)) +
-  geom_errorbar(aes(Category, DiffEst.P, ymin = DiffEst.P-StdError.P,
-                    ymax = DiffEst.P+StdError.P, color = Category, linetype = sample_set), width = 0.2)  + 
+  geom_errorbar(aes(Category, DiffEst.P, ymin = DiffEst.P-MarginofError.P,
+                    ymax = DiffEst.P+MarginofError.P, color = Category, linetype = sample_set), width = 0.2)  + 
   dark_theme_bw() +
   theme(panel.grid.major = element_blank(), 
         panel.grid.minor = element_blank()) +
@@ -112,7 +112,7 @@ ggsave("Figures/BW_presentationfigs/lim_shifts_national.png", height = 4, width 
 
 ggplot(percent_lim1, aes(year, Estimate.P, fill = Category)) +
   geom_bar(stat = "identity") +
-  geom_text(text_percents, mapping = aes(label = perc), position = position_stack(vjust = 0.5), size = 3) +
+  geom_text(text_percents_lim, mapping = aes(label = perc), position = position_stack(vjust = 0.5), size = 3) +
   facet_wrap(~Subpopulation) +
   scale_fill_manual("", values = c("grey60","red4", "#336a98")) +
   dark_theme_bw() +
@@ -131,8 +131,8 @@ ggsave("Figures/BW_presentationfigs/national_limbar.png", height = 4, width = 6.
 ggplot(TS_changes_fullset |> filter(sample_set == 'All surveyed lakes')) +
   geom_point(aes(Category,DiffEst.P, fill = Category), 
              color = "white", pch = 21, size = 1, position=position_dodge(width=0.5)) +
-  geom_errorbar(aes(Category, DiffEst.P, ymin = DiffEst.P-StdError.P, 
-                    ymax = DiffEst.P+StdError.P, color = Category, linetype = sample_set), width = 0.2)  + 
+  geom_errorbar(aes(Category, DiffEst.P, ymin = DiffEst.P-MarginofError.P, 
+                    ymax = DiffEst.P+MarginofError.P, color = Category, linetype = sample_set), width = 0.2)  + 
   dark_theme_bw() +
   theme(panel.grid.major = element_blank(), 
         panel.grid.minor = element_blank()) +
@@ -150,3 +150,18 @@ ggplot(TS_changes_fullset |> filter(sample_set == 'All surveyed lakes')) +
 ggsave("Figures/BW_presentationfigs/trophicstate.png", height = 4.5, width = 6.5, units = "in", dpi = 1200) 
 
 
+ggplot(nat_limTS) +
+  geom_point(aes(Category, Estimate.P)) +
+  facet_wrap(~Subpopulation) +
+  geom_errorbar(aes(Category, Estimate.P, ymin = Estimate.P-MarginofError.P,
+                    ymax = Estimate.P+MarginofError.P, color = Category), width = 0.2) +
+  scale_color_manual("", values = c(palette_OkabeIto[2], palette_OkabeIto[4], palette_OkabeIto[3], palette_OkabeIto[1]))  +
+  scale_fill_manual("", values = c(palette_OkabeIto[2], palette_OkabeIto[4], palette_OkabeIto[3], palette_OkabeIto[1])) +
+  dark_theme_bw() +
+  theme(axis.text.x = element_text(angle = 49, vjust = 1, hjust =1),
+        strip.text.x = element_text(size = 7.5),
+        plot.caption.position = "plot",
+        plot.caption = element_text(hjust = 0, family = "serif"),
+        legend.title = element_blank()) +
+  labs(x = '', y = '% lakes from both surveys')
+ggsave("Figures/BW_presentationfigs/F7_trophicstates_bylim.png", height = 4.5, width = 6.5, units = "in", dpi = 1200) 
