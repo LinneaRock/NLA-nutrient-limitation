@@ -77,7 +77,7 @@ ggplot() +
   theme_minimal() +
   scale_fill_manual("", values = muted) +
   scale_color_manual("", values = c("grey60","red4", "#336a98"), labels = c('Co-nutrient \nlimitation', 'N-limitation', 'P-limitation'))  +
-  guides(fill = FALSE) +
+  guides(fill = 'none') +
   theme(legend.position = c(1, 0.4), 
         legend.key.size = unit(0.05, 'cm'), #change legend key size
         legend.key.height = unit(0.05, 'cm'), #change legend key height
@@ -89,4 +89,7 @@ ggplot() +
 ggsave("Figures/AbstractArt_map.png", height = 1.75, width = 3.25, units = "in", dpi = 500)
 
 
-
+ggplot() +
+  geom_sf(data = regions.sf, aes(), fill = 'lightgrey', alpha = 0.15) +
+  geom_sf(data = nla_locations.sf, aes(), color='#476ba1') +
+  theme_classic()
