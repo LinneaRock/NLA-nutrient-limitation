@@ -89,7 +89,13 @@ ggplot() +
 ggsave("Figures/AbstractArt_map.png", height = 1.75, width = 3.25, units = "in", dpi = 500)
 
 
+ch_locations <- st_as_sf(data.frame(lon=c(-108.191820, -105.615173),
+                           lat=c(43.304538, 40.052161)), coords = c('lon', 'lat'), crs=4326)
+ 
+
+
 ggplot() +
   geom_sf(data = regions.sf, aes(), fill = 'lightgrey', alpha = 0.15) +
   geom_sf(data = nla_locations.sf, aes(), color='#476ba1') +
+  geom_sf(data = ch_locations, aes(), color='red') +
   theme_classic()
