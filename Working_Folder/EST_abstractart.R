@@ -89,6 +89,8 @@ ggplot() +
 ggsave("Figures/AbstractArt_map.png", height = 1.75, width = 3.25, units = "in", dpi = 500)
 
 
+
+# making map for conceptual diagram
 ch_locations <- st_as_sf(data.frame(lon=c(-108.191820, -105.615173),
                            lat=c(43.304538, 40.052161)), coords = c('lon', 'lat'), crs=4326)
  
@@ -99,3 +101,23 @@ ggplot() +
   geom_sf(data = nla_locations.sf, aes(), color='#476ba1') +
   geom_sf(data = ch_locations, aes(), color='red') +
   theme_classic()
+
+
+
+ggplot() +
+  geom_sf(data = regions.sf, aes(), fill = 'lightgrey', alpha = 0.15) +
+  geom_sf(data = nla_locations.sf |> filter(year == '2017', limitation %in% c("N-limitation","P-limitation")), aes(color = limitation), alpha = 0.4) +
+  geom_sf(data = nla_locations.sf |> filter(year == '2017', limitation %in% c("Co-nutrient limitation")), aes(color = limitation), alpha = 0.4) +
+  theme_classic() +
+  scale_fill_manual("", values = muted) +
+  scale_color_manual("", values = c("grey60","red4", "#336a98"), labels = c('Co-nutrient \nlimitation', 'N-limitation', 'P-limitation'))  +
+  guides(fill = 'none') +
+  theme(legend.position = c(0.95, 0.4), 
+        legend.key.size = unit(0.05, 'cm'), #change legend key size
+        legend.key.height = unit(0.05, 'cm'), #change legend key height
+        legend.key.width = unit(0.05, 'cm'), #change legend key width
+        legend.text = element_text(size=6), #change legend text font size
+        axis.text = element_text(size = 6),
+        legend.title = element_blank())
+
+ggsave("C:/Users/linne/OneDrive - University of Wyoming/Writing/proposal/concept_ch1.png", height = 4.5, width = 6.5, units = "in", dpi = 1200)
