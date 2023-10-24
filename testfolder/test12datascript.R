@@ -227,8 +227,8 @@ ggplot(correlations_data, aes(log10(concentration), log10(CHLA_PPB))) +
   scale_color_manual("", labels = c("TN", "TP"), values=c("red4", "#336a98")) +
   theme(plot.caption.position = "plot",
         plot.caption = element_text(hjust = 0, family = "serif"))
-#ggsave("Figures/test12data/F1_linregs.png", height = 4.5, width = 6.4, units = "in", dpi = 1200) 
-ggsave("Figures/test12data/F1_linregs_pub.png", height = 4.5, width = 6.4, units = "in", dpi = 1200) 
+#ggsave("testfolder/test12data/F1_linregs.png", height = 4.5, width = 6.4, units = "in", dpi = 1200) 
+ggsave("testfolder/test12data/F1_linregs_pub.png", height = 4.5, width = 6.4, units = "in", dpi = 1200) 
 
 # NOTE: I also ran these for just 2007 and just 2012 data. 
 
@@ -273,8 +273,8 @@ ggplot(data = regions.sf1) +
   theme(plot.caption.position = "plot",
         plot.caption = element_text(hjust = 0, family = "serif")) +
   theme(legend.position = c(0.1, 0.2)) 
-#ggsave("Figures/test12data/F2_Map.png", height = 4.5, width = 6.5, units = "in", dpi = 1200) 
-ggsave("Figures/test12data/F2_Map_pub.png", height = 4.5, width = 6.5, units = "in", dpi = 1200) 
+#ggsave("testfolder/test12data/F2_Map.png", height = 4.5, width = 6.5, units = "in", dpi = 1200) 
+ggsave("testfolder/test12data/F2_Map_pub.png", height = 4.5, width = 6.5, units = "in", dpi = 1200) 
 
 #detach(package:sf, unload=TRUE)
 
@@ -289,7 +289,7 @@ ggsave("Figures/test12data/F2_Map_pub.png", height = 4.5, width = 6.5, units = "
 #   theme(plot.tag = element_text(size = 8),
 #         plot.caption.position = "plot",
 #         plot.caption = element_text(hjust = 0))
-# ggsave("Figures/test12data/F1_Map_linregs.png", height = 8.5, width = 8, units = "in", dpi = 500) 
+# ggsave("testfolder/test12data/F1_Map_linregs.png", height = 8.5, width = 8, units = "in", dpi = 500) 
 
 
 
@@ -366,7 +366,7 @@ ggplot(limits) +
 TP rather than DIN vs TP becaue of better correlation between the total nutrients.") +
   theme(plot.caption.position = "plot",
         plot.caption = element_text(hjust = 0, family = "serif"))
-ggsave("Figures/test12data/Forig3_limitedlakes.png", height = 4.5, width = 6.5, units = "in", dpi = 1200) 
+ggsave("testfolder/test12data/Forig3_limitedlakes.png", height = 4.5, width = 6.5, units = "in", dpi = 1200) 
 
 # how many of the co-nutrient limited lakes occur in lakes with excess N or P?
 co_lim <- limits |>
@@ -461,8 +461,8 @@ ggplot(percent_lim1, aes(year, Estimate.P, fill = Category)) +
   theme(plot.caption.position = "plot",
         plot.caption = element_text(hjust = 0, family = "serif"),
         legend.position = c(0.75, 0.175))
-#ggsave("Figures/test12data/F3_limitbars_ecoreg.png", height = 4.5, width = 6.5, units = "in", dpi = 1200)
-ggsave("Figures/test12data/F3_limitbars_ecoreg_pub.png", height = 4.5, width = 6.5, units = "in", dpi = 1200)
+#ggsave("testfolder/test12data/F3_limitbars_ecoreg.png", height = 4.5, width = 6.5, units = "in", dpi = 1200)
+ggsave("testfolder/test12data/F3_limitbars_ecoreg_pub.png", height = 4.5, width = 6.5, units = "in", dpi = 1200)
 
 
 
@@ -614,8 +614,8 @@ nat_plot/ecoreg_plot +
   plot_layout(guides = "collect",
               design = layout) +
   plot_annotation(tag_levels = 'a', tag_suffix = ')') 
-#ggsave("Figures/test12data/F4_limchanges.png", height = 8.5, width = 6.5, units = "in", dpi = 1200) 
-ggsave("Figures/test12data/F4_limchanges_pub.png", height = 6, width = 6.5, units = "in", dpi = 1200) 
+#ggsave("testfolder/test12data/F4_limchanges.png", height = 8.5, width = 6.5, units = "in", dpi = 1200) 
+ggsave("testfolder/test12data/F4_limchanges_pub.png", height = 6, width = 6.5, units = "in", dpi = 1200) 
 
 
 
@@ -699,8 +699,8 @@ ggplot(percent_TS1, aes(year, Estimate.P, fill = Category)) +
         plot.caption = element_text(hjust = 0, family = "serif"),
         legend.position = c(0.75, 0.175)) +
   guides(fill = guide_legend(ncol=2))
-#ggsave("Figures/test12data/F5_TSbars_ecoreg.png", height = 4.5, width = 6.5, units = "in", dpi = 1200)
-ggsave("Figures/test12data/F5_TSbars_ecoreg_pub.png", height = 4.5, width = 6.5, units = "in", dpi = 1200)
+#ggsave("testfolder/test12data/F5_TSbars_ecoreg.png", height = 4.5, width = 6.5, units = "in", dpi = 1200)
+ggsave("testfolder/test12data/F5_TSbars_ecoreg_pub.png", height = 4.5, width = 6.5, units = "in", dpi = 1200)
 
 
 #### 6. Trophic state change analysis within limitation status at the national level ####
@@ -818,8 +818,8 @@ ggplot(TS_changes_fullset) +
         plot.caption.position = "plot",
         plot.caption = element_text(hjust = 0, family = "serif"),
         legend.title = element_blank())
-#ggsave("Figures/test12data/F6_TSchanges.png", height = 4.5, width = 6.5, units = "in", dpi = 1200) 
-ggsave("Figures/test12data/F6_TSchanges_pub.png", height = 4.5, width = 6.5, units = "in", dpi = 1200) 
+#ggsave("testfolder/test12data/F6_TSchanges.png", height = 4.5, width = 6.5, units = "in", dpi = 1200) 
+ggsave("testfolder/test12data/F6_TSchanges_pub.png", height = 4.5, width = 6.5, units = "in", dpi = 1200) 
 
 
 
@@ -925,8 +925,8 @@ ggplot(TS_changes_fullseteco) +
         plot.caption.position = "plot",
         plot.caption = element_text(hjust = 0, family = "serif"),
         legend.title = element_blank())
-#ggsave("Figures/test12data/F6_TSchanges.png", height = 4.5, width = 6.5, units = "in", dpi = 1200) 
-ggsave("Figures/test12data/FX_TSchangesECO.png", height = 4.5, width = 6.5, units = "in", dpi = 1200) 
+#ggsave("testfolder/test12data/F6_TSchanges.png", height = 4.5, width = 6.5, units = "in", dpi = 1200) 
+ggsave("testfolder/test12data/FX_TSchangesECO.png", height = 4.5, width = 6.5, units = "in", dpi = 1200) 
 
 
 # #### 8. Relationship between trophic state and limitation ####
@@ -995,4 +995,4 @@ ggplot(nat_limTS) +
         plot.caption = element_text(hjust = 0, family = "serif"),
         legend.title = element_blank()) +
   labs(x = '', y = '% lakes from both surveys')
-ggsave("Figures/test12data/F7_trophicstates_bylim.png", height = 4.5, width = 6.5, units = "in", dpi = 1200) 
+ggsave("testfolder/test12data/F7_trophicstates_bylim.png", height = 4.5, width = 6.5, units = "in", dpi = 1200) 
