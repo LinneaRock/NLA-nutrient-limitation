@@ -320,14 +320,14 @@ ref_np <- reflakes |>
   ungroup()
 
 
-ref_np <- nla_data_subset |>
-  filter(SITE_TYPE %in% c("REF_Lake", "HAND")) |> # subset of 230 lakes
-  group_by(ECO_REG_NAME, year) |>
-  # 75th percentile of nutrient concentrations from reference lakes
-  summarise(percentile75TN_PPM = quantile(NTL_PPM, probs = 0.75), 
-            percentile75TP_PPB = quantile(PTL_PPB, probs = 0.75),
-            percentile75DIN_PPM = quantile(DIN_PPM, probs = 0.75)) |>
-  ungroup()
+# ref_np <- nla_data_subset |>
+#   filter(SITE_TYPE %in% c("REF_Lake", "HAND")) |> # subset of 230 lakes
+#   group_by(ECO_REG_NAME, year) |>
+#   # 75th percentile of nutrient concentrations from reference lakes
+#   summarise(percentile75TN_PPM = quantile(NTL_PPM, probs = 0.75), 
+#             percentile75TP_PPB = quantile(PTL_PPB, probs = 0.75),
+#             percentile75DIN_PPM = quantile(DIN_PPM, probs = 0.75)) |>
+#   ungroup()
 
 # get some information about the entire dataset
 averages_np <- nla_data_subset |>
@@ -355,7 +355,8 @@ criteria <- left_join(averages_np, ref_np) |>
   # There were no reference lakes in the Northern Plains in 2007. So, concentration thresholds were determined solely by the 25th percentile of all assessed lakes in that region in that year. 
   mutate(TP_threshold = ifelse(is.na(TP_threshold), percentile25TP_PPB, TP_threshold),
          TN_threshold = ifelse(is.na(TN_threshold), percentile25TN_PPM, TN_threshold),
-         DIN_threshold = ifelse(is.na(DIN_threshold), percentile25DIN_PPM, DIN_threshold))
+         DIN_threshold = ifelse(is.na(DIN_threshold), percentile25DIN_PPM, DIN_threshold)) |>
+  mutate(DIN_threshold = DIN_threshold * 1000)
 
 #write.csv(criteria, "criteria.csv")
 
