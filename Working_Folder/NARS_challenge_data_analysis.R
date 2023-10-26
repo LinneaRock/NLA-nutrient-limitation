@@ -12,6 +12,7 @@ library(lme4)
 #library(gt)
 library(patchwork)
 library(ggpubr)
+library(readxl)
 
 
 #### Load and subset dataframe ####
@@ -295,6 +296,30 @@ ggsave("Figures/F2_Map_pub.png", height = 4.5, width = 6.5, units = "in", dpi = 
 
 #### 3. Calculate limitations ####
 # get information about the refernece lakes
+reflakes <- readxl::read_xlsx('Data/Reference_sites_2023-10-26.xlsx') |>
+  left_join(readxl::read_xlsx('Data/crosswalk_ID.xlsx', sheet = 'LONG_NARS_ALLSurvey_SITE_ID_CRO') |>
+              filter(SURVEY %in% c('NLA', 'NRSA')) |>
+              select(UNIQUE_ID, SITE_ID)) |>
+  select(-SITE_ID, -GROUP) |>
+  rename(year = YEAR,
+         ECO_REG = REGION) |>
+  mutate(year = as.character(year)) |>
+  pivot_wider(names_from = INDICATOR, values_from = VALUE) |>
+  unique() |>
+  mutate(ECO_REG = ifelse(ECO_REG %in% c('SPLnat', 'SPLman'), 'SPL', ECO_REG)) |>
+  left_join(nla_data_subset |> select(UNIQUE_ID, year, NTL_PPM, PTL_PPB, DIN_PPM)) |>
+  drop_na(DIN_PPM) |>
+  left_join(all_NLA |> select(ECO_REG, ECO_REG_NAME) |> unique())
+
+ref_np <- reflakes |>
+  group_by(ECO_REG_NAME, year) |>
+  # 75th percentile of nutrient concentrations from reference lakes
+  summarise(percentile75TN_PPM = quantile(NTL_PPM, probs = 0.75), 
+            percentile75TP_PPB = quantile(PTL_PPB, probs = 0.75),
+            percentile75DIN_PPM = quantile(DIN_PPM, probs = 0.75)) |>
+  ungroup()
+
+
 ref_np <- nla_data_subset |>
   filter(SITE_TYPE %in% c("REF_Lake", "HAND")) |> # subset of 230 lakes
   group_by(ECO_REG_NAME, year) |>
