@@ -5,7 +5,12 @@ nreltest <- nla_data_subset |>
          !is.na(DON))
 
 ggplot(nreltest) +
-  geom_point(aes(DIN_PPM, CHLA_PPB)) +
+  geom_point(aes(CHLA_PPB, NTL_PPM)) +
   scale_y_log10() +
   scale_x_log10() +
-  geom_smooth(aes(DON, CHLA_PPB))
+  geom_smooth(aes(CHLA_PPB, DON))
+
+ggplot(nreltest,aes(DIN_PPM, CHLA_PPB)) +
+  geom_point() +
+
+  geom_smooth(method='gam')

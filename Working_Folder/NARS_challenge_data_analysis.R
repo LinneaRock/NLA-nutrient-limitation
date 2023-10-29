@@ -309,54 +309,20 @@ reflakes <- readxl::read_xlsx('Data/Reference_sites_2023-10-26.xlsx') |>
   mutate(ECO_REG = ifelse(ECO_REG %in% c('SPLnat', 'SPLman'), 'SPL', ECO_REG)) |>
   left_join(nla_data_subset |> select(UNIQUE_ID, year, NTL_PPM, PTL_PPB, DIN_PPM)) |>
   drop_na(DIN_PPM) |>
-  left_join(all_NLA |> select(ECO_REG, ECO_REG_NAME) |> unique()) |>
-# get quantiles to remove extreme outliers
-  group_by(year, ECO_REG_NAME) |>
-  mutate(Q1_TP = quantile(PTL_PPB, 0.25),
-         Q3_TP = quantile(PTL_PPB, 0.75),
-         Q1_DIN = quantile(DIN_PPM, 0.25),
-         Q3_DIN = quantile(DIN_PPM, 0.75),
-         IQR_TP = IQR(PTL_PPB),
-         IQR_DIN = IQR(DIN_PPM)) |>
-  ungroup() 
+  left_join(all_NLA |> select(ECO_REG, ECO_REG_NAME) |> unique()) #|>
 
-reflakes_outrm <- reflakes |>
-  filter(PTL_PPB > Q1_TP-(IQR_TP*3),
-         PTL_PPB < Q3_TP+(IQR_TP*3), # dropped 7 values
-         DIN_PPM > Q1_DIN-(IQR_DIN*3),
-         DIN_PPM < Q3_DIN+(IQR_DIN*3)) # dropped 17 values
-
-
-
-TPoutliers <- boxplot(PTL_PPB~ECO_REG_NAME *year, data=reflakes)$out #14
-DINoutliers <- boxplot(DIN_PPM~ECO_REG_NAME *year, data=reflakes)$out #28
-
-reflakes_outrm <- reflakes[-which(reflakes$PTL_PPB %in% TPoutliers),]
-reflakes_outrm <- reflakes_outrm[-which(reflakes$DIN_PPM %in% DINoutliers),]
   
-ref_np <- reflakes_outrm |>
-  group_by(ECO_REG_NAME, year) |>
-  # 75th percentile of nutrient concentrations from reference lakes
-  summarise(percentile75TN_PPM = quantile(NTL_PPM, probs = 0.75), 
-            percentile75TP_PPB = quantile(PTL_PPB, probs = 0.75),
-            percentile75DIN_PPM = quantile(DIN_PPM, probs = 0.75)) |>
-  ungroup()
-
 ref_np <- reflakes |>
   group_by(ECO_REG_NAME, year) |>
   # 75th percentile of nutrient concentrations from reference lakes
   summarise(percentile75TN_PPM = quantile(NTL_PPM, probs = 0.75), 
             percentile75TP_PPB = quantile(PTL_PPB, probs = 0.75),
             percentile75DIN_PPM = quantile(DIN_PPM, probs = 0.75)) |>
-  ungroup()
-# ref_np <- nla_data_subset |>
-#   filter(SITE_TYPE %in% c("REF_Lake", "HAND")) |> # subset of 230 lakes
-#   group_by(ECO_REG_NAME, year) |>
-#   # 75th percentile of nutrient concentrations from reference lakes
-#   summarise(percentile75TN_PPM = quantile(NTL_PPM, probs = 0.75), 
-#             percentile75TP_PPB = quantile(PTL_PPB, probs = 0.75),
-#             percentile75DIN_PPM = quantile(DIN_PPM, probs = 0.75)) |>
-#   ungroup()
+  ungroup() |>
+  # in one case (Southern Plains 2007), the 75th percentile of TP was way higher than reasonable, so we manually discarded that and used the 75th percentile from the other survey in the same ecoregion.
+  mutate(percentile75TP_PPB = ifelse(percentile75TP_PPB == 478.50000, 38.08750, percentile75TP_PPB))
+
+
 
 # get some information about the entire dataset
 averages_np <- nla_data_subset |>
@@ -380,25 +346,10 @@ criteria <- left_join(averages_np, ref_np) |>
   group_by(ECO_REG_NAME, year) |>
   mutate(TP_threshold = median(c(percentile75TP_PPB, percentile25TP_PPB)),
          TN_threshold = median(c(percentile75TN_PPM, percentile25TN_PPM)),
-         DIN_threshold = median(c(percentile75DIN_PPM, percentile25DIN_PPM))) |>
-  # There were no reference lakes in the Northern Plains in 2007. So, concentration thresholds were determined solely by the 25th percentile of all assessed lakes in that region in that year. 
-  mutate(TP_threshold = ifelse(is.na(TP_threshold), percentile25TP_PPB, TP_threshold),
-         TN_threshold = ifelse(is.na(TN_threshold), percentile25TN_PPM, TN_threshold),
-         DIN_threshold = ifelse(is.na(DIN_threshold), percentile25DIN_PPM, DIN_threshold)) 
+         DIN_threshold = median(c(percentile75DIN_PPM, percentile25DIN_PPM))) # |>
+ 
+write.csv(criteria, "criteria.csv")
 
-criteria <- left_join(averages_np, ref_np) |>
-  mutate(useRefN = percentile75DIN_PPM < percentile25DIN_PPM,
-         useRefP = percentile75TP_PPB < percentile25TP_PPB) |>
-  mutate(TP_threshold = ifelse(useRefP == 'TRUE', percentile75TP_PPB, percentile25TP_PPB),
-         DIN_threshold = ifelse(useRefN == 'TRUE', percentile75DIN_PPM, percentile25DIN_PPM))
-
-#write.csv(criteria, "criteria.csv")
-
-# How do the lower 25th percentiles of TN and TP compare the the 75th percentile concentrations of TN and TP in the reference lakes? 
-t.test(criteria$percentile75TN_PPM, criteria$percentile25TN_PPM) # p = 0.39
-t.test(criteria$percentile75TP_PPB, criteria$percentile25TP_PPB) # p = 0.25
-t.test(criteria$percentile75DIN_PPM, criteria$percentile25DIN_PPM) # p = 0.008
-# reject the null hypotheses for these tests except DIN. The true difference in means is equal to 0.
 
 # generate nutrient limitations
 limits <- nla_data_subset|>
@@ -410,9 +361,9 @@ limits <- nla_data_subset|>
                              ifelse(DIN_PPM > DIN_threshold & log(DIN.TP_molar) > medianlogDINP, "P-limitation",
                                     ifelse(is.na(limitation), "Co-nutrient limitation", limitation))))
 
-nrow(limits |> filter(limitation == "P-limitation")) # 725
-nrow(limits |> filter(limitation == "N-limitation")) # 890
-nrow(limits |> filter(limitation == "Co-nutrient limitation")) # 564
+nrow(limits |> filter(limitation == "P-limitation")) # 704
+nrow(limits |> filter(limitation == "N-limitation")) # 922
+nrow(limits |> filter(limitation == "Co-nutrient limitation")) # 553
 
 ## plot the limited lakes
 ggplot(limits) +
@@ -430,13 +381,13 @@ ggsave("Figures/Forig3_limitedlakes.png", height = 4.5, width = 6.5, units = "in
 
 # how many of the co-nutrient limited lakes occur in lakes with excess N or P?
 co_lim <- limits |>
-  filter(limitation == "Co-nutrient limitation") |> # 594 obs
+  filter(limitation == "Co-nutrient limitation") |> # 553 obs
   mutate(highDIN = ifelse(DIN_PPM > DIN_threshold, 1, 0),
          highTN = ifelse(NTL_PPM >TN_threshold, 1, 0),
          highTP = ifelse(PTL_PPB > TP_threshold, 1,0)) |>
   filter(highDIN == 1 |
            highTN == 1 |
-           highTP == 1) # 92 obs
+           highTP == 1) # 101 obs
 
 
 
@@ -450,9 +401,9 @@ limits_survey_prep <- limits|> # total 1773 lakes for this analysis
   filter(WGT_NLA > 0) # the sp survey package is not designed to use the reference lakes, so those are ignored when using this package for analyses.
 
 # lakes with limitations considered for this analysis now 
-nrow(limits_survey_prep |> filter(limitation == "P-limitation")) # 589
-nrow(limits_survey_prep |> filter(limitation == "N-limitation")) # 729
-nrow(limits_survey_prep |> filter(limitation == "Co-nutrient limitation")) # 455
+nrow(limits_survey_prep |> filter(limitation == "P-limitation")) # 597
+nrow(limits_survey_prep |> filter(limitation == "N-limitation")) # 764
+nrow(limits_survey_prep |> filter(limitation == "Co-nutrient limitation")) # 412
 
 # use categorical analysis from spsurvey package
 years <- c("2007", "2017")
@@ -1056,3 +1007,4 @@ ggplot(nat_limTS) +
         legend.title = element_blank()) +
   labs(x = '', y = '% lakes from both surveys')
 ggsave("Figures/F7_trophicstates_bylim.png", height = 4.5, width = 6.5, units = "in", dpi = 1200) 
+
