@@ -24,7 +24,7 @@ NLA12 <- read.csv("Data/NLA/NLA_2012.csv") |>
 NLA17 <- read.csv("Data/NLA/NLA_2017.csv") |> 
 #NLA17 <- read.csv("C:/Users/lrock1/Downloads/PhD_code/STOICH_NARSchallenge/Data/NLA/NLA_2017.csv") |>
   select(-X) |>
-  mutate(DATE_COL = as.Date(DATE_COL, format = "%d-%b-%y"),
+  mutate(DATE_COL = as.Date(DATE_COL, format = "%Y-%m-%d"),
          HUC_8 = as.integer(substring(HUC_8, 2)))
 
 #str(NLA17) # what variables need to be altered (e.g. to as date or as numeric, etc.)? 

@@ -18,7 +18,7 @@ library(readxl)
 #### Load and subset dataframe ####
 source("Data/NLA/Call_NLA_data.R")
 nla_data_subset <- all_NLA |>
-  select(ECO_REG_NAME, UNIQUE_ID, DATE_COL, VISIT_NO, NTL_PPM, PTL_PPB, DIN_PPM, tn.tp, DIN.TP, CHLA_PPB, TROPHIC_STATE, year,WGT_NLA, LON_DD, LAT_DD, AREA_HA, ELEV_PT, PCT_DEVELOPED_BSN, PCT_AGRIC_BSN, SITE_TYPE, URBAN, LAKE_ORIGIN) |>
+  select(ECO_REG_NAME, UNIQUE_ID, DATE_COL, VISIT_NO, NTL_PPM, PTL_PPB, DIN_PPM, tn.tp, DIN.TP, CHLA_PPB, TROPHIC_STATE, year,WGT_NLA, LON_DD, LAT_DD, AREA_HA, ELEV_PT, PCT_DEVELOPED_BSN, PCT_AGRIC_BSN, SITE_TYPE, URBAN, LAKE_ORIGIN, PTL_COND, NTL_COND, CHLA_COND) |>
   rename(DIN.TP_molar = DIN.TP,
          TN.TP_molar = tn.tp) |>
   filter(year != "2012") |>
@@ -295,61 +295,194 @@ ggsave("Figures/F2_Map_pub.png", height = 4.5, width = 6.5, units = "in", dpi = 
 
 
 #### 3. Calculate limitations ####
-# get information about the refernece lakes
-reflakes <- readxl::read_xlsx('Data/Reference_sites_2023-10-26.xlsx') |>
-  left_join(readxl::read_xlsx('Data/crosswalk_ID.xlsx', sheet = 'LONG_NARS_ALLSurvey_SITE_ID_CRO') |>
-              filter(SURVEY %in% c('NLA', 'NRSA')) |>
-              select(UNIQUE_ID, SITE_ID)) |>
-  select(-SITE_ID, -GROUP) |>
-  rename(year = YEAR,
-         ECO_REG = REGION) |>
-  mutate(year = as.character(year)) |>
-  pivot_wider(names_from = INDICATOR, values_from = VALUE) |>
-  unique() |>
-  mutate(ECO_REG = ifelse(ECO_REG %in% c('SPLnat', 'SPLman'), 'SPL', ECO_REG)) |>
-  left_join(nla_data_subset |> select(UNIQUE_ID, year, NTL_PPM, PTL_PPB, DIN_PPM)) |>
-  drop_na(DIN_PPM) |>
-  left_join(all_NLA |> select(ECO_REG, ECO_REG_NAME) |> unique()) #|>
+# categorize lakes based on size using quantiles to apply 4 size classes within each ecoregion
+range(nla_data_subset$AREA_HA)
 
-  
-ref_np <- reflakes |>
-  group_by(ECO_REG_NAME, year) |>
-  # 75th percentile of nutrient concentrations from reference lakes
-  summarise(percentile75TN_PPM = quantile(NTL_PPM, probs = 0.75), 
-            percentile75TP_PPB = quantile(PTL_PPB, probs = 0.75),
-            percentile75DIN_PPM = quantile(DIN_PPM, probs = 0.75)) |>
+nla_data_subset2 <- nla_data_subset |>
+  group_by(ECO_REG_NAME) |>
+  mutate(lakesizeclass = ifelse(AREA_HA <= as.numeric(quantile(tmp$AREA_HA, 0.25)), 'lil',
+                                ifelse(between(AREA_HA, as.numeric(quantile(tmp$AREA_HA, 0.25)),as.numeric(quantile(tmp$AREA_HA, 0.50))), 'small',
+                                       ifelse(between(AREA_HA, as.numeric(quantile(tmp$AREA_HA, 0.50)), as.numeric(quantile(tmp$AREA_HA, 0.75))), 'med',
+                                              ifelse(AREA_HA > as.numeric(quantile(tmp$AREA_HA, 0.75)), 'big', lakesizeclass))))) |>
+  ungroup()
+
+nla_data_subset <- nla_data_subset2
+
+
+# shows how many lakes are in each combination of conditions (good/least dist., fair/intermediate dist., poor/most dist.) in each ecoregion and year
+condition_checks <- nla_data_subset |>
+  group_by(ECO_REG_NAME, year, lakesizeclass, PTL_COND, NTL_COND, CHLA_COND) |>
+  count()
+
+# shows how many EPA hand-selected reference lakes exist in each ecoregion and year. these overlap with our best condition lakes from 'condition_checks,' but also include lakes that are not in best conditions, but still are representative of healthy lakes deemed by folks collecting the data who have in-depth knowledge of the area they are surveying. 
+reference_checks <- nla_data_subset |>
+  filter(SITE_TYPE %in% c('HAND', 'REF_LAKE')) |>
+  group_by(ECO_REG_NAME, year, lakesizeclass) |>
+  count()
+
+# We will combine these 'best' lakes with the selected 'reference' lakes to build our reference condition nutrient thresholds that determine healthy waters in each region and year.
+
+## first get the best condition lakes
+cond.tmp <- nla_data_subset |>
+  # we want to make conditions based on DIN values, so get rid of any NAs
+  filter(!is.na(DIN_PPM)) |>
+  # lakes in good condition for CHLA
+  filter(CHLA_COND %in% c('1:LEAST DISTURBED', 'Good')) |> #|> # 1266 lakes
+  # lakes in good condition for CHLA and phosphorus
+  filter(PTL_COND %in% c('1:LEAST DISTURBED', 'Good')) |> # 985 lakes
+  # lakes in good condition for CHLA, P, and nitrogen
+  filter(NTL_COND %in% c('1:LEAST DISTURBED', 'Good')) # 819 lakes
+
+## now get the specified reference lakes 
+ref.tmp <- nla_data_subset |>
+  # we want to make conditions based on DIN values, so get rid of any NAs
+  filter(!is.na(DIN_PPM)) |>
+  filter(SITE_TYPE %in% c('HAND', 'REF_LAKE')) # 98 lakes
+
+
+
+## combine reference and best lakes 
+reflakes <- bind_rows(ref.tmp, cond.tmp) |>
+  # get rid of the duplicates 
+  distinct() |> # total of 856 lakes
+  # how many lakes in each region and year? 
+  group_by(ECO_REG_NAME, year, lakesizeclass) |>
+  mutate(n=n()) |>
   ungroup() |>
-  # in one case (Southern Plains 2007), the 75th percentile of TP was way higher than reasonable, so we manually discarded that and used the 75th percentile from the other survey in the same ecoregion.
-  mutate(percentile75TP_PPB = ifelse(percentile75TP_PPB == 478.50000, 38.08750, percentile75TP_PPB))
+  # 75th percentile of nutrient concentrations from reference lakes
+  group_by(ECO_REG_NAME, year, n, lakesizeclass) |>
+    summarise(percentile75TN_PPM = quantile(NTL_PPM, probs = 0.75), 
+            percentile75TP_PPB = quantile(PTL_PPB, probs = 0.75),
+            percentile75DIN_PPM = quantile(DIN_PPM, probs = 0.75, na.rm=TRUE)) |>
+  ungroup() 
+
+
+# BELOW WAS USED FOR MOST RECENT CLASSIFICATION
+# BEST N conditions
+ref_N <- nla_data_subset |>
+  # we want to make conditions based on DIN values, so get rid of any NAs
+  filter(!is.na(DIN_PPM)) |>
+  # lakes in good condition for CHLA
+  filter(CHLA_COND %in% c('1:LEAST DISTURBED', 'Good')) |>
+  filter(NTL_COND %in% c('1:LEAST DISTURBED', 'Good')) |>
+  # how many lakes in each region and year?
+  group_by(ECO_REG_NAME, year) |>
+  mutate(n=n()) |>
+  ungroup()  |>
+  group_by(ECO_REG_NAME, year, n) |>
+  summarise(percentile75DIN_PPM = quantile(DIN_PPM, probs = 0.75)) |>
+  rename(bestn = n)
+  
+# intermediate N conditions
+INT_N_test <- nla_data_subset |>
+  # we want to make conditions based on DIN values, so get rid of any NAs
+  filter(!is.na(DIN_PPM)) |>
+  # lakes in good condition for CHLA
+  filter(!CHLA_COND %in% c('1:Most DISTURBED', 'Poor')) |>
+  filter(!NTL_COND %in% c('1:Most DISTURBED', 'Poor')) |>
+  # how many lakes in each region and year?
+  group_by(ECO_REG_NAME, year) |>
+  mutate(n=n()) |>
+  ungroup()  |>
+  group_by(ECO_REG_NAME, year, n) |>
+  summarise(percentile25DIN_PPM = quantile(DIN_PPM, probs = 0.25)) |>
+  rename(allN = n)
+
+Nitrogen_thresholds <- left_join(ref_N, INT_N) |>
+   mutate(DIN_threshold = mean(c(percentile75DIN_PPM, percentile25DIN_PPM)))
+#  mutate(DIN_threshold = percentile75DIN_PPM)
+
+# BEST P conditions
+ref_P <- nla_data_subset |>
+  # lakes in good condition for CHLA
+  filter(CHLA_COND %in% c('1:LEAST DISTURBED', 'Good')) |>
+  filter(PTL_COND %in% c('1:LEAST DISTURBED', 'Good')) |>
+  # how many lakes in each region and year?
+  group_by(ECO_REG_NAME, year) |>
+  mutate(n=n()) |>
+  ungroup()  |>
+  group_by(ECO_REG_NAME, year, n) |>
+  summarise(percentile75TP_PPB = quantile(PTL_PPB, probs = 0.75)) |>
+  rename(bestP = n)
+
+# intermediate P conditions
+INT_P <- nla_data_subset |>
+  # lakes in good condition for CHLA
+  filter(!CHLA_COND %in% c('1:Most DISTURBED', 'Poor')) |>
+  filter(!PTL_COND %in% c('1:Most DISTURBED', 'Poor')) |>
+  # how many lakes in each region and year?
+  group_by(ECO_REG_NAME, year) |>
+  mutate(n=n()) |>
+  ungroup()  |>
+  group_by(ECO_REG_NAME, year, n) |>
+  summarise(percentile25TP_PPB = quantile(PTL_PPB, probs = 0.25)) |>
+  rename(allP = n)
+
+Phosphorus_thresholds <- left_join(ref_P, INT_P) |>
+  mutate(TP_threshold = mean(c(percentile75TP_PPB, percentile25TP_PPB)))
+ # mutate(TP_threshold = percentile75TP_PPB)
+
+reflakes <- left_join(Nitrogen_thresholds, Phosphorus_thresholds)
+
+# reflakes <- readxl::read_xlsx('Data/Reference_sites_2023-10-26.xlsx') |>
+#   left_join(readxl::read_xlsx('Data/crosswalk_ID.xlsx', sheet = 'LONG_NARS_ALLSurvey_SITE_ID_CRO') |>
+#               filter(SURVEY %in% c('NLA', 'NRSA')) |>
+#               select(UNIQUE_ID, SITE_ID)) |>
+#   select(-SITE_ID, -GROUP) |>
+#   rename(year = YEAR,
+#          ECO_REG = REGION) |>
+#   mutate(year = as.character(year)) |>
+#   pivot_wider(names_from = INDICATOR, values_from = VALUE) |>
+#   unique() |>
+#   mutate(ECO_REG = ifelse(ECO_REG %in% c('SPLnat', 'SPLman'), 'SPL', ECO_REG)) |>
+#   left_join(nla_data_subset |> select(UNIQUE_ID, year, NTL_PPM, PTL_PPB, DIN_PPM)) |>
+#   drop_na(DIN_PPM) |>
+#   left_join(all_NLA |> select(ECO_REG, ECO_REG_NAME) |> unique()) #|>
+# 
+#   
+# ref_np <- reflakes |>
+#   group_by(ECO_REG_NAME, year) |>
+#   # 75th percentile of nutrient concentrations from reference lakes
+#   summarise(percentile75TN_PPM = quantile(NTL_PPM, probs = 0.75), 
+#             percentile75TP_PPB = quantile(PTL_PPB, probs = 0.75),
+#             percentile75DIN_PPM = quantile(DIN_PPM, probs = 0.75)) |>
+#   ungroup() |>
+#   # in one case (Southern Plains 2007), the 75th percentile of TP was way higher than reasonable, so we manually discarded that and used the 75th percentile from the other survey in the same ecoregion.
+#   mutate(percentile75TP_PPB = ifelse(percentile75TP_PPB == 478.50000, 38.08750, percentile75TP_PPB))
 
 
 
 # get some information about the entire dataset
 averages_np <- nla_data_subset |>
   filter(is.finite(log(DIN.TP_molar))) |>
-  group_by(ECO_REG_NAME, year) |>
+  group_by(ECO_REG_NAME, year, lakesizeclass) |>
   # 25th percentile of nutrient concentrations from total assessed lakes and mean ratios
-  summarise(meanlogNP = mean(log(TN.TP_molar)),
-            meanlogDINP = mean(log(DIN.TP_molar), na.rm = TRUE),
+  summarise(#meanlogNP = mean(log(TN.TP_molar)),
+            #meanlogDINP = mean(log(DIN.TP_molar), na.rm = TRUE),
             medianlogDINP = median(log(DIN.TP_molar), na.rm = TRUE),
-            meanNP = mean((TN.TP_molar)),
-            meanDINP = mean((DIN.TP_molar), na.rm = TRUE),
-            medianDINP = median(DIN.TP_molar, na.rm = TRUE),
-            percentile25TN_PPM = quantile(NTL_PPM, probs = 0.25),
-            percentile25TP_PPB = quantile(PTL_PPB, probs = 0.25),
-            percentile25DIN_PPM = quantile(DIN_PPM, probs = 0.25)) |>
+            #meanNP = mean((TN.TP_molar)),
+            #meanDINP = mean((DIN.TP_molar), na.rm = TRUE),
+            medianDINP = median(DIN.TP_molar, na.rm = TRUE)) |>
+            #percentile25TN_PPM = quantile(NTL_PPM, probs = 0.25),
+            #percentile25TP_PPB = quantile(PTL_PPB, probs = 0.25),
+            #percentile25DIN_PPM = quantile(DIN_PPM, probs = 0.25)) |>
   ungroup() |>
   # select(ECO_REG_NAME, meanlogNP, meanlogDINP, percentile25TN_PPM, percentile25TP_PPB, percentile25DIN_PPM) |>
   distinct()
 
-criteria <- left_join(averages_np, ref_np) |>
-  group_by(ECO_REG_NAME, year) |>
-  mutate(TP_threshold = median(c(percentile75TP_PPB, percentile25TP_PPB)),
-         TN_threshold = median(c(percentile75TN_PPM, percentile25TN_PPM)),
-         DIN_threshold = median(c(percentile75DIN_PPM, percentile25DIN_PPM))) # |>
+# criteria <- left_join(averages_np, reflakes) |>
+#   group_by(ECO_REG_NAME, year) |>
+#   mutate(TP_threshold = median(c(percentile75TP_PPB, percentile25TP_PPB)),
+#          TN_threshold = median(c(percentile75TN_PPM, percentile25TN_PPM)),
+#          DIN_threshold = median(c(percentile75DIN_PPM, percentile25DIN_PPM))) # |>
  
-write.csv(criteria, "criteria.csv")
+#write.csv(criteria, "criteria.csv") 
 
+
+criteria <- left_join(averages_np, reflakes)  |>
+  rename(TP_threshold = percentile75TP_PPB,
+         TN_threshold = percentile75TN_PPM,
+         DIN_threshold = percentile75DIN_PPM)
 
 # generate nutrient limitations
 limits <- nla_data_subset|>
@@ -361,9 +494,9 @@ limits <- nla_data_subset|>
                              ifelse(DIN_PPM > DIN_threshold & log(DIN.TP_molar) > medianlogDINP, "P-limitation",
                                     ifelse(is.na(limitation), "Co-nutrient limitation", limitation))))
 
-nrow(limits |> filter(limitation == "P-limitation")) # 704
-nrow(limits |> filter(limitation == "N-limitation")) # 922
-nrow(limits |> filter(limitation == "Co-nutrient limitation")) # 553
+nrow(limits |> filter(limitation == "P-limitation")) # 645
+nrow(limits |> filter(limitation == "N-limitation")) # 750
+nrow(limits |> filter(limitation == "Co-nutrient limitation")) # 784
 
 ## plot the limited lakes
 ggplot(limits) +
@@ -381,13 +514,13 @@ ggsave("Figures/Forig3_limitedlakes.png", height = 4.5, width = 6.5, units = "in
 
 # how many of the co-nutrient limited lakes occur in lakes with excess N or P?
 co_lim <- limits |>
-  filter(limitation == "Co-nutrient limitation") |> # 553 obs
+  filter(limitation == "Co-nutrient limitation") |> # 636 obs
   mutate(highDIN = ifelse(DIN_PPM > DIN_threshold, 1, 0),
-         highTN = ifelse(NTL_PPM >TN_threshold, 1, 0),
+        # highTN = ifelse(NTL_PPM >TN_threshold, 1, 0),
          highTP = ifelse(PTL_PPB > TP_threshold, 1,0)) |>
   filter(highDIN == 1 |
-           highTN == 1 |
-           highTP == 1) # 101 obs
+          # highTN == 1 |
+           highTP == 1) # 76 obs
 
 
 
@@ -401,9 +534,9 @@ limits_survey_prep <- limits|> # total 1773 lakes for this analysis
   filter(WGT_NLA > 0) # the sp survey package is not designed to use the reference lakes, so those are ignored when using this package for analyses.
 
 # lakes with limitations considered for this analysis now 
-nrow(limits_survey_prep |> filter(limitation == "P-limitation")) # 597
-nrow(limits_survey_prep |> filter(limitation == "N-limitation")) # 764
-nrow(limits_survey_prep |> filter(limitation == "Co-nutrient limitation")) # 412
+nrow(limits_survey_prep |> filter(limitation == "P-limitation")) # 555
+nrow(limits_survey_prep |> filter(limitation == "N-limitation")) # 633
+nrow(limits_survey_prep |> filter(limitation == "Co-nutrient limitation")) # 585
 
 # use categorical analysis from spsurvey package
 years <- c("2007", "2017")
