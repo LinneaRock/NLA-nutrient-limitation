@@ -1,6 +1,6 @@
 
-##### Script to run analyses for EPA's National Aquatic Resource Surveys Data Challenge #####
-## Linnea Rock, 2022
+##### Script to run analyses for A broad-scale look at nutrient limitation and a shift toward co-limitation in United States lakes #####
+## Linnea Rock, 2023
 
 
 #### Load necessary libraries ####
@@ -21,22 +21,22 @@ nla_data_subset <- all_NLA |>
   select(ECO_REG_NAME, UNIQUE_ID, DATE_COL, VISIT_NO, NTL_PPM, PTL_PPB, DIN_PPM, tn.tp, DIN.TP, CHLA_PPB, TROPHIC_STATE, year,WGT_NLA, LON_DD, LAT_DD, AREA_HA, ELEV_PT, PCT_DEVELOPED_BSN, PCT_AGRIC_BSN, SITE_TYPE, URBAN, LAKE_ORIGIN, PTL_COND, NTL_COND, CHLA_COND) |>
   rename(DIN.TP_molar = DIN.TP,
          TN.TP_molar = tn.tp) |>
-  filter(year != "2012") |>
-  filter(AREA_HA >= 4) |> # removes 216 observations 
+ # filter(year != "2012") |>
+  filter(AREA_HA >= 4) |> # removes 382 observations 
   distinct()
 
 tinylakesobs <- all_NLA |>
   distinct() |>
-  filter(year != "2012",
+  filter(#year != "2012",
          AREA_HA < 4) |>
-  distinct() # 216 observations
+  distinct() # 309 observations
 
 tinylakes_lake <- tinylakesobs |>
   select(UNIQUE_ID, SITE_TYPE) |>
-  distinct() # 211 lakes, 8 of these were reference lakes 
+  distinct() # 269 lakes, 8 of these were reference lakes 
 
-
-
+rm(tinylakes_lake)
+rm(tinylakesobs)
 
 
 #### 1. General trends in the data ####
@@ -69,10 +69,17 @@ tinylakes_lake <- tinylakesobs |>
 reservoir <- nla_data_subset |>
   select(ECO_REG_NAME, UNIQUE_ID, LAKE_ORIGIN, year) |>
   distinct() |>
-  mutate(region = ifelse(ECO_REG_NAME %in% c('Western Mountains', 'Xeric', 'Northern Plains', 'Southern Plains'), 'west', 'east')) 
-  
-reservoir |> count(year, LAKE_ORIGIN, region) 
-reservoir |> count(year, region)
+  mutate(region = ifelse(ECO_REG_NAME %in% c('Western Mountains', 'Xeric', 'Northern Plains', 'Southern Plains'), 'west', 'east')) |>
+  group_by(year, LAKE_ORIGIN, region) |>
+  mutate(n=n()) |>
+  ungroup() |>
+  group_by(year, region) |>
+  mutate(total = n()) |>
+  select(-UNIQUE_ID, -ECO_REG_NAME) |>
+  distinct() |>
+  filter(LAKE_ORIGIN == 'MAN-MADE') |>
+  mutate(percentRES = (n/total) * 100)
+
 
 
 #### 2. Nutrient correlations with eutrophication ####
@@ -81,7 +88,8 @@ reservoir |> count(year, region)
 correlations_data <- nla_data_subset |>
  # filter(year == "2007") |> # same as total except TN better predictor in coastal plains
  # filter(year == "2017") |> # same as total except TP better predictor in xeric and w. mtn
-  mutate(NTL_PPB = NTL_PPM / 1000) |>
+ # filter(year == '2012') |> # same as total except 
+  mutate(NTL_PPB = NTL_PPM * 1000) |>
   pivot_longer(cols = c(PTL_PPB, NTL_PPB), names_to = "nutrient", values_to = "concentration") 
 
 correlations_data$ECO_REG_NAME = factor(correlations_data $ECO_REG_NAME,
@@ -90,19 +98,19 @@ correlations_data$ECO_REG_NAME = factor(correlations_data $ECO_REG_NAME,
 m.0 <- aov(log10(CHLA_PPB)~log10(concentration) * nutrient, correlations_data  |> filter(is.finite(log10(CHLA_PPB))))
 summary(m.0) # all vars significant
 tidy(m.0)
-glance(m.0) #  r = 0.527, AIC = 6241
+glance(m.0) #  r = 0.505, AIC = 8300
 
 m.0region <- aov(log10(CHLA_PPB)~log10(concentration) * nutrient * ECO_REG_NAME, correlations_data  |> filter(is.finite(log10(CHLA_PPB))))
-summary(m.0region) # all vars signficant excent conc:nutrient:ecoreg
+summary(m.0region) # all vars significant 
 anova(m.0, m.0region) # adding Ecoregion is a significantly better model
-glance(m.0region) # r = 0.618, AIC = 5236
-performance::r2(m.0region) # adj r = 0.615
+glance(m.0region) # r = 0.594, AIC = 7063
+performance::r2(m.0region) # adj r = 0.592
 
 m.1region <- lmer(log10(CHLA_PPB)~log10(concentration) * nutrient * factor(year) + (1|ECO_REG_NAME), correlations_data  |> filter(is.finite(log10(CHLA_PPB))))
 summary(m.1region) 
 anova(m.1region) 
 anova(m.1region, m.0region) #m.0region has lower AIC and is significantly better
-performance::r2(m.1region) #Conditional R2: 0.601, Marginal R2: 0.506
+performance::r2(m.1region) #Conditional R2: 0.573, Marginal R2: 0.482
 
 
 ##Table of values from linear models 
@@ -150,8 +158,8 @@ for(name in list) {
   rN <- as.numeric(glance(m.N)[2]) # adj. r-squraed of linear model of Chla vs. N
   pP <- as.numeric(glance(m.P)[5]) # p-value of linear model of Chla vs. P
   pN <- as.numeric(glance(m.N)[5]) # p-value of linear model of Chla vs. N
-  aicP <- AIC(m.P)
-  aicN <- AIC(m.N)
+  aicP <- AIC(m.P) # AIC of linear model of Chla vs. N
+  aicN <- AIC(m.N) # AIC of linear model of Chla vs. N
   
   
   Ecoregion <- c(name, name)
@@ -177,25 +185,6 @@ lm_ecoreg_df1$Ecoregion = factor(lm_ecoreg_df1$Ecoregion,
                                  levels = c("National","Northern Appalachians", "Southern Appalachians", "Coastal Plains", "Temperate Plains", "Upper Midwest", "Northern Plains", "Southern Plains", "Xeric", "Western Mountains"))
 
 
-#create a pretty table
-# gt_tbl <- gt(lm_ecoreg_df1)
-# simpleregtable <- gt_tbl %>%
-#   cols_label(
-#     Ecoregion = "Ecoregion",
-#     Model.Predictor = "Model Predictor",
-#     Slope = "Slope",
-#     AIC = "AIC",
-#     r.squared = "r-squared"
-#   ) %>%
-#   cols_align(
-#     align = "left"
-#   ) %>%
-#   tab_header(
-#     title = "Chlorophyll concentration (proxy for trophic status) vs nutrient concentration relationships",
-#     subtitle = "Log10(chlorophyll-a) - Log(nutrient) used in linear models"
-#   ); simpleregtable
-#gtsave(simpleregtable, "Figures/TN_analyses/linreg_TN.png") 
-
 add_corr <- lm_ecoreg_df1 |>
   rename(nutrient = Model.Predictor,
          ECO_REG_NAME = Ecoregion) |>
@@ -204,32 +193,28 @@ add_corr <- lm_ecoreg_df1 |>
          r.squared = paste0("adj.r=", round(r.squared, digits=2)))
 
 
-ggplot(correlations_data, aes(log10(concentration), log10(CHLA_PPB))) +
-  geom_point(alpha = 0.25, aes(color = nutrient)) +
-  geom_smooth(method = "lm", se = FALSE, aes(group = nutrient), color = "grey60") +
-  geom_text(add_corr |> filter(nutrient == "NTL_PPB"), mapping = aes(x = -5, y = 3.5, label = r.squared), size = 2, vjust = 0.75, hjust = 0) +
-  geom_text(add_corr |> filter(nutrient == "NTL_PPB"), mapping = aes(x = -5, y = 3, label = AIC), size = 2, vjust = 0.75, hjust = 0) +
-  geom_text(add_corr |> filter(nutrient == "PTL_PPB"), mapping = aes(x = 1, y = 3.5, label = r.squared), size = 2, vjust = 0.75, hjust = 0) +
-  geom_text(add_corr |> filter(nutrient == "PTL_PPB"), mapping = aes(x = 1, y = 3, label = AIC), size = 2, vjust = 0.75, hjust = 0) +
+corrs <- ggplot(correlations_data, aes(log10(concentration), log10(CHLA_PPB))) +
   geom_abline(slope = 0, intercept = log10(2)) +
   geom_abline(slope = 0, intercept = log10(7)) +
   geom_abline(slope = 0, intercept = log10(30)) +
-  geom_vline(xintercept = 0) +
-  facet_wrap(~nutrient, scales = "free_x") +
+  geom_point(alpha = 0.25, aes(color = nutrient)) +
+  geom_smooth(method = "lm", se = FALSE, aes(group = nutrient), color = "grey60") +
+  geom_text(add_corr |> filter(nutrient == "NTL_PPB"), mapping = aes(x = 3, y = 3.5, label = r.squared), size = 2.5, vjust = 0.75, hjust = 0) +
+  geom_text(add_corr |> filter(nutrient == "NTL_PPB"), mapping = aes(x = 3, y = 3, label = AIC), size = 2.5, vjust = 0.75, hjust = 0) +
+  geom_text(add_corr |> filter(nutrient == "PTL_PPB"), mapping = aes(x = 0, y = 3.5, label = r.squared), size = 2.5, vjust = 0.75, hjust = 0) +
+  geom_text(add_corr |> filter(nutrient == "PTL_PPB"), mapping = aes(x = 0, y = 3, label = AIC), size = 2.5, vjust = 0.75, hjust = 0) +
+  facet_wrap(~nutrient, scales = "free_y") +
   theme_bw() +
   theme(panel.grid.major = element_blank(), 
         panel.grid.minor = element_blank()) +
   facet_wrap(~ECO_REG_NAME, ncol = 3) +
   labs(y = "log10(chlorophyll-a concentration)",
        x = "log10(nutrient concentration)") +
-#        caption = "Figure 1. Chlorophyll-a vs. nutrient concentration (log-log) in each ecoregion. Color indicates either total nitrogen or 
-# total phosphorus. AIC and adjusted r-squared (adj.r) are displayed on each panel. Horizontal lines indicate trophic state
-# from oligotrophic (below the lowest line to hypereutrophic (above the highest line).") +
   scale_color_manual("", labels = c("TN", "TP"), values=c("red4", "#336a98")) +
   theme(plot.caption.position = "plot",
         plot.caption = element_text(hjust = 0, family = "serif"))
-#ggsave("Figures/F1_linregs.png", height = 4.5, width = 6.4, units = "in", dpi = 1200) 
-ggsave("Figures/F1_linregs_pub.png", height = 4.5, width = 6.4, units = "in", dpi = 1200) 
+
+ggsave(corrs, "Figures/linregs_pub.png", height = 4.5, width = 6.5, units = "in", dpi = 1200) 
 
 # NOTE: I also ran these for just 2007 and just 2017 data. 
 
@@ -237,6 +222,7 @@ ggsave("Figures/F1_linregs_pub.png", height = 4.5, width = 6.4, units = "in", dp
 #read in the ecoregion shapefiles
 regions.sf <- read_sf("Data/aggr_ecoregions_2015/Aggr_Ecoregions_2015.shp") |>
   mutate(WSA9_NAME = ifelse(WSA9_NAME == "Temporate Plains", "Temperate Plains", WSA9_NAME))
+
 
 #determine better predictor in each
 compare_r_values <- lm_ecoreg_df |>
@@ -251,93 +237,95 @@ compare_r_values <- lm_ecoreg_df |>
 regions.sf1 <- left_join(regions.sf, compare_r_values)
 
 
-## does N:TP correlate with chlorophyll-a? 
-# ggplot(limits) +
-#   geom_point(aes(log10(TN.TP_molar), log10(CHLA_PPB))) +
-#   geom_smooth(method = "lm", se = FALSE, aes(log10(TN.TP_molar), log10(CHLA_PPB))) +
-#   facet_wrap(~limitation)
-# 
-# ggplot(limits) +
-#   geom_point(aes(log10(DIN.TP_molar), log10(CHLA_PPB))) +
-#   geom_smooth(method = "lm", se = FALSE, aes(log10(DIN.TP_molar), log10(CHLA_PPB))) +
-#   facet_wrap(~limitation)
 
 # create the map
-ggplot(data = regions.sf1) +
-  geom_sf(aes(fill = best_predictor)) +
+NPmap <- ggplot(data = regions.sf1) +
+  geom_sf(aes(fill = best_predictor), color = 'black') +
   theme_bw() +
   geom_sf_label(aes(label = WSA9_NAME), size = 2.5) +
   labs(x = "", y = "") +
-#        caption = "Figure 2. Map displaying the best correlation variable of the chlorophyll-a (trophic state proxy) vs nutrient linear
-# models in each (labelled) ecoregion.") +
   scale_fill_manual("", values=c("red4", "#336a98")) +
   theme(plot.caption.position = "plot",
         plot.caption = element_text(hjust = 0, family = "serif")) +
   theme(legend.position = c(0.1, 0.2)) 
-#ggsave("Figures/F2_Map.png", height = 4.5, width = 6.5, units = "in", dpi = 1200) 
-ggsave("Figures/F2_Map_pub.png", height = 4.5, width = 6.5, units = "in", dpi = 1200) 
 
-#detach(package:sf, unload=TRUE)
+ggsave("Figures/Map_NP.png", height = 4.5, width = 6.5, units = "in", dpi = 1200) 
 
 
-# ## Create a beautiful plot -- too big to save well
-# (map / lm_plots) +
-#   plot_annotation(tag_levels = 'a', tag_suffix = ')',
-#                   caption = "Figure 1. a) Map displaying the better nutrient predictor of trophic state in each (labelled) ecoregion.
-# b) Chlorophyll-a vs. nutrient concentration (log-log) in each ecoregion. Color indicates either total nitrogen or total 
-# phosphorus. AIC and adjusted r-squared are displayed on each panel. Horizontal lines indicate trophic state from 
-# oligotrophic (below the lowest line to hypereutrophic (above the highest line).") &
-#   theme(plot.tag = element_text(size = 8),
-#         plot.caption.position = "plot",
-#         plot.caption = element_text(hjust = 0))
-# ggsave("Figures/F1_Map_linregs.png", height = 8.5, width = 8, units = "in", dpi = 500) 
 
+
+# 
+# (NPmap | corrs) +
+#   plot_annotation(tag_levels = 'a', tag_suffix = ')') 
+# 
+# ggsave("Figures/map_corrs.png", height = 6, width = 8.5, units = "in", dpi = 1200) 
+
+
+
+## Create map with just ecoregions ####
+muted <- c("#CC6677", "#332288", "#DDCC77", "#117733", "#88CCEE", "#882255", "#44AA99", "#999933", "#AA4499" ) # ecoreg color scheme
+
+
+
+ggplot() +
+  geom_sf(data = regions.sf, aes(fill = WSA9_NAME)) +
+  scale_fill_manual("", values = muted) +
+  theme_bw()
+
+ggsave("Figures/ecoregions.png", height = 4.5, width = 6.5, units = "in", dpi = 1200) 
 
 
 #### 3. Calculate limitations ####
 # categorize lakes based on size using quantiles to apply 4 size classes within each ecoregion
 range(nla_data_subset$AREA_HA)
+# there is a big range of lake sizes
 
 nla_data_subset2 <- nla_data_subset |>
   group_by(ECO_REG_NAME) |>
-  mutate(lakesizeclass = ifelse(AREA_HA <= as.numeric(quantile(tmp$AREA_HA, 0.25)), 'lil',
-                                ifelse(between(AREA_HA, as.numeric(quantile(tmp$AREA_HA, 0.25)),as.numeric(quantile(tmp$AREA_HA, 0.50))), 'small',
-                                       ifelse(between(AREA_HA, as.numeric(quantile(tmp$AREA_HA, 0.50)), as.numeric(quantile(tmp$AREA_HA, 0.75))), 'med',
-                                              ifelse(AREA_HA > as.numeric(quantile(tmp$AREA_HA, 0.75)), 'big', lakesizeclass))))) |>
+  mutate(lakesizeclass = NA) |>
+  mutate(lakesizeclass = ifelse(AREA_HA <= as.numeric(quantile(AREA_HA, 0.25)), 'lil',
+                                ifelse(between(AREA_HA, as.numeric(quantile(AREA_HA, 0.25)),as.numeric(quantile(AREA_HA, 0.50))), 'small',
+                                       ifelse(between(AREA_HA, as.numeric(quantile(AREA_HA, 0.50)), as.numeric(quantile(AREA_HA, 0.75))), 'med',
+                                              ifelse(AREA_HA > as.numeric(quantile(AREA_HA, 0.75)), 'big', lakesizeclass))))) |>
   ungroup()
 
 nla_data_subset <- nla_data_subset2
+rm(nla_data_subset2)
 
+countlakesizes <- nla_data_subset |>
+  group_by(ECO_REG_NAME, year, lakesizeclass) |>
+  summarise(n=n()) |>
+  ungroup()
 
-# shows how many lakes are in each combination of conditions (good/least dist., fair/intermediate dist., poor/most dist.) in each ecoregion and year
+sum(countlakesizes$n)
+
+# shows how many lakes are in each combination of conditions (good/least dist., fair/intermediate dist., poor/most dist.) in each ecoregion and year and size class
 condition_checks <- nla_data_subset |>
   group_by(ECO_REG_NAME, year, lakesizeclass, PTL_COND, NTL_COND, CHLA_COND) |>
   count()
 
-# shows how many EPA hand-selected reference lakes exist in each ecoregion and year. these overlap with our best condition lakes from 'condition_checks,' but also include lakes that are not in best conditions, but still are representative of healthy lakes deemed by folks collecting the data who have in-depth knowledge of the area they are surveying. 
+# shows how many EPA hand-selected reference lakes exist in each ecoregion and year and size class. these overlap with our best condition lakes from 'condition_checks,' but also include lakes that are not in best conditions, but still are representative of healthy lakes deemed by folks collecting the data who have in-depth knowledge of the area they are surveying. 
 reference_checks <- nla_data_subset |>
-  filter(SITE_TYPE %in% c('HAND', 'REF_LAKE')) |>
+  filter(SITE_TYPE %in% c('HAND', 'REF_Lake')) |>
   group_by(ECO_REG_NAME, year, lakesizeclass) |>
   count()
+# THERE WERE NO REFERENCE LAKES IN 2012?!
 
-# We will combine these 'best' lakes with the selected 'reference' lakes to build our reference condition nutrient thresholds that determine healthy waters in each region and year.
+
+# We will combine these 'best' lakes with the selected 'reference' lakes to build our reference condition nutrient thresholds that determine healthy waters.
 
 ## first get the best condition lakes
 cond.tmp <- nla_data_subset |>
-  # we want to make conditions based on DIN values, so get rid of any NAs
-  filter(!is.na(DIN_PPM)) |>
   # lakes in good condition for CHLA
-  filter(CHLA_COND %in% c('1:LEAST DISTURBED', 'Good')) |> #|> # 1266 lakes
+  filter(CHLA_COND %in% c('1:LEAST DISTURBED', 'Good')) |> #|> # 1875 lakes
   # lakes in good condition for CHLA and phosphorus
-  filter(PTL_COND %in% c('1:LEAST DISTURBED', 'Good')) |> # 985 lakes
+  filter(PTL_COND %in% c('1:LEAST DISTURBED', 'Good')) |> # 1281 lakes
   # lakes in good condition for CHLA, P, and nitrogen
-  filter(NTL_COND %in% c('1:LEAST DISTURBED', 'Good')) # 819 lakes
+  filter(NTL_COND %in% c('1:LEAST DISTURBED', 'Good')) # 1048 lakes
 
 ## now get the specified reference lakes 
 ref.tmp <- nla_data_subset |>
-  # we want to make conditions based on DIN values, so get rid of any NAs
-  filter(!is.na(DIN_PPM)) |>
-  filter(SITE_TYPE %in% c('HAND', 'REF_LAKE')) # 98 lakes
+  filter(SITE_TYPE %in% c('HAND', 'REF_Lake')) # 222 lakes
 
 
 
@@ -351,152 +339,69 @@ reflakes <- bind_rows(ref.tmp, cond.tmp) |>
   ungroup() |>
   # 75th percentile of nutrient concentrations from reference lakes
   group_by(ECO_REG_NAME, year, n, lakesizeclass) |>
-    summarise(percentile75TN_PPM = quantile(NTL_PPM, probs = 0.75), 
+    summarise(#percentile75TN_PPM = quantile(NTL_PPM, probs = 0.75), 
             percentile75TP_PPB = quantile(PTL_PPB, probs = 0.75),
             percentile75DIN_PPM = quantile(DIN_PPM, probs = 0.75, na.rm=TRUE)) |>
   ungroup() 
 
 
-# BELOW WAS USED FOR MOST RECENT CLASSIFICATION
-# BEST N conditions
-ref_N <- nla_data_subset |>
-  # we want to make conditions based on DIN values, so get rid of any NAs
-  filter(!is.na(DIN_PPM)) |>
-  # lakes in good condition for CHLA
-  filter(CHLA_COND %in% c('1:LEAST DISTURBED', 'Good')) |>
-  filter(NTL_COND %in% c('1:LEAST DISTURBED', 'Good')) |>
-  # how many lakes in each region and year?
-  group_by(ECO_REG_NAME, year) |>
-  mutate(n=n()) |>
-  ungroup()  |>
-  group_by(ECO_REG_NAME, year, n) |>
-  summarise(percentile75DIN_PPM = quantile(DIN_PPM, probs = 0.75)) |>
-  rename(bestn = n)
-  
-# intermediate N conditions
-INT_N_test <- nla_data_subset |>
-  # we want to make conditions based on DIN values, so get rid of any NAs
-  filter(!is.na(DIN_PPM)) |>
-  # lakes in good condition for CHLA
-  filter(!CHLA_COND %in% c('1:Most DISTURBED', 'Poor')) |>
-  filter(!NTL_COND %in% c('1:Most DISTURBED', 'Poor')) |>
-  # how many lakes in each region and year?
-  group_by(ECO_REG_NAME, year) |>
-  mutate(n=n()) |>
-  ungroup()  |>
-  group_by(ECO_REG_NAME, year, n) |>
-  summarise(percentile25DIN_PPM = quantile(DIN_PPM, probs = 0.25)) |>
-  rename(allN = n)
 
-Nitrogen_thresholds <- left_join(ref_N, INT_N) |>
-   mutate(DIN_threshold = mean(c(percentile75DIN_PPM, percentile25DIN_PPM)))
-#  mutate(DIN_threshold = percentile75DIN_PPM)
-
-# BEST P conditions
-ref_P <- nla_data_subset |>
-  # lakes in good condition for CHLA
-  filter(CHLA_COND %in% c('1:LEAST DISTURBED', 'Good')) |>
-  filter(PTL_COND %in% c('1:LEAST DISTURBED', 'Good')) |>
-  # how many lakes in each region and year?
-  group_by(ECO_REG_NAME, year) |>
-  mutate(n=n()) |>
-  ungroup()  |>
-  group_by(ECO_REG_NAME, year, n) |>
-  summarise(percentile75TP_PPB = quantile(PTL_PPB, probs = 0.75)) |>
-  rename(bestP = n)
-
-# intermediate P conditions
-INT_P <- nla_data_subset |>
-  # lakes in good condition for CHLA
-  filter(!CHLA_COND %in% c('1:Most DISTURBED', 'Poor')) |>
-  filter(!PTL_COND %in% c('1:Most DISTURBED', 'Poor')) |>
-  # how many lakes in each region and year?
-  group_by(ECO_REG_NAME, year) |>
-  mutate(n=n()) |>
-  ungroup()  |>
-  group_by(ECO_REG_NAME, year, n) |>
-  summarise(percentile25TP_PPB = quantile(PTL_PPB, probs = 0.25)) |>
-  rename(allP = n)
-
-Phosphorus_thresholds <- left_join(ref_P, INT_P) |>
-  mutate(TP_threshold = mean(c(percentile75TP_PPB, percentile25TP_PPB)))
- # mutate(TP_threshold = percentile75TP_PPB)
-
-reflakes <- left_join(Nitrogen_thresholds, Phosphorus_thresholds)
-
-# reflakes <- readxl::read_xlsx('Data/Reference_sites_2023-10-26.xlsx') |>
-#   left_join(readxl::read_xlsx('Data/crosswalk_ID.xlsx', sheet = 'LONG_NARS_ALLSurvey_SITE_ID_CRO') |>
-#               filter(SURVEY %in% c('NLA', 'NRSA')) |>
-#               select(UNIQUE_ID, SITE_ID)) |>
-#   select(-SITE_ID, -GROUP) |>
-#   rename(year = YEAR,
-#          ECO_REG = REGION) |>
-#   mutate(year = as.character(year)) |>
-#   pivot_wider(names_from = INDICATOR, values_from = VALUE) |>
-#   unique() |>
-#   mutate(ECO_REG = ifelse(ECO_REG %in% c('SPLnat', 'SPLman'), 'SPL', ECO_REG)) |>
-#   left_join(nla_data_subset |> select(UNIQUE_ID, year, NTL_PPM, PTL_PPB, DIN_PPM)) |>
-#   drop_na(DIN_PPM) |>
-#   left_join(all_NLA |> select(ECO_REG, ECO_REG_NAME) |> unique()) #|>
-# 
-#   
-# ref_np <- reflakes |>
-#   group_by(ECO_REG_NAME, year) |>
-#   # 75th percentile of nutrient concentrations from reference lakes
-#   summarise(percentile75TN_PPM = quantile(NTL_PPM, probs = 0.75), 
-#             percentile75TP_PPB = quantile(PTL_PPB, probs = 0.75),
-#             percentile75DIN_PPM = quantile(DIN_PPM, probs = 0.75)) |>
-#   ungroup() |>
-#   # in one case (Southern Plains 2007), the 75th percentile of TP was way higher than reasonable, so we manually discarded that and used the 75th percentile from the other survey in the same ecoregion.
-#   mutate(percentile75TP_PPB = ifelse(percentile75TP_PPB == 478.50000, 38.08750, percentile75TP_PPB))
-
-
-
-# get some information about the entire dataset
+# get median N:P ratio in each ecoregion, year, and size class to use as threshold 
 averages_np <- nla_data_subset |>
   filter(is.finite(log(DIN.TP_molar))) |>
   group_by(ECO_REG_NAME, year, lakesizeclass) |>
   # 25th percentile of nutrient concentrations from total assessed lakes and mean ratios
-  summarise(#meanlogNP = mean(log(TN.TP_molar)),
-            #meanlogDINP = mean(log(DIN.TP_molar), na.rm = TRUE),
-            medianlogDINP = median(log(DIN.TP_molar), na.rm = TRUE),
-            #meanNP = mean((TN.TP_molar)),
-            #meanDINP = mean((DIN.TP_molar), na.rm = TRUE),
+  summarise(medianlogDINP = median(log(DIN.TP_molar), na.rm = TRUE),
             medianDINP = median(DIN.TP_molar, na.rm = TRUE)) |>
-            #percentile25TN_PPM = quantile(NTL_PPM, probs = 0.25),
-            #percentile25TP_PPB = quantile(PTL_PPB, probs = 0.25),
-            #percentile25DIN_PPM = quantile(DIN_PPM, probs = 0.25)) |>
   ungroup() |>
-  # select(ECO_REG_NAME, meanlogNP, meanlogDINP, percentile25TN_PPM, percentile25TP_PPB, percentile25DIN_PPM) |>
   distinct()
 
-# criteria <- left_join(averages_np, reflakes) |>
-#   group_by(ECO_REG_NAME, year) |>
-#   mutate(TP_threshold = median(c(percentile75TP_PPB, percentile25TP_PPB)),
-#          TN_threshold = median(c(percentile75TN_PPM, percentile25TN_PPM)),
-#          DIN_threshold = median(c(percentile75DIN_PPM, percentile25DIN_PPM))) # |>
- 
-#write.csv(criteria, "criteria.csv") 
-
-
+# combine ratio and concentration threshold criteria 
 criteria <- left_join(averages_np, reflakes)  |>
   rename(TP_threshold = percentile75TP_PPB,
-         TN_threshold = percentile75TN_PPM,
-         DIN_threshold = percentile75DIN_PPM)
+         #TN_threshold = percentile75TN_PPM,
+         DIN_threshold = percentile75DIN_PPM) 
+
+# No reference lakes for 2012 coastal plains (big), temperate plains (small), and northern plains (lil), for each, use average between 2007 and 2017 values - manual add unfortunately 
+CP_TP <- as.numeric(mean(c(((criteria |> filter(ECO_REG_NAME == 'Coastal Plains',year == '2017', lakesizeclass == 'big'))$TP_threshold), ((criteria |> filter(ECO_REG_NAME == 'Coastal Plains',year == '2007',lakesizeclass == 'big'))$TP_threshold))))
+CP_DIN <- as.numeric(mean(c(((criteria |> filter(ECO_REG_NAME == 'Coastal Plains',year == '2017', lakesizeclass == 'big'))$DIN_threshold), ((criteria |> filter(ECO_REG_NAME == 'Coastal Plains',year == '2007',lakesizeclass == 'big'))$DIN_threshold))))
+
+TP_TP <- as.numeric(mean(c(((criteria |> filter(ECO_REG_NAME == 'Temperate Plains',year == '2017', lakesizeclass == 'small'))$TP_threshold), ((criteria |> filter(ECO_REG_NAME == 'Temperate Plains',year == '2007',lakesizeclass == 'small'))$TP_threshold))))
+TP_DIN <- as.numeric(mean(c(((criteria |> filter(ECO_REG_NAME == 'Temperate Plains',year == '2017', lakesizeclass == 'small'))$DIN_threshold), ((criteria |> filter(ECO_REG_NAME == 'Temperate Plains',year == '2007',lakesizeclass == 'small'))$DIN_threshold))))
+
+NP_TP <- as.numeric(mean(c(((criteria |> filter(ECO_REG_NAME == 'Northern Plains',year == '2017', lakesizeclass == 'lil'))$TP_threshold), ((criteria |> filter(ECO_REG_NAME == 'Northern Plains',year == '2007',lakesizeclass == 'lil'))$TP_threshold))))
+NP_DIN <- as.numeric(mean(c(((criteria |> filter(ECO_REG_NAME == 'Northern Plains',year == '2017', lakesizeclass == 'lil'))$DIN_threshold), ((criteria |> filter(ECO_REG_NAME == 'Northern Plains',year == '2007',lakesizeclass == 'lil'))$DIN_threshold))))
+
+criteria <- criteria |>
+  mutate(TP_threshold = ifelse(is.na(TP_threshold) & 
+                                 ECO_REG_NAME=='Coastal Plains', CP_TP, TP_threshold),
+         DIN_threshold = ifelse(is.na(DIN_threshold) & 
+                                  ECO_REG_NAME=='Coastal Plains', CP_DIN, DIN_threshold)) |>
+  mutate(TP_threshold = ifelse(is.na(TP_threshold) & 
+                                 ECO_REG_NAME=='Temperate Plains', TP_TP, TP_threshold),
+         DIN_threshold = ifelse(is.na(DIN_threshold) & 
+                                  ECO_REG_NAME=='Temperate Plains', TP_DIN, DIN_threshold)) |>
+  mutate(TP_threshold = ifelse(is.na(TP_threshold) & 
+                                 ECO_REG_NAME=='Northern Plains', NP_TP, TP_threshold),
+         DIN_threshold = ifelse(is.na(DIN_threshold) & 
+                                  ECO_REG_NAME=='Northern Plains', NP_DIN, DIN_threshold))
+
+write.csv(criteria, "criteria.csv") 
+
 
 # generate nutrient limitations
-limits <- nla_data_subset|>
-  filter(is.finite(log(DIN.TP_molar))) |>
-  filter(!is.na(DIN_PPM)) |> # 2371 observations, loss of 74 observations from analysis
+limits <- nla_data_subset|> #3270 lakes
+  filter(is.finite(log(DIN.TP_molar))) |> #3172
+  filter(!is.na(DIN_PPM)) |> # 3172 observations, loss of 98 observations from analysis
   left_join(criteria) |>
   mutate(limitation = NA) |>
   mutate(limitation = ifelse(PTL_PPB > TP_threshold & log(DIN.TP_molar) < medianlogDINP, "N-limitation", 
                              ifelse(DIN_PPM > DIN_threshold & log(DIN.TP_molar) > medianlogDINP, "P-limitation",
                                     ifelse(is.na(limitation), "Co-nutrient limitation", limitation))))
 
-nrow(limits |> filter(limitation == "P-limitation")) # 645
-nrow(limits |> filter(limitation == "N-limitation")) # 750
-nrow(limits |> filter(limitation == "Co-nutrient limitation")) # 784
+nrow(limits |> filter(limitation == "P-limitation")) # 907
+nrow(limits |> filter(limitation == "N-limitation")) # 1287
+nrow(limits |> filter(limitation == "Co-nutrient limitation")) # 978
 
 ## plot the limited lakes
 ggplot(limits) +
@@ -510,17 +415,15 @@ ggplot(limits) +
 TP rather than DIN vs TP becaue of better correlation between the total nutrients.") +
   theme(plot.caption.position = "plot",
         plot.caption = element_text(hjust = 0, family = "serif"))
-ggsave("Figures/Forig3_limitedlakes.png", height = 4.5, width = 6.5, units = "in", dpi = 1200) 
+ggsave("Figures/limitedlakes_dist.png", height = 4.5, width = 6.5, units = "in", dpi = 1200) 
 
 # how many of the co-nutrient limited lakes occur in lakes with excess N or P?
 co_lim <- limits |>
-  filter(limitation == "Co-nutrient limitation") |> # 636 obs
+  filter(limitation == "Co-nutrient limitation") |> # 978 obs
   mutate(highDIN = ifelse(DIN_PPM > DIN_threshold, 1, 0),
-        # highTN = ifelse(NTL_PPM >TN_threshold, 1, 0),
          highTP = ifelse(PTL_PPB > TP_threshold, 1,0)) |>
   filter(highDIN == 1 |
-          # highTN == 1 |
-           highTP == 1) # 76 obs
+           highTP == 1) # 146 obs
 
 
 
@@ -529,17 +432,17 @@ co_lim <- limits |>
 #### 3. Spatial, temporal distribution of limitations ####
 # Percent lakes in each ecoregion 
 # prep the data
-limits_survey_prep <- limits|> # total 1773 lakes for this analysis 
+limits_survey_prep <- limits|> # total 2675 lakes for this analysis 
   filter(VISIT_NO == 1) |># for this analysis, we are using just the first visit from each lake
   filter(WGT_NLA > 0) # the sp survey package is not designed to use the reference lakes, so those are ignored when using this package for analyses.
 
 # lakes with limitations considered for this analysis now 
-nrow(limits_survey_prep |> filter(limitation == "P-limitation")) # 555
-nrow(limits_survey_prep |> filter(limitation == "N-limitation")) # 633
-nrow(limits_survey_prep |> filter(limitation == "Co-nutrient limitation")) # 585
+nrow(limits_survey_prep |> filter(limitation == "P-limitation")) # 802
+nrow(limits_survey_prep |> filter(limitation == "N-limitation")) # 1100
+nrow(limits_survey_prep |> filter(limitation == "Co-nutrient limitation")) # 773
 
 # use categorical analysis from spsurvey package
-years <- c("2007", "2017")
+years <- c("2007","2012", "2017")
 percent_lim <- data.frame()
 
 for(i in 1:length(years)) {
@@ -598,34 +501,115 @@ ggplot(percent_lim1, aes(year, Estimate.P, fill = Category)) +
         panel.grid.minor = element_blank(),
         strip.text.x = element_text(size = 6.5)) +
   labs(x = "", y = "% lakes") +
-#        caption = "Figure 3. Percent of lakes nationally and in each ecoregion in each nutrient limitation
-# category per year. Percents were extrapolated from the indidvudal lakes in the dataset
-# to represent lakes across the conterminous U.S. using the weights. Each bar is labelled 
-# with the percent of lakes in that category (percents <10% were not labelled).")  +
   theme(plot.caption.position = "plot",
         plot.caption = element_text(hjust = 0, family = "serif"),
-        legend.position = c(0.75, 0.175))
-#ggsave("Figures/F3_limitbars_ecoreg.png", height = 4.5, width = 6.5, units = "in", dpi = 1200)
-ggsave("Figures/F3_limitbars_ecoreg_pub.png", height = 4.5, width = 6.5, units = "in", dpi = 1200)
+        legend.position = c(0.75, 0.165))
+
+ggsave("Figures/limitbars_ecoreg_pub.png", height = 4.5, width = 6.5, units = "in", dpi = 1200)
 
 
 
-#### 4. Limitations change analysis ####
-## find only sites that are sampled in both 2007 and 2017
+lim_natplot <- ggplot(percent_lim1 |>
+         filter(Subpopulation == "National"), aes(year, Estimate.P, fill = Category)) +
+  geom_point(size=2, color = "black", pch = 21, position=position_dodge(width=0.5)) +
+  geom_errorbar(aes(color = Category, year, Estimate.P, ymin = Estimate.P - StdError.P, ymax = Estimate.P + StdError.P, color = Category), width = 0.2, position=position_dodge(width=0.5)) +
+  scale_color_manual("",values = c("grey60","red4", "#336a98"))  +
+  scale_fill_manual("",values = c("grey60","red4", "#336a98")) +
+  theme_bw() +
+  theme(panel.grid.major.x = element_blank()) +
+  geom_vline(xintercept = c(1.5, 2.5)) +
+  labs(x = '',
+       y = '% U.S. lakes',
+       title = 'National') +
+  theme(legend.title = element_blank())
+
+lim_regplot <- ggplot(percent_lim1 |>
+         filter(Subpopulation != "National"), aes(year, Estimate.P, fill = Category)) +
+  geom_point(size=2, color = "black", pch = 21, position=position_dodge(width=0.5)) +
+  geom_errorbar(aes(color = Category, year, Estimate.P, ymin = Estimate.P - StdError.P, ymax = Estimate.P + StdError.P, color = Category), width = 0.2, position=position_dodge(width=0.5)) +
+  scale_color_manual("",values = c("grey60","red4", "#336a98"))  +
+  scale_fill_manual("",values = c("grey60","red4", "#336a98")) +
+  theme_bw() +
+  theme(panel.grid.major.x = element_blank()) +
+  geom_vline(xintercept = c(1.5, 2.5)) +
+  labs(x = '',
+       y = '% lakes in ecoregion') +
+  theme(legend.title = element_blank())  +
+  facet_wrap(~Subpopulation, ncol = 3)
+
+
+layout <- "
+AAAA
+BBBB
+BBBB
+"
+
+lim_natplot/lim_regplot +
+  plot_layout(guides = "collect",
+              design = layout) +
+  plot_annotation(tag_levels = 'a', tag_suffix = ')') 
+
+ggsave("Figures/Limits_ALL.png", height = 6, width = 6.5, units = "in", dpi = 1200) 
+
+
+regions_lim <- regions.sf |>
+  rename(Subpopulation = WSA9_NAME) |>
+  left_join(percent_lim1)
+
+ggplot() +
+  geom_sf(data = regions_lim |> 
+            filter(Category == 'Co-nutrient limitation'), aes(fill = Estimate.P)) +
+  scale_fill_gradient('% Co-nutrient limited lakes', low='grey95',high='grey60') +
+  ggthemes::theme_map() +
+  facet_wrap(~year, nrow=1) +
+  theme(legend.position = 'bottom')
+
+ggsave("Figures/percentLimitationsMaps_CO.png", height = 3, width = 6.5, units = "in", dpi = 1200) 
+
+ggplot() +
+  geom_sf(data = regions_lim |> 
+            filter(Category == 'N-limitation'), aes(fill = Estimate.P)) +
+  scale_fill_gradient('% N-limited lakes', low='grey95',high='red4') +
+  ggthemes::theme_map() +
+  facet_wrap(~year, nrow=1) +
+  theme(legend.position = 'bottom')
+
+ggsave("Figures/percentLimitationsMaps_N.png", height = 3, width = 6.5, units = "in", dpi = 1200) 
+
+ggplot() +
+  geom_sf(data = regions_lim |> 
+            filter(Category == 'P-limitation'), aes(fill = Estimate.P)) +
+  scale_fill_gradient('% P-limited lakes', low='grey95',high='#336a98') +
+  ggthemes::theme_map() +
+  facet_wrap(~year, nrow=1) +
+  theme(legend.position = 'bottom')
+
+ggsave("Figures/percentLimitationsMaps_P.png", height = 3, width = 6.5, units = "in", dpi = 1200) 
+
+
+#### 4. Limitations change analysis 2007 to 2017 ####
+## find only sites that are sampled in 2007 and 2017
 crossover <- limits_survey_prep |>
   select(year, UNIQUE_ID) |>
   filter(year == "2007") |>
   rename(year1 = year) |>
   distinct() |>
+  # inner_join(limits_survey_prep |>
+  #              select(year, UNIQUE_ID) |>
+  #              filter(year == "2012") |>
+  #              rename(year3 = year) |>
+  #              distinct()) |> #346 sites sampled in 2007 and 2012
   inner_join(limits_survey_prep |>
                select(year, UNIQUE_ID) |>
                filter(year == "2017") |>
                rename(year2 = year) |>
                distinct()) |>
-  select(UNIQUE_ID) # 232 sites
+  select(UNIQUE_ID) # 232 sites sampled in all 3 years
 
 limits_change_prep <- limits_survey_prep |> # analysis has same restrictions as categorical analysis
-  inner_join(crossover) # this keeps only resampled sites
+  inner_join(crossover) |> # this keeps only resampled sites
+  filter(year != '2012') # we are only looking at change over the full period
+#464 lakes
 
 # use change_analysis from the spsurvey package
 # ecoregional change analysis
@@ -648,9 +632,9 @@ lim_change0717$Subpopulation = factor(lim_change0717$Subpopulation,
 
 
 #### Now run the analysis on the full population of lakes
-limits_change_prep <- limits_survey_prep #|> # analysis has same restrictions as categorical analysis
-#inner_join(crossover) # this keeps only resampled sites
-
+limits_change_prep <- limits_survey_prep |> # analysis has same restrictions as categorical analysis
+  filter(year != '2012')
+  
 # use change_analysis from the spsurvey package
 # ecoregional change analysis
 change_ecoreg <- change_analysis(limits_change_prep, subpops = "ECO_REG_NAME", siteID = "UNIQUE_ID", vars_cat = "limitation", surveyID = "year", weight = "WGT_NLA", xcoord = "LON_DD", ycoord = "LAT_DD")
@@ -676,9 +660,10 @@ lim_change0717_allSITES$Subpopulation = factor(lim_change0717_allSITES$Subpopula
 lim_changes_fullset <- rbind(lim_change0717 |> mutate(sample_set = "Resampled lakes"), lim_change0717_allSITES |> mutate(sample_set = "All surveyed lakes"))
 
 # compare confidence interval between all surveyed lakes and resampled lakes
-t.test((lim_changes_fullset |> filter(sample_set == "Resampled lakes"))$MarginofError.P, (lim_changes_fullset |> filter(sample_set != "Resampled lakes"))$MarginofError.P) # p = 0.006251
+t.test((lim_changes_fullset |> filter(sample_set == "Resampled lakes"))$MarginofError.P, (lim_changes_fullset |> filter(sample_set != "Resampled lakes"))$MarginofError.P) # p = 0.001772
 ggplot(lim_changes_fullset, aes(sample_set, MarginofError.P)) +
   geom_boxplot()
+# error is larger in resampled lakes
 
 # compare all to resampled lakes within each category and region to find statistical differences for plotting
 comparison_lim <- lim_changes_fullset |>
@@ -694,18 +679,25 @@ comparison_lim <- lim_changes_fullset |>
   filter(p.value <=0.05) |>
   select(-4,-3) |>
   unique() |>
-  mutate(p.value = '*') # no changes were significantly different 
+  mutate(p.value = '*')  
+# all were same!
 
 # add significance to dataset
 lim_changes_fullset <- left_join(lim_changes_fullset, comparison_lim) |>
   mutate(p.value=ifelse(sample_set!='Resampled lakes', NA, p.value))
 
-ecoreg_plot <- ggplot(lim_changes_fullset |>
-         filter(Subpopulation != "National")) +
-  geom_point(aes(Category,DiffEst.P, fill = Category), color = "black", pch = 21, size = 1, position=position_dodge(width=0.5))+
-  geom_errorbar(aes(Category, DiffEst.P, ymin = DiffEst.P-MarginofError.P, ymax = DiffEst.P+MarginofError.P, color = Category, linetype = sample_set), width = 0.2)  +
-  geom_text(lim_changes_fullset|>
-               filter(Subpopulation != "National"), mapping=aes(Category, DiffEst.P, label=p.value), nudge_x=-0.25, nudge_y=0.25) +
+ecoreg_plot_limchange <- lim_changes_fullset |>
+  filter(Subpopulation != "National") |>
+  ggplot() +
+  geom_point(aes(Category, DiffEst.P, fill = Category, group = sample_set),
+             color = "black", pch = 21, size = 2,
+             position = position_dodge(width = 0.75)) +
+  geom_errorbar(aes(Category, DiffEst.P,
+                    ymin = DiffEst.P - MarginofError.P,
+                    ymax = DiffEst.P + MarginofError.P,
+                    color = Category, linetype = sample_set),
+                width = 0.2,
+                position = position_dodge(width = 0.75)) +
   theme_bw() +
   theme(panel.grid.major = element_blank(), 
         panel.grid.minor = element_blank()) +
@@ -714,10 +706,6 @@ ecoreg_plot <- ggplot(lim_changes_fullset |>
   geom_hline(yintercept = 0) +
   labs(x = "",
        y = "% change 2007-2017") +
-#        caption = "Figure 4. Percent change in lakes in nutrient limitation status a) nationally, and b) in the nine aggregated 
-# ecoregions from 2007-2017. The change is represented as a percent difference in the population (point) with 
-# standard error bars. Error bars that cross zero are not statistically significant. The solid lines are the 
-# entire population of all surveyed lakes, and the dotted lines are the resampled lakes in both surveys only.") + 
   scale_color_manual("",values = c("grey60","red4", "#336a98"))  +
   scale_fill_manual("",values = c("grey60","red4", "#336a98")) +
   theme(#axis.text.x = element_text(angle = 49, vjust = 1, hjust =1),
@@ -729,24 +717,31 @@ ecoreg_plot <- ggplot(lim_changes_fullset |>
 
 
 #national plot
-nat_plot <- ggplot(lim_changes_fullset |>
-         filter(Subpopulation == "National")) +
-  geom_point(aes(Category,DiffEst.P, fill = Category), color = "black", pch = 21, size = 1, position=position_dodge(width=0.5)) +
-  geom_errorbar(aes(Category, DiffEst.P, ymin = DiffEst.P-MarginofError.P, ymax = DiffEst.P+MarginofError.P, color = Category, linetype = sample_set), width = 0.2)  + 
-  geom_text(lim_changes_fullset|>
-              filter(Subpopulation == "National"), mapping=aes(Category, DiffEst.P, label=p.value), nudge_x=-0.25, nudge_y=0.25) +
+nat_plot_limchange <- lim_changes_fullset %>%
+  filter(Subpopulation == "National") %>%
+  ggplot() +
+  geom_point(aes(Category, DiffEst.P, fill = Category, group = sample_set),
+             color = "black", pch = 21, size = 2,
+             position = position_dodge(width = 0.75)) +
+  geom_errorbar(aes(Category, DiffEst.P,
+                    ymin = DiffEst.P - MarginofError.P,
+                    ymax = DiffEst.P + MarginofError.P,
+                    color = Category, linetype = sample_set),
+                width = 0.2,
+                position = position_dodge(width = 0.75)) +
+  geom_text(aes(Category, DiffEst.P, label = p.value),
+            nudge_x = -0.25, nudge_y = 0.25) +
   theme_bw() +
-  theme(panel.grid.major = element_blank(), 
+  theme(panel.grid.major = element_blank(),
         panel.grid.minor = element_blank()) +
-  #facet_grid(~Trophic.State, scales = "free_x") +
-  #facet_wrap(~Subpopulation, ncol = 3, scales = "free_y") +
   geom_hline(yintercept = 0) +
   labs(x = "",
        y = "% change 2007-2017",
        title = "National") +
-  scale_color_manual("",values = c("grey60","red4", "#336a98"))  +
-  scale_fill_manual("",values = c("grey60","red4", "#336a98")) +
+  scale_color_manual("", values = c("grey60", "red4", "#336a98")) +
+  scale_fill_manual("", values = c("grey60", "red4", "#336a98")) +
   theme(legend.title = element_blank())
+
 
 layout <- "
 AAAA
@@ -754,12 +749,12 @@ BBBB
 BBBB
 "
 
-nat_plot/ecoreg_plot +
+nat_plot_limchange/ecoreg_plot_limchange +
   plot_layout(guides = "collect",
               design = layout) +
   plot_annotation(tag_levels = 'a', tag_suffix = ')') 
-#ggsave("Figures/F4_limchanges.png", height = 8.5, width = 6.5, units = "in", dpi = 1200) 
-ggsave("Figures/F4_limchanges_pub.png", height = 6, width = 6.5, units = "in", dpi = 1200) 
+
+ggsave("Figures/limchanges_07-17.png", height = 6, width = 6.5, units = "in", dpi = 1200) 
 
 
 
@@ -768,13 +763,13 @@ ggsave("Figures/F4_limchanges_pub.png", height = 6, width = 6.5, units = "in", d
 
 #### 5. Spatial, temporal distribution of trophic state ####
 # how many observations of each trophic state
-nrow(limits |> filter(TROPHIC_STATE == "Oligo.")) # 348
-nrow(limits |> filter(TROPHIC_STATE == "Meso.")) # 697
-nrow(limits |> filter(TROPHIC_STATE == "Eutro.")) # 676
-nrow(limits |> filter(TROPHIC_STATE == "Hyper.")) # 458
+nrow(limits |> filter(TROPHIC_STATE == "Oligo.")) # 511
+nrow(limits |> filter(TROPHIC_STATE == "Meso.")) # 1012
+nrow(limits |> filter(TROPHIC_STATE == "Eutro.")) # 954
+nrow(limits |> filter(TROPHIC_STATE == "Hyper.")) # 695
 # Percent lakes in each ecoregion 
 # use categorical analysis from spsurvey package
-years <- c("2007", "2017")
+years <- c("2007",'2012', "2017")
 percent_TS <- data.frame()
 
 for(i in 1:length(years)) {
@@ -835,16 +830,12 @@ ggplot(percent_TS1, aes(year, Estimate.P, fill = Category)) +
         panel.grid.minor = element_blank(),
         strip.text.x = element_text(size = 6.5)) +
   labs(x = "", y = "% lakes") +
-#        caption = "Figure 5. Percent of lakes nationally and in each ecoregion in each trophic state per year. Percents 
-# were extrapolated from the indidvudal lakes in the dataset to represent lakes across the conterminous 
-# U.S. using the weights. Each bar is labelled with the percent of lakes in that category (percents <10%
-# were not labelled).")  +
   theme(plot.caption.position = "plot",
         plot.caption = element_text(hjust = 0, family = "serif"),
         legend.position = c(0.75, 0.175)) +
   guides(fill = guide_legend(ncol=2))
-#ggsave("Figures/F5_TSbars_ecoreg.png", height = 4.5, width = 6.5, units = "in", dpi = 1200)
-ggsave("Figures/F5_TSbars_ecoreg_pub.png", height = 4.5, width = 6.5, units = "in", dpi = 1200)
+
+ggsave("Figures/TSbars_ecoreg_pub.png", height = 4.5, width = 6.5, units = "in", dpi = 1200)
 
 
 #### 6. Trophic state change analysis within limitation status at the national level ####
@@ -862,7 +853,8 @@ crossover <- limits_survey_prep |>
   select(UNIQUE_ID) # 232 sites
 
 TS_change_prep <- limits_survey_prep |> # analysis has same restrictions as categorical analysis
-  inner_join(crossover) # this keeps only resampled sites
+  inner_join(crossover) |> # this keeps only resampled sites
+  filter(year != '2012')
 
 # use change_analysis from the spsurvey package
 # national change analysis
@@ -884,8 +876,9 @@ TS_change0717$Category = factor(TS_change0717$Category,
 
 
 #### Now use the full population of lakes, not just resampled. 
-TS_change_prep <- limits_survey_prep #|> # analysis has same restrictions as categorical analysis
-#inner_join(crossover) # this keeps only resampled sites
+TS_change_prep <- limits_survey_prep |> # analysis has same restrictions as categorical analysis
+  filter(year != '2012')
+  
 # use change_analysis from the spsurvey package
 # national change analysis
 change_nat <- change_analysis(TS_change_prep, subpops = "limitation", siteID = "UNIQUE_ID", vars_cat = "TROPHIC_STATE", surveyID = "year", weight = "WGT_NLA", xcoord = "LON_DD", ycoord = "LAT_DD")
@@ -929,7 +922,8 @@ comparison_ts <- TS_changes_fullset |>
   filter(p.value <=0.05) |>
   select(-4,-3) |>
   unique() |>
-  mutate(p.value = '*') # all values were between 0.01 and 0.05
+  mutate(p.value = '*') 
+# none were significant
 
 # add significance to dataset
 TS_changes_fullset <- left_join(TS_changes_fullset, comparison_ts) |>
@@ -939,9 +933,17 @@ TS_changes_fullset <- left_join(TS_changes_fullset, comparison_ts) |>
 
 #national plot
 ggplot(TS_changes_fullset) +
-  geom_point(aes(Category,DiffEst.P, fill = Category), color = "black", pch = 21, size = 1, position=position_dodge(width=0.5)) +
-  geom_errorbar(aes(Category, DiffEst.P, ymin = DiffEst.P-MarginofError.P, ymax = DiffEst.P+MarginofError.P, color = Category, linetype = sample_set), width = 0.2)  + 
- geom_text(TS_changes_fullset, mapping=aes(Category, DiffEst.P, label=p.value), nudge_x=-0.25, nudge_y=0.25) +
+  geom_point(aes(Category, DiffEst.P, fill = Category, group = sample_set),
+             color = "black", pch = 21, size = 2,
+             position = position_dodge(width = 0.75)) +
+  geom_errorbar(aes(Category, DiffEst.P,
+                    ymin = DiffEst.P - MarginofError.P,
+                    ymax = DiffEst.P + MarginofError.P,
+                    color = Category, linetype = sample_set),
+                width = 0.2,
+                position = position_dodge(width = 0.75)) +
+  geom_text(aes(Category, DiffEst.P, label = p.value),
+            nudge_x = -0.25, nudge_y = 0.25) +
   theme_bw() +
   theme(panel.grid.major = element_blank(), 
         panel.grid.minor = element_blank()) +
@@ -950,20 +952,17 @@ ggplot(TS_changes_fullset) +
   geom_hline(yintercept = 0) +
   labs(x = "",
        y = "% change 2007-2017")+                                                 
-#        caption = "Figure 6. Percent change in trophic state across lakes nationally from 2007-2017, panels separated to show all lakes 
-# at all limitations and separated by limitation category. The change is represented as a percent difference in the 
-# population (point) with standard error bars. Change bars that cross zero are not statistically significant. The 
-# solid lines are the entire population of all surveyed lakes, and the dotted lines are the resampled lakes in both 
-# surveys only. Note there is a difference in y-axis scales.") + 
   scale_color_manual("", values = c(palette_OkabeIto[2], palette_OkabeIto[4], palette_OkabeIto[3], palette_OkabeIto[1]))  +
   scale_fill_manual("", values = c(palette_OkabeIto[2], palette_OkabeIto[4], palette_OkabeIto[3], palette_OkabeIto[1])) +
   theme(axis.text.x = element_text(angle = 49, vjust = 1, hjust =1),
         strip.text.x = element_text(size = 7.5),
         plot.caption.position = "plot",
         plot.caption = element_text(hjust = 0, family = "serif"),
-        legend.title = element_blank())
-#ggsave("Figures/F6_TSchanges.png", height = 4.5, width = 6.5, units = "in", dpi = 1200) 
-ggsave("Figures/F6_TSchanges_pub.png", height = 4.5, width = 6.5, units = "in", dpi = 1200) 
+        legend.title = element_blank()) +
+  guides(color=FALSE,
+         fill= FALSE)
+
+ggsave("Figures/TSchanges_07-17.png", height = 4.5, width = 6.5, units = "in", dpi = 1200) 
 
 
 
@@ -982,7 +981,8 @@ crossover <- limits_survey_prep |>
   select(UNIQUE_ID) # 232 sites
 
 TS_change_prep_eco <- limits_survey_prep |> # analysis has same restrictions as categorical analysis
-  inner_join(crossover) # this keeps only resampled sites
+  inner_join(crossover) |> # this keeps only resampled sites
+  filter(year !='2012')
 
 # use change_analysis from the spsurvey package
 # ecoregional change analysis
@@ -999,8 +999,9 @@ TS_change0717eco$Category = factor(TS_change0717eco$Category,
 
 
 #### Now use the full population of lakes, not just resampled. 
-TS_change_prep <- limits_survey_prep #|> # analysis has same restrictions as categorical analysis
-#inner_join(crossover) # this keeps only resampled sites
+TS_change_prep <- limits_survey_prep |> # analysis has same restrictions as categorical analysis
+  filter(year != '2012')
+  
 # use change_analysis from the spsurvey package
 # national change analysis
 change_eco <- change_analysis(TS_change_prep, subpops = "ECO_REG_NAME", siteID = "UNIQUE_ID", vars_cat = "TROPHIC_STATE", surveyID = "year", weight = "WGT_NLA", xcoord = "LON_DD", ycoord = "LAT_DD")
@@ -1049,11 +1050,19 @@ TS_changes_fullseteco <- left_join(TS_changes_fullseteco, comparison_tseco) |>
 TS_changes_fullseteco$Subpopulation = factor(TS_changes_fullseteco$Subpopulation,
                                       levels = c("Northern Appalachians", "Southern Appalachians", "Coastal Plains", "Temperate Plains", "Upper Midwest", "Northern Plains", "Southern Plains", "Xeric", "Western Mountains"))
 
-#national plot
+#ecoregion plot
 ggplot(TS_changes_fullseteco) +
-  geom_point(aes(Category,DiffEst.P, fill = Category), color = "black", pch = 21, size = 1, position=position_dodge(width=0.5)) +
-  geom_errorbar(aes(Category, DiffEst.P, ymin = DiffEst.P-MarginofError.P, ymax = DiffEst.P+MarginofError.P, color = Category, linetype = sample_set), width = 0.2)  + 
-  geom_text(TS_changes_fullseteco, mapping=aes(Category, DiffEst.P, label=p.value), nudge_x=-0.25, nudge_y=0.25) +
+  geom_point(aes(Category, DiffEst.P, fill = Category, group = sample_set),
+             color = "black", pch = 21, size = 2,
+             position = position_dodge(width = 0.75)) +
+  geom_errorbar(aes(Category, DiffEst.P,
+                    ymin = DiffEst.P - MarginofError.P,
+                    ymax = DiffEst.P + MarginofError.P,
+                    color = Category, linetype = sample_set),
+                width = 0.2,
+                position = position_dodge(width = 0.75)) +
+  geom_text(aes(Category, DiffEst.P, label = p.value),
+            nudge_x = -0.25, nudge_y = 0.25) +
   theme_bw() +
   theme(panel.grid.major = element_blank(), 
         panel.grid.minor = element_blank()) +
@@ -1068,47 +1077,15 @@ ggplot(TS_changes_fullseteco) +
         strip.text.x = element_text(size = 7.5),
         plot.caption.position = "plot",
         plot.caption = element_text(hjust = 0, family = "serif"),
-        legend.title = element_blank())
-#ggsave("Figures/F6_TSchanges.png", height = 4.5, width = 6.5, units = "in", dpi = 1200) 
-ggsave("Figures/FX_TSchangesECO.png", height = 4.5, width = 6.5, units = "in", dpi = 1200) 
+        legend.title = element_blank()) +
+  guides(color=FALSE,
+         fill= FALSE)
+
+ggsave("Figures/TSchangesECO_01-17.png", height = 4.5, width = 6.5, units = "in", dpi = 1200) 
 
 
 # #### 8. Relationship between trophic state and limitation ####
-# ## combine datasets for boxplots
-# tmp_ts <- percent_TS1 |>
-#   select(Subpopulation, Category, Estimate.P, year) |>
-#   pivot_wider(names_from = Category, values_from = Estimate.P) |>
-#   mutate(perc_eutro = Eutro. + Hyper.,
-#          perc_noteutro = Meso. + Oligo.) |>
-#   select(-Eutro., -Hyper., -Meso., -Oligo.)
-# 
-# tmp_lim <- percent_lim1 |> 
-#   select(Subpopulation, Category, Estimate.P, year) #|>
-#   # pivot_wider(names_from = Category, values_from = Estimate.P) |>
-#   # rename(colim = 3,
-#   #        nlim=4,
-#   #        plim=5)
-# 
-# ts_lim_perc <- left_join(tmp_ts, tmp_lim)
-# 
-# library(lme4)
-# 
-# m.1 <- lmer(perc_eutro ~ Estimate.P + (1|Category), ts_lim_perc)
-# summary(m.1)
-# m.1$coefficients
-# fixef(m.1)
-# ranef(m.1)
-# 
-# ggplot(ts_lim_perc) +
-#   geom_point(aes(Estimate.P, perc_noteutro, color=Category)) +
-#   geom_smooth(aes(Estimate.P, perc_noteutro, color=Category), method='lm')
-
-# library(scales)
-# show_col(c("grey60","red4", "#336a98"))
-# show_col(palette_OkabeIto[5:7])
-
-
-# 8a. Categorical analysis of trophic states within limitation categories ####
+#  Categorical analysis of trophic states within limitation categories
 
 nat_limTS <- cat_analysis(
   limits_survey_prep,
@@ -1126,7 +1103,7 @@ nat_limTS$Category = factor(nat_limTS$Category,
 
 
 ggplot(nat_limTS) +
-  geom_point(aes(Category, Estimate.P)) +
+  geom_point(aes(Category, Estimate.P, fill=Category), color='black', pch=21, size=2) +
   facet_wrap(~Subpopulation) +
   geom_errorbar(aes(Category, Estimate.P, ymin = Estimate.P-MarginofError.P,
                     ymax = Estimate.P+MarginofError.P, color = Category), width = 0.2) +
@@ -1137,7 +1114,7 @@ ggplot(nat_limTS) +
         strip.text.x = element_text(size = 7.5),
         plot.caption.position = "plot",
         plot.caption = element_text(hjust = 0, family = "serif"),
-        legend.title = element_blank()) +
-  labs(x = '', y = '% lakes from both surveys')
-ggsave("Figures/F7_trophicstates_bylim.png", height = 4.5, width = 6.5, units = "in", dpi = 1200) 
+        legend.position = 'none') +
+  labs(x = '', y = '% lakes from all surveys')
+ggsave("Figures/trophicstates_bylim.png", height = 4.5, width = 6.5, units = "in", dpi = 1200) 
 
