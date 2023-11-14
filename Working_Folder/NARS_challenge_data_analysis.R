@@ -386,7 +386,7 @@ criteria <- criteria |>
          DIN_threshold = ifelse(is.na(DIN_threshold) & 
                                   ECO_REG_NAME=='Northern Plains', NP_DIN, DIN_threshold))
 
-write.csv(criteria, "criteria.csv") 
+#write.csv(criteria, "criteria.csv") 
 
 
 # generate nutrient limitations
