@@ -88,7 +88,7 @@ reservoir <- nla_data_subset |>
 correlations_data <- nla_data_subset |>
  # filter(year == "2007") |> # same as total except TN better predictor in coastal plains
  # filter(year == "2017") |> # same as total except TP better predictor in xeric and w. mtn
- # filter(year == '2012') |> # same as total except 
+# filter(year == '2012') |> # same as total except TN better predictor in temperate plains
   mutate(NTL_PPB = NTL_PPM * 1000) |>
   pivot_longer(cols = c(PTL_PPB, NTL_PPB), names_to = "nutrient", values_to = "concentration") 
 
@@ -309,7 +309,7 @@ reference_checks <- nla_data_subset |>
   filter(SITE_TYPE %in% c('HAND', 'REF_Lake')) |>
   group_by(ECO_REG_NAME, year, lakesizeclass) |>
   count()
-# THERE WERE NO REFERENCE LAKES IN 2012?!
+# THERE WERE NO REFERENCE LAKES IN 2012!
 
 
 # We will combine these 'best' lakes with the selected 'reference' lakes to build our reference condition nutrient thresholds that determine healthy waters.
@@ -332,7 +332,7 @@ ref.tmp <- nla_data_subset |>
 ## combine reference and best lakes 
 reflakes <- bind_rows(ref.tmp, cond.tmp) |>
   # get rid of the duplicates 
-  distinct() |> # total of 856 lakes
+  distinct() |> # total of 1132 lakes
   # how many lakes in each region and year? 
   group_by(ECO_REG_NAME, year, lakesizeclass) |>
   mutate(n=n()) |>
@@ -486,8 +486,8 @@ percent_lim1$Subpopulation = factor(percent_lim1$Subpopulation,
 
 text_percents_lim <- percent_lim1 |>
   select(year, Subpopulation, Category, Estimate.P) |>
-  filter(Estimate.P > 10) |>
-  mutate(perc = paste0(round(Estimate.P, digits = 1), "%")) 
+  #filter(Estimate.P > 10) |>
+  mutate(perc = paste0(round(Estimate.P, digits = 0), "%")) 
 
 
 
@@ -537,19 +537,6 @@ lim_regplot <- ggplot(percent_lim1 |>
   theme(legend.title = element_blank())  +
   facet_wrap(~Subpopulation, ncol = 3)
 
-
-layout <- "
-AAAA
-BBBB
-BBBB
-"
-
-lim_natplot/lim_regplot +
-  plot_layout(guides = "collect",
-              design = layout) +
-  plot_annotation(tag_levels = 'a', tag_suffix = ')') 
-
-ggsave("Figures/Limits_ALL.png", height = 6, width = 6.5, units = "in", dpi = 1200) 
 
 
 regions_lim <- regions.sf |>
@@ -736,8 +723,7 @@ nat_plot_limchange <- lim_changes_fullset %>%
         panel.grid.minor = element_blank()) +
   geom_hline(yintercept = 0) +
   labs(x = "",
-       y = "% change 2007-2017",
-       title = "National") +
+       y = "% change 2007-2017") +
   scale_color_manual("", values = c("grey60", "red4", "#336a98")) +
   scale_fill_manual("", values = c("grey60", "red4", "#336a98")) +
   theme(legend.title = element_blank())
@@ -749,14 +735,19 @@ BBBB
 BBBB
 "
 
-nat_plot_limchange/ecoreg_plot_limchange +
+lim_natplot/nat_plot_limchange +
   plot_layout(guides = "collect",
               design = layout) +
   plot_annotation(tag_levels = 'a', tag_suffix = ')') 
 
-ggsave("Figures/limchanges_07-17.png", height = 6, width = 6.5, units = "in", dpi = 1200) 
+ggsave("Figures/national_limitations.png", height = 4.5, width = 6.5, units = "in", dpi = 1200) 
 
+lim_regplot/ecoreg_plot_limchange +
+  plot_layout(guides = "collect",
+              design = layout) +
+  plot_annotation(tag_levels = 'a', tag_suffix = ')') 
 
+ggsave("Figures/ecoregions_limitations.png", height = 8, width = 8, units = "in", dpi = 1200) 
 
 
 
@@ -817,7 +808,7 @@ percent_TS1$Category = factor(percent_TS1$Category,
 text_percents_ts <- percent_TS1 |>
   select(year, Subpopulation, Category, Estimate.P) |>
   filter(Estimate.P > 10) |>
-  mutate(perc = paste0(round(Estimate.P, digits = 1), "%"))
+  mutate(perc = paste0(round(Estimate.P, digits = 0), "%"))
 
 
 ggplot(percent_TS1, aes(year, Estimate.P, fill = Category)) +
