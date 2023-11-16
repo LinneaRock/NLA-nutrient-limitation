@@ -192,29 +192,33 @@ add_corr <- lm_ecoreg_df1 |>
   mutate(AIC = paste0("AIC=",round(AIC, digits = 1)),
          r.squared = paste0("adj.r=", round(r.squared, digits=2)))
 
-
-corrs <- ggplot(correlations_data, aes(log10(concentration), log10(CHLA_PPB))) +
+options(scipen = 999)
+ggplot(correlations_data, aes(concentration, CHLA_PPB)) +
   geom_abline(slope = 0, intercept = log10(2)) +
   geom_abline(slope = 0, intercept = log10(7)) +
   geom_abline(slope = 0, intercept = log10(30)) +
+  scale_y_log10() +
+  scale_x_log10() +
   geom_point(alpha = 0.25, aes(color = nutrient)) +
   geom_smooth(method = "lm", se = FALSE, aes(group = nutrient), color = "grey60") +
-  geom_text(add_corr |> filter(nutrient == "NTL_PPB"), mapping = aes(x = 3, y = 3.5, label = r.squared), size = 2.5, vjust = 0.75, hjust = 0) +
-  geom_text(add_corr |> filter(nutrient == "NTL_PPB"), mapping = aes(x = 3, y = 3, label = AIC), size = 2.5, vjust = 0.75, hjust = 0) +
-  geom_text(add_corr |> filter(nutrient == "PTL_PPB"), mapping = aes(x = 0, y = 3.5, label = r.squared), size = 2.5, vjust = 0.75, hjust = 0) +
-  geom_text(add_corr |> filter(nutrient == "PTL_PPB"), mapping = aes(x = 0, y = 3, label = AIC), size = 2.5, vjust = 0.75, hjust = 0) +
+  geom_text(add_corr |> filter(nutrient == "NTL_PPB"), mapping = aes(x = 1000, y = 5000, label = r.squared), size = 2.5, vjust = 0.75, hjust = 0) +
+  geom_text(add_corr |> filter(nutrient == "NTL_PPB"), mapping = aes(x = 1000, y = 900, label = AIC), size = 2.5, vjust = 0.75, hjust = 0) +
+  geom_text(add_corr |> filter(nutrient == "PTL_PPB"), mapping = aes(x = 1, y = 5000, label = r.squared), size = 2.5, vjust = 0.75, hjust = 0) +
+  geom_text(add_corr |> filter(nutrient == "PTL_PPB"), mapping = aes(x = 1, y = 900, label = AIC), size = 2.5, vjust = 0.75, hjust = 0) +
   facet_wrap(~nutrient, scales = "free_y") +
   theme_bw() +
   theme(panel.grid.major = element_blank(), 
         panel.grid.minor = element_blank()) +
   facet_wrap(~ECO_REG_NAME, ncol = 3) +
-  labs(y = "log10(chlorophyll-a concentration)",
-       x = "log10(nutrient concentration)") +
+  labs(y = "log-scale chlorophyll-a concentration "~(mu*g~L^-1),
+       x = "log-scale nutrient concentration "~(mu*g~L^-1)) +
   scale_color_manual("", labels = c("TN", "TP"), values=c("red4", "#336a98")) +
   theme(plot.caption.position = "plot",
         plot.caption = element_text(hjust = 0, family = "serif"))
 
-ggsave(corrs, "Figures/linregs_pub.png", height = 4.5, width = 6.5, units = "in", dpi = 1200) 
+
+
+ggsave("Figures/linregs_pub.png", height = 4.5, width = 6.5, units = "in", dpi = 1200) 
 
 # NOTE: I also ran these for just 2007 and just 2017 data. 
 
