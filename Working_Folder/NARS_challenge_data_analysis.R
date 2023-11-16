@@ -192,6 +192,7 @@ add_corr <- lm_ecoreg_df1 |>
   mutate(AIC = paste0("AIC=",round(AIC, digits = 1)),
          r.squared = paste0("adj.r=", round(r.squared, digits=2)))
 
+library(lemon)
 options(scipen = 999)
 ggplot(correlations_data, aes(concentration, CHLA_PPB)) +
   geom_abline(slope = 0, intercept = log10(2)) +
@@ -205,7 +206,12 @@ ggplot(correlations_data, aes(concentration, CHLA_PPB)) +
   geom_text(add_corr |> filter(nutrient == "NTL_PPB"), mapping = aes(x = 1000, y = 900, label = AIC), size = 2.5, vjust = 0.75, hjust = 0) +
   geom_text(add_corr |> filter(nutrient == "PTL_PPB"), mapping = aes(x = 1, y = 5000, label = r.squared), size = 2.5, vjust = 0.75, hjust = 0) +
   geom_text(add_corr |> filter(nutrient == "PTL_PPB"), mapping = aes(x = 1, y = 900, label = AIC), size = 2.5, vjust = 0.75, hjust = 0) +
-  facet_wrap(~nutrient, scales = "free_y") +
+  facet_rep_wrap(~nutrient, scales = "free_y") +
+  annotation_logticks(
+     short = unit(0,"mm"),
+     mid = unit(0.1, "cm"),
+     long = unit(0.2, "cm"),
+  ) +
   theme_bw() +
   theme(panel.grid.major = element_blank(), 
         panel.grid.minor = element_blank()) +
@@ -214,7 +220,14 @@ ggplot(correlations_data, aes(concentration, CHLA_PPB)) +
        x = "log-scale nutrient concentration "~(mu*g~L^-1)) +
   scale_color_manual("", labels = c("TN", "TP"), values=c("red4", "#336a98")) +
   theme(plot.caption.position = "plot",
-        plot.caption = element_text(hjust = 0, family = "serif"))
+        plot.caption = element_text(hjust = 0, family = "serif"),
+        strip.placement = "outside",             # place facet strips outside axis
+        axis.ticks.length = unit(-2.75, "pt"),   # point axis ticks inwards (2.75pt is 
+        # the default axis tick length here)
+        axis.text.x.top = element_blank(),       # do not show top / right axis labels
+        axis.text.y.right = element_blank(),     # for secondary axis
+        axis.title.x.top = element_blank(),      # as above, don't show axis titles for
+        axis.title.y.right = element_blank())    # secondary axis either)
 
 
 
@@ -817,7 +830,7 @@ text_percents_ts <- percent_TS1 |>
 
 ggplot(percent_TS1, aes(year, Estimate.P, fill = Category)) +
   geom_bar(stat = "identity") +
-  geom_text(text_percents_ts, mapping = aes(label = perc), position = position_stack(vjust = 0.5), size = 3) +
+  geom_text(text_percents_ts, mapping = aes(label = perc), position = position_stack(vjust = 0.7), size = 3) +
   facet_wrap(~Subpopulation) +
   scale_fill_manual("", values = c(palette_OkabeIto[2], palette_OkabeIto[4], palette_OkabeIto[3], palette_OkabeIto[1])) +
   theme_bw() +
