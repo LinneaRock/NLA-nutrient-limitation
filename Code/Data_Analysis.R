@@ -1,6 +1,6 @@
 
-##### Script to run analyses for A broad-scale look at nutrient limitation and a shift toward co-limitation in United States lakes #####
-## Linnea Rock, 2023
+##### Script to run analyses for Nutrient limitation patterns of United States lakes #####
+## Linnea A. Rock, 2023
 
 
 #### Load necessary libraries ####
@@ -21,14 +21,12 @@ nla_data_subset <- all_NLA |>
   select(ECO_REG_NAME, UNIQUE_ID, DATE_COL, VISIT_NO, NTL_PPM, PTL_PPB, DIN_PPM, tn.tp, DIN.TP, CHLA_PPB, TROPHIC_STATE, year,WGT_NLA, LON_DD, LAT_DD, AREA_HA, ELEV_PT, PCT_DEVELOPED_BSN, PCT_AGRIC_BSN, SITE_TYPE, URBAN, LAKE_ORIGIN, PTL_COND, NTL_COND, CHLA_COND) |>
   rename(DIN.TP_molar = DIN.TP,
          TN.TP_molar = tn.tp) |>
- # filter(year != "2012") |>
   filter(AREA_HA >= 4) |> # removes 382 observations 
   distinct()
 
 tinylakesobs <- all_NLA |>
   distinct() |>
-  filter(#year != "2012",
-         AREA_HA < 4) |>
+  filter(AREA_HA < 4) |>
   distinct() # 309 observations
 
 tinylakes_lake <- tinylakesobs |>
@@ -229,11 +227,9 @@ ggplot(correlations_data, aes(concentration, CHLA_PPB)) +
         axis.title.x.top = element_blank(),      # as above, don't show axis titles for
         axis.title.y.right = element_blank())    # secondary axis either)
 
-
-
 ggsave("Figures/linregs_pub.png", height = 4.5, width = 6.5, units = "in", dpi = 1200) 
 
-# NOTE: I also ran these for just 2007 and just 2017 data. 
+# NOTE: I also ran these for just 2007 and just 2017 data. -- results on lines 87-89 of this script
 
 # create a map of the better predictor in each ecoregion
 #read in the ecoregion shapefiles
@@ -256,7 +252,7 @@ regions.sf1 <- left_join(regions.sf, compare_r_values)
 
 
 # create the map
-NPmap <- ggplot(data = regions.sf1) +
+ggplot(data = regions.sf1) +
   geom_sf(aes(fill = best_predictor), color = 'black') +
   theme_bw() +
   geom_sf_label(aes(label = WSA9_NAME), size = 2.5) +
@@ -268,14 +264,6 @@ NPmap <- ggplot(data = regions.sf1) +
 
 ggsave("Figures/Map_NP.png", height = 4.5, width = 6.5, units = "in", dpi = 1200) 
 
-
-
-
-# 
-# (NPmap | corrs) +
-#   plot_annotation(tag_levels = 'a', tag_suffix = ')') 
-# 
-# ggsave("Figures/map_corrs.png", height = 6, width = 8.5, units = "in", dpi = 1200) 
 
 
 
@@ -356,9 +344,8 @@ reflakes <- bind_rows(ref.tmp, cond.tmp) |>
   ungroup() |>
   # 75th percentile of nutrient concentrations from reference lakes
   group_by(ECO_REG_NAME, year, n, lakesizeclass) |>
-    summarise(#percentile75TN_PPM = quantile(NTL_PPM, probs = 0.75), 
-            percentile75TP_PPB = quantile(PTL_PPB, probs = 0.75),
-            percentile75DIN_PPM = quantile(DIN_PPM, probs = 0.75, na.rm=TRUE)) |>
+    summarise(percentile75TP_PPB = quantile(PTL_PPB, probs = 0.75),
+              percentile75DIN_PPM = quantile(DIN_PPM, probs = 0.75, na.rm=TRUE)) |>
   ungroup() 
 
 
@@ -367,7 +354,6 @@ reflakes <- bind_rows(ref.tmp, cond.tmp) |>
 averages_np <- nla_data_subset |>
   filter(is.finite(log(DIN.TP_molar))) |>
   group_by(ECO_REG_NAME, year, lakesizeclass) |>
-  # 25th percentile of nutrient concentrations from total assessed lakes and mean ratios
   summarise(medianlogDINP = median(log(DIN.TP_molar), na.rm = TRUE),
             medianDINP = median(DIN.TP_molar, na.rm = TRUE)) |>
   ungroup() |>
@@ -376,7 +362,6 @@ averages_np <- nla_data_subset |>
 # combine ratio and concentration threshold criteria 
 criteria <- left_join(averages_np, reflakes)  |>
   rename(TP_threshold = percentile75TP_PPB,
-         #TN_threshold = percentile75TN_PPM,
          DIN_threshold = percentile75DIN_PPM) 
 
 # No reference lakes for 2012 coastal plains (big), temperate plains (small), and northern plains (lil), for each, use average between 2007 and 2017 values - manual add unfortunately 
@@ -503,7 +488,7 @@ percent_lim1$Subpopulation = factor(percent_lim1$Subpopulation,
 
 text_percents_lim <- percent_lim1 |>
   select(year, Subpopulation, Category, Estimate.P) |>
-  #filter(Estimate.P > 10) |>
+  filter(Estimate.P > 10) |>
   mutate(perc = paste0(round(Estimate.P, digits = 0), "%")) 
 
 
@@ -684,7 +669,7 @@ comparison_lim <- lim_changes_fullset |>
   select(-4,-3) |>
   unique() |>
   mutate(p.value = '*')  
-# all were same!
+# all were not statistically different!
 
 # add significance to dataset
 lim_changes_fullset <- left_join(lim_changes_fullset, comparison_lim) |>
@@ -705,15 +690,13 @@ ecoreg_plot_limchange <- lim_changes_fullset |>
   theme_bw() +
   theme(panel.grid.major = element_blank(), 
         panel.grid.minor = element_blank()) +
-  #facet_grid(~Trophic.State, scales = "free_x") +
   facet_wrap(~Subpopulation, ncol = 3, scales = "free_y") +
   geom_hline(yintercept = 0) +
   labs(x = "",
        y = "% change 2007-2017") +
   scale_color_manual("",values = c("grey60","red4", "#336a98"))  +
   scale_fill_manual("",values = c("grey60","red4", "#336a98")) +
-  theme(#axis.text.x = element_text(angle = 49, vjust = 1, hjust =1),
-        strip.text.x = element_text(size = 7.5),
+  theme(strip.text.x = element_text(size = 7.5),
         plot.caption.position = "plot",
         plot.caption = element_text(hjust = 0, family = "serif"),
         legend.title = element_blank(),
@@ -931,7 +914,7 @@ comparison_ts <- TS_changes_fullset |>
   select(-4,-3) |>
   unique() |>
   mutate(p.value = '*') 
-# none were significant
+# all were not statistically different!
 
 # add significance to dataset
 TS_changes_fullset <- left_join(TS_changes_fullset, comparison_ts) |>
@@ -1075,7 +1058,6 @@ ggplot(TS_changes_fullseteco) +
   theme(panel.grid.major = element_blank(), 
         panel.grid.minor = element_blank()) +
   facet_wrap(~Subpopulation, scales = "free_y", ncol = 3) +
-  #facet_wrap(~Subpopulation, ncol = 3, scales = "free_y") +
   geom_hline(yintercept = 0) +
   labs(x = "",
        y = "% change 2007-2017")+                                                 
