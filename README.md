@@ -1,5 +1,4 @@
 # Nutrient limitation patterns of United States lakes
-journal
 
 Authors: Linnea A. Rock and Sarah M. Collins
 
