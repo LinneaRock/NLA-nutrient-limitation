@@ -107,7 +107,7 @@ performance::r2(m.0region) # adj r = 0.592
 m.1region <- lmer(log10(CHLA_PPB)~log10(concentration) * nutrient * factor(year) + (1|ECO_REG_NAME), correlations_data  |> filter(is.finite(log10(CHLA_PPB))))
 summary(m.1region) 
 anova(m.1region) 
-anova(m.1region, m.0region) #m.0region has lower AIC and is significantly better
+anova(m.1region, m.0region) #m.0region has lower AIC and is significantly better, i.e., adding year doesn't improve the model
 performance::r2(m.1region) #Conditional R2: 0.573, Marginal R2: 0.482
 
 
