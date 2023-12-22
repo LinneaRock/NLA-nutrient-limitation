@@ -4,7 +4,7 @@ library(tidyverse)
 #### Load and subset dataframe ####
 source("Data/NLA/Call_NLA_data.R")
 nla_data_subset <- all_NLA |>
-  select(ECO_REG_NAME, UNIQUE_ID, DATE_COL, VISIT_NO, NTL_PPM, PTL_PPB, DIN_PPM, tn.tp, DIN.TP, CHLA_PPB, TROPHIC_STATE, year,WGT_NLA, LON_DD, LAT_DD, AREA_HA, ELEV_PT, PCT_DEVELOPED_BSN, PCT_AGRIC_BSN, SITE_TYPE, URBAN, LAKE_ORIGIN, PTL_COND, NTL_COND, CHLA_COND) |>
+  select(ECO_REG_NAME, UNIQUE_ID, DATE_COL, VISIT_NO, NTL_PPM, PTL_PPB, DIN_PPM, tn.tp, DIN.TP, CHLA_PPB, TROPHIC_STATE, year,WGT_NLA, LON_DD, LAT_DD, AREA_HA, ELEV_PT, PCT_DEVELOPED_BSN, PCT_AGRIC_BSN, SITE_TYPE, URBAN, LAKE_ORIGIN, PTL_COND, NTL_COND, CHLA_COND, REFERENCE) |>
   rename(DIN.TP_molar = DIN.TP,
          TN.TP_molar = tn.tp) |>
   filter(AREA_HA >= 4) |> # removes 382 observations 
@@ -139,39 +139,55 @@ plot_model(m1, type='int')
 
 
 
-#### 3. Calculate limitations ####
-# categorize lakes based on size using quantiles to apply 4 size classes within each ecoregion
-# range(nla_data_subset$AREA_HA)
-# # there is a big range of lake sizes
-# 
-# nla_data_subset2 <- nla_data_subset |>
-#   group_by(ECO_REG_NAME) |>
-#   mutate(lakesizeclass = NA) |>
-#   mutate(lakesizeclass = ifelse(AREA_HA <= as.numeric(quantile(AREA_HA, 0.25)), 'lil',
-#                                 ifelse(between(AREA_HA, as.numeric(quantile(AREA_HA, 0.25)),as.numeric(quantile(AREA_HA, 0.50))), 'small',
-#                                        ifelse(between(AREA_HA, as.numeric(quantile(AREA_HA, 0.50)), as.numeric(quantile(AREA_HA, 0.75))), 'med',
-#                                               ifelse(AREA_HA > as.numeric(quantile(AREA_HA, 0.75)), 'big', lakesizeclass))))) |>
-#   ungroup()
-# 
-# nla_data_subset <- nla_data_subset2
-# rm(nla_data_subset2)
-# 
-# countlakesizes <- nla_data_subset |>
-#   group_by(ECO_REG_NAME, year, lakesizeclass) |>
-#   summarise(n=n()) |>
-#   ungroup()
-# 
-# sum(countlakesizes$n)
-# 
-# # shows how many lakes are in each combination of conditions (good/least dist., fair/intermediate dist., poor/most dist.) in each ecoregion and year and size class
-# condition_checks <- nla_data_subset |>
-#   group_by(ECO_REG_NAME, year, lakesizeclass, PTL_COND, NTL_COND, CHLA_COND) |>
-#   count()
+ggplot() +
+  geom_density(nla_data_subset, mapping=aes(x=NTL_PPM)) +
+  geom_density(nla_data_subset |> filter(REFERENCE == 'Y'),mapping= aes(x=NTL_PPM, color = 'Reference Conditions')) +
+  facet_wrap(~ECO_REG_NAME, ncol=3)
+
+
+ggplot() +
+  geom_density(nla_data_subset, mapping=aes(x=log10(CHLA_PPB)))
+
+
+ggplot(nla_data_subset) +
+ # geom_boxplot(mapping=aes(ECO_REG_NAME, CHLA_PPB)) +
+  geom_boxplot(nla_data_subset |> filter(REFERENCE == 'Y'), mapping=aes(ECO_REG_NAME, CHLA_PPB), color = 'red')
+
+
+
+
+# find where N and P differ and chlorophyll a is disturbed -- maybe this will appease them ?
+chla_dist <- nla_data_subset |>
+  filter(CHLA_COND %in% c('Poor', 'Fair', '3:MOST DISTURBED', '2:INTERMEDIATE DISTURBANCE'))
+
+LOW_N <-chla_dist |>
+  filter(NTL_COND %in% c('Good', '1:LEAST DISTURBED', 'Fair', '2:INTERMEDIATE DISTURBANCE')) |>
+ # filter(!PTL_COND %in% c('Good', '1:LEAST DISTURBED')) |>
+  group_by(ECO_REG_NAME) |>
+  summarise(meanNP_N = mean(TN.TP_molar))
+
+LOW_P <-chla_dist |>
+  filter(PTL_COND %in% c('Good', '1:LEAST DISTURBED', 'Fair', '2:INTERMEDIATE DISTURBANCE')) |>
+ # filter(!PTL_COND %in% c('Good', '1:LEAST DISTURBED')) |>
+  group_by(ECO_REG_NAME) |>
+  summarise(meanNP_P = mean(TN.TP_molar))
+
+ratio <- left_join(LOW_N, LOW_P) |>
+  group_by(ECO_REG_NAME) |>
+  summarise(medianNP = median(c(TN.TP_molar, TN.TP_molar)))
+
+
+ggplot() +
+  geom_density(LOW_N, mapping=aes(x=TN.TP_molar), color='red') +
+  geom_density(LOW_P, mapping=aes(x=TN.TP_molar), color='blue') +
+  facet_wrap(~ECO_REG_NAME, ncol=3)
+
+
 
 # shows how many EPA hand-selected reference lakes exist in each ecoregion and year and size class. these overlap with our best condition lakes from 'condition_checks,' but also include lakes that are not in best conditions, but still are representative of healthy lakes deemed by folks collecting the data who have in-depth knowledge of the area they are surveying. 
 reference_checks <- nla_data_subset |>
-  filter(SITE_TYPE %in% c('HAND', 'REF_Lake')) |>
-  group_by(ECO_REG_NAME) |>
+  filter(REFERENCE == 'Y') |>
+  group_by(ECO_REG_NAME, year) |>
   count()
 # THERE WERE NO REFERENCE LAKES IN 2012!
 
@@ -189,7 +205,7 @@ reference_checks <- nla_data_subset |>
 
 ## now get the specified reference lakes 
 ref.tmp <- nla_data_subset |>
-  filter(SITE_TYPE %in% c('HAND', 'REF_Lake')) # 222 lakes
+  filter(REFERENCE == 'Y')  # 437 lakes
 
 
 
@@ -204,83 +220,32 @@ reflakes <- ref.tmp|>
   # 75th percentile of nutrient concentrations from reference lakes
   group_by(ECO_REG_NAME, n) |>
   summarise(percentile75TP_PPB = quantile(PTL_PPB, probs = 0.75),
-            percentile75TN_PPM = quantile(NTL_PPM, probs = 0.75, na.rm=TRUE),
-            meanNP = mean(TN.TP_molar, na.rm=TRUE),
-            medianNP = median(TN.TP_molar, na.rm=TRUE)) |>
-  ungroup() 
-
-
-
-# get median N:P ratio in each ecoregion, year, and size class to use as threshold 
-averages_np <- nla_data_subset |>
-  filter(is.finite(log(TN.TP_molar))) |>
-  group_by(ECO_REG_NAME, year) |>
-  summarise(medianlogTNP = median(log(TN.TP_molar), na.rm = TRUE),
-            medianTNP = median(TN.TP_molar, na.rm = TRUE)) |>
+            percentile75TN_PPM = quantile(NTL_PPM, probs = 0.75, na.rm=TRUE)) |>
   ungroup() |>
-  distinct()
+  left_join(ratio)
 
-# combine ratio and concentration threshold criteria 
-criteria <- left_join(averages_np, reflakes)  |>
+criteria <- reflakes  |>
   rename(TP_threshold = percentile75TP_PPB,
-         DIN_threshold = percentile75DIN_PPM) 
-
-# No reference lakes for 2012 coastal plains (big), temperate plains (small), and northern plains (lil), for each, use average between 2007 and 2017 values - manual add unfortunately 
-CP_TP <- as.numeric(mean(c(((criteria |> filter(ECO_REG_NAME == 'Coastal Plains',year == '2017', lakesizeclass == 'big'))$TP_threshold), ((criteria |> filter(ECO_REG_NAME == 'Coastal Plains',year == '2007',lakesizeclass == 'big'))$TP_threshold))))
-CP_DIN <- as.numeric(mean(c(((criteria |> filter(ECO_REG_NAME == 'Coastal Plains',year == '2017', lakesizeclass == 'big'))$DIN_threshold), ((criteria |> filter(ECO_REG_NAME == 'Coastal Plains',year == '2007',lakesizeclass == 'big'))$DIN_threshold))))
-
-TP_TP <- as.numeric(mean(c(((criteria |> filter(ECO_REG_NAME == 'Temperate Plains',year == '2017', lakesizeclass == 'small'))$TP_threshold), ((criteria |> filter(ECO_REG_NAME == 'Temperate Plains',year == '2007',lakesizeclass == 'small'))$TP_threshold))))
-TP_DIN <- as.numeric(mean(c(((criteria |> filter(ECO_REG_NAME == 'Temperate Plains',year == '2017', lakesizeclass == 'small'))$DIN_threshold), ((criteria |> filter(ECO_REG_NAME == 'Temperate Plains',year == '2007',lakesizeclass == 'small'))$DIN_threshold))))
-
-NP_TP <- as.numeric(mean(c(((criteria |> filter(ECO_REG_NAME == 'Northern Plains',year == '2017', lakesizeclass == 'lil'))$TP_threshold), ((criteria |> filter(ECO_REG_NAME == 'Northern Plains',year == '2007',lakesizeclass == 'lil'))$TP_threshold))))
-NP_DIN <- as.numeric(mean(c(((criteria |> filter(ECO_REG_NAME == 'Northern Plains',year == '2017', lakesizeclass == 'lil'))$DIN_threshold), ((criteria |> filter(ECO_REG_NAME == 'Northern Plains',year == '2007',lakesizeclass == 'lil'))$DIN_threshold))))
-
-criteria <- criteria |>
-  mutate(TP_threshold = ifelse(is.na(TP_threshold) & 
-                                 ECO_REG_NAME=='Coastal Plains', CP_TP, TP_threshold),
-         DIN_threshold = ifelse(is.na(DIN_threshold) & 
-                                  ECO_REG_NAME=='Coastal Plains', CP_DIN, DIN_threshold)) |>
-  mutate(TP_threshold = ifelse(is.na(TP_threshold) & 
-                                 ECO_REG_NAME=='Temperate Plains', TP_TP, TP_threshold),
-         DIN_threshold = ifelse(is.na(DIN_threshold) & 
-                                  ECO_REG_NAME=='Temperate Plains', TP_DIN, DIN_threshold)) |>
-  mutate(TP_threshold = ifelse(is.na(TP_threshold) & 
-                                 ECO_REG_NAME=='Northern Plains', NP_TP, TP_threshold),
-         DIN_threshold = ifelse(is.na(DIN_threshold) & 
-                                  ECO_REG_NAME=='Northern Plains', NP_DIN, DIN_threshold))
-
-#write.csv(criteria, "criteria.csv") 
-
+         TN_threshold = percentile75TN_PPM) 
 
 # generate nutrient limitations
 limits <- nla_data_subset|> #3270 lakes
-  filter(is.finite(log(DIN.TP_molar))) |> #3172
-  filter(!is.na(DIN_PPM)) |> # 3172 observations, loss of 98 observations from analysis
+ # filter(is.finite(log(DIN.TP_molar))) |> #3172
+ # filter(!is.na(DIN_PPM)) |> # 3172 observations, loss of 98 observations from analysis
   left_join(criteria) |>
   mutate(limitation = NA) |>
-  mutate(limitation = ifelse(PTL_PPB > TP_threshold & log(DIN.TP_molar) < medianlogDINP, "N-limitation", 
-                             ifelse(DIN_PPM > DIN_threshold & log(DIN.TP_molar) > medianlogDINP, "P-limitation",
+  mutate(limitation = ifelse(PTL_PPB > TP_threshold & TN.TP_molar < medianNP, "N-limitation", 
+                             ifelse(NTL_PPM > TN_threshold & TN.TP_molar > medianNP, "P-limitation",
                                     ifelse(is.na(limitation), "Co-nutrient limitation", limitation))))
 
-nrow(limits |> filter(limitation == "P-limitation")) # 907
-nrow(limits |> filter(limitation == "N-limitation")) # 1287
-nrow(limits |> filter(limitation == "Co-nutrient limitation")) # 978
+nrow(limits |> filter(limitation == "P-limitation")) # 920
+nrow(limits |> filter(limitation == "N-limitation")) # 1208
+nrow(limits |> filter(limitation == "Co-nutrient limitation")) # 1142
 
-## plot the limited lakes
-ggplot(limits) +
-  geom_point(aes(log(PTL_PPB, base = 10), log(NTL_PPM, base = 10), fill = limitation), size = 2.5, shape = 21, alpha = 0.8) +
-  theme_bw() +
-  theme(panel.grid.major = element_blank(), 
-        panel.grid.minor = element_blank()) +
-  scale_fill_manual("",values = c("grey60","red4", "#336a98")) +
-  labs(y = "Log TN"~(m*g~L^-1), x = "Log TP"~(mu*g~L^-1),
-       caption = "Figure X. N-limited, P-limited, and co-nutrient limited lakes across the total assessed lakes dataset. Plotted as TN vs 
-TP rather than DIN vs TP becaue of better correlation between the total nutrients.") +
-  theme(plot.caption.position = "plot",
-        plot.caption = element_text(hjust = 0, family = "serif"))
 
-# 
-# 
+
+
+
 # lm_dat <- nla_data_subset |>
 #   select(ECO_REG_NAME, CHLA_PPB, PTL_PPB, NTL_PPM) |>
 #   mutate(NTL_PPB = NTL_PPM * 1000) |>
