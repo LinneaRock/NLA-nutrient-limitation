@@ -123,3 +123,25 @@ nla17call2 <- nla17call |>
   left_join(ws_data_2017)
 
 write.csv(nla17call2, "Data/NLA/NLA_2017.csv")
+
+
+
+
+
+                                                                
+                                                                
+
+
+# Finding better reference lake parameters from site information
+References_17 <- read.csv("C:/Users/linne/Downloads/nla_2017_site_information-data.csv") |>
+  select(SITE_ID, RT_NLA17) |>
+  filter(RT_NLA17 == 'R') |>
+  distinct() |> # 214
+  mutate(REFERENCE = 'Y') |>
+  select(-RT_NLA17)
+
+
+nla17 <- read.csv('Data/NLA/NLA_2017.csv') |>
+  left_join(References_17)
+
+write.csv(nla17, "Data/NLA/NLA_2017.csv")

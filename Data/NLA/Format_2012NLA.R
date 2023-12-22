@@ -212,3 +212,27 @@ nla12 <- NLA_2012_1 |>
 
 write.csv(nla12, "Data/NLA/NLA_2012.csv")
 
+
+
+
+
+
+                                                                  
+
+                                                                  
+
+
+# Finding better reference lake parameters from site information
+References_12 <- read.csv("C:/Users/linne/Downloads/nla2012_wide_siteinfo_08232016.csv") |>
+  select(SITE_ID, REF_NLA12_NUTR) |>
+  filter(REF_NLA12_NUTR == 'R') |>
+  distinct() |> # 237
+  mutate(REFERENCE = 'Y') |>
+  select(-REF_NLA12_NUTR)
+
+
+nla12 <- read.csv('Data/NLA/NLA_2012.csv') |>
+  left_join(References_12)
+
+write.csv(nla12, "Data/NLA/NLA_2012.csv")
+

@@ -115,7 +115,23 @@ nla07 <- nla2007_tntp1 |>
 write.csv(nla07, "Data/NLA/NLA_2007.csv")
 
 
+                                                      
+                                                      
+                                                      
 
 
+# Finding better reference lake parameters from site information
+References_07 <- read.csv("C:/Users/linne/Downloads/nla2007_sampledlakeinformation_20091113.csv") |>
+  select(SITE_ID, RT_NLA, REF_NUTR) |>
+  filter(RT_NLA == 'REF') |>
+  distinct() |> # 170 lakes
+  filter(REF_NUTR == 'Y') |> # 70 lakes
+  mutate(REFERENCE = 'Y') |>
+  select(-REF_NUTR, -RT_NLA)
 
-             
+nla07 <- read.csv('Data/NLA/NLA_2007.csv') |>
+  left_join(References_07)
+
+write.csv(nla07, "Data/NLA/NLA_2007.csv")
+
+
