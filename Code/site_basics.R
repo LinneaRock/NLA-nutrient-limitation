@@ -12,6 +12,7 @@ nrow(unique_2007 |> filter(VISIT_NO == 1) |> select(UNIQUE_ID) |> distinct()) # 
 nrow(unique_2007 |> filter(VISIT_NO == 2)  |> select(UNIQUE_ID) |> distinct()) # 95 lakes resampled
 
 nrow(NLA07 |> filter(SITE_TYPE == "REF_Lake") |> select(UNIQUE_ID) |> distinct()) # 124 reference lakes
+nrow(NLA07 |> filter(REFERENCE == "Y") |> select(UNIQUE_ID) |> distinct())# 70 reference lakes
 
 #how many sites in NLA 2012
 unique_2012 <- NLA12 |>
@@ -21,7 +22,7 @@ unique_2012 <- NLA12 |>
 nrow(unique_2012 |> filter(VISIT_NO == 1)  |> select(UNIQUE_ID) |> distinct()) # 1038 lakes surveyed
 nrow(unique_2012 |> filter(VISIT_NO == 2)  |> select(UNIQUE_ID) |> distinct()) # 100 lakes resampled
 
-nrow(NLA12 |> filter(SITE_TYPE == "REF_Lake") |> select(UNIQUE_ID) |> distinct()) # 0 reference lakes
+nrow(NLA12 |> filter(REFERENCE == "Y") |> select(UNIQUE_ID) |> distinct()) # 182 reference lakes
 
 
 #how many sites in NLA 2017
@@ -32,7 +33,7 @@ unique_2017 <- NLA17 |>
 nrow(unique_2017 |> filter(VISIT_NO == 1)  |> select(UNIQUE_ID) |> distinct()) # 1112 lakes surveyed
 nrow(unique_2017 |> filter(VISIT_NO == 2)  |> select(UNIQUE_ID) |> distinct()) # 97 lakes resampled
 
-nrow(NLA17 |> filter(SITE_TYPE == "HAND") |> select(UNIQUE_ID) |> distinct()) # 108 reference lakes
+nrow(NLA17 |> filter(REFERENCE == "Y") |> select(UNIQUE_ID) |> distinct()) # 214 reference lakes
 
 
 crossover2007_2012 <- unique_2007 |>

@@ -92,7 +92,7 @@ test_dat <- test_dat |>
 options(scipen = 999)
 ggplot(test_dat, aes(concentration, CHLA_PPB, color = nutrient, group = nutrient)) +
   geom_point() +
-  geom_line(aes(y=fit), color='black') +
+  geom_smooth(method='lm', aes(y=fit), color='black') +
   facet_wrap(.~ECO_REG_NAME, ncol=3) +
   scale_y_log10() +
   scale_x_log10()
