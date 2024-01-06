@@ -11,7 +11,6 @@ unique_2007 <- NLA07 |>
 nrow(unique_2007 |> filter(VISIT_NO == 1) |> select(UNIQUE_ID) |> distinct()) # 1156 lakes surveyed
 nrow(unique_2007 |> filter(VISIT_NO == 2)  |> select(UNIQUE_ID) |> distinct()) # 95 lakes resampled
 
-nrow(NLA07 |> filter(SITE_TYPE == "REF_Lake") |> select(UNIQUE_ID) |> distinct()) # 124 reference lakes
 nrow(NLA07 |> filter(REFERENCE == "Y") |> select(UNIQUE_ID) |> distinct())# 70 reference lakes
 
 #how many sites in NLA 2012

@@ -18,7 +18,7 @@ library(readxl)
 #### Load and subset dataframe ####
 source("Data/NLA/Call_NLA_data.R")
 nla_data_subset <- all_NLA |>
-  select(ECO_REG_NAME, UNIQUE_ID, DATE_COL, VISIT_NO, NTL_PPM, PTL_PPB, DIN_PPM, tn.tp, DIN.TP, CHLA_PPB, TROPHIC_STATE, year,WGT_NLA, LON_DD, LAT_DD, AREA_HA, ELEV_PT, PCT_DEVELOPED_BSN, PCT_AGRIC_BSN, SITE_TYPE, URBAN, LAKE_ORIGIN, PTL_COND, NTL_COND, CHLA_COND) |>
+  select(ECO_REG_NAME, UNIQUE_ID, DATE_COL, VISIT_NO, NTL_PPM, PTL_PPB, DIN_PPM, tn.tp, DIN.TP, CHLA_PPB, TROPHIC_STATE, year,WGT_NLA, LON_DD, LAT_DD, AREA_HA, ELEV_PT, PCT_DEVELOPED_BSN, PCT_AGRIC_BSN, SITE_TYPE, URBAN, LAKE_ORIGIN, PTL_COND, NTL_COND, CHLA_COND, REFERENCE) |>
   rename(DIN.TP_molar = DIN.TP,
          TN.TP_molar = tn.tp) |>
   filter(AREA_HA >= 4) |> # removes 382 observations 
@@ -512,11 +512,12 @@ ggsave("Figures/limitbars_ecoreg_pub.png", height = 4.5, width = 6.5, units = "i
 
 
 lim_natplot <- ggplot(percent_lim1 |>
-         filter(Subpopulation == "National"), aes(year, Estimate.P, fill = Category)) +
-  geom_point(size=2, color = "black", pch = 21, position=position_dodge(width=0.5)) +
+         filter(Subpopulation == "National"), aes(year, Estimate.P, fill = Category, shape=Category)) +
+  geom_point(size=2, color = "black", position=position_dodge(width=0.5)) +
   geom_errorbar(aes(color = Category, year, Estimate.P, ymin = Estimate.P - StdError.P, ymax = Estimate.P + StdError.P, color = Category), width = 0.2, position=position_dodge(width=0.5)) +
   scale_color_manual("",values = c("grey60","red4", "#336a98"))  +
   scale_fill_manual("",values = c("grey60","red4", "#336a98")) +
+  scale_shape_manual('',values = c(21,22,23)) +
   theme_bw() +
   theme(panel.grid.major.x = element_blank()) +
   geom_vline(xintercept = c(1.5, 2.5)) +
@@ -526,11 +527,12 @@ lim_natplot <- ggplot(percent_lim1 |>
   theme(legend.title = element_blank())
 
 lim_regplot <- ggplot(percent_lim1 |>
-         filter(Subpopulation != "National"), aes(year, Estimate.P, fill = Category)) +
-  geom_point(size=2, color = "black", pch = 21, position=position_dodge(width=0.5)) +
+         filter(Subpopulation != "National"), aes(year, Estimate.P, fill = Category, shape=Category)) +
+  geom_point(size=2, color = "black", position=position_dodge(width=0.5)) +
   geom_errorbar(aes(color = Category, year, Estimate.P, ymin = Estimate.P - StdError.P, ymax = Estimate.P + StdError.P, color = Category), width = 0.2, position=position_dodge(width=0.5)) +
   scale_color_manual("",values = c("grey60","red4", "#336a98"))  +
   scale_fill_manual("",values = c("grey60","red4", "#336a98")) +
+  scale_shape_manual('',values = c(21,22,23)) +
   theme_bw() +
   theme(panel.grid.major.x = element_blank()) +
   geom_vline(xintercept = c(1.5, 2.5)) +
@@ -678,8 +680,8 @@ lim_changes_fullset <- left_join(lim_changes_fullset, comparison_lim) |>
 ecoreg_plot_limchange <- lim_changes_fullset |>
   filter(Subpopulation != "National") |>
   ggplot() +
-  geom_point(aes(Category, DiffEst.P, fill = Category, group = sample_set),
-             color = "black", pch = 21, size = 2,
+  geom_point(aes(Category, DiffEst.P, fill = Category, shape=Category, group = sample_set),
+             color = "black", size = 2,
              position = position_dodge(width = 0.75)) +
   geom_errorbar(aes(Category, DiffEst.P,
                     ymin = DiffEst.P - MarginofError.P,
@@ -696,6 +698,7 @@ ecoreg_plot_limchange <- lim_changes_fullset |>
        y = "% change 2007-2017") +
   scale_color_manual("",values = c("grey60","red4", "#336a98"))  +
   scale_fill_manual("",values = c("grey60","red4", "#336a98")) +
+  scale_shape_manual('',values = c(21,22,23)) +
   theme(strip.text.x = element_text(size = 7.5),
         plot.caption.position = "plot",
         plot.caption = element_text(hjust = 0, family = "serif"),
@@ -707,8 +710,8 @@ ecoreg_plot_limchange <- lim_changes_fullset |>
 nat_plot_limchange <- lim_changes_fullset %>%
   filter(Subpopulation == "National") %>%
   ggplot() +
-  geom_point(aes(Category, DiffEst.P, fill = Category, group = sample_set),
-             color = "black", pch = 21, size = 2,
+  geom_point(aes(Category, DiffEst.P, fill = Category, shape=Category, group = sample_set),
+             color = "black",  size = 2,
              position = position_dodge(width = 0.75)) +
   geom_errorbar(aes(Category, DiffEst.P,
                     ymin = DiffEst.P - MarginofError.P,
@@ -726,6 +729,7 @@ nat_plot_limchange <- lim_changes_fullset %>%
        y = "% change 2007-2017") +
   scale_color_manual("", values = c("grey60", "red4", "#336a98")) +
   scale_fill_manual("", values = c("grey60", "red4", "#336a98")) +
+  scale_shape_manual('',values = c(21,22,23)) +
   theme(legend.title = element_blank())
 
 
