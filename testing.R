@@ -164,13 +164,13 @@ LOW_N <-chla_dist |>
   filter(NTL_COND %in% c('Good', '1:LEAST DISTURBED', 'Fair', '2:INTERMEDIATE DISTURBANCE')) |>
  # filter(!PTL_COND %in% c('Good', '1:LEAST DISTURBED')) |>
   group_by(ECO_REG_NAME) |>
-  summarise(meanNP_N = mean(TN.TP_molar))
+  mutate(meanNP_N = mean(TN.TP_molar))
 
 LOW_P <-chla_dist |>
   filter(PTL_COND %in% c('Good', '1:LEAST DISTURBED', 'Fair', '2:INTERMEDIATE DISTURBANCE')) |>
  # filter(!PTL_COND %in% c('Good', '1:LEAST DISTURBED')) |>
   group_by(ECO_REG_NAME) |>
-  summarise(meanNP_P = mean(TN.TP_molar))
+  mutate(meanNP_P = mean(TN.TP_molar))
 
 ratio <- left_join(LOW_N, LOW_P) |>
   group_by(ECO_REG_NAME) |>
@@ -180,6 +180,7 @@ ratio <- left_join(LOW_N, LOW_P) |>
 ggplot() +
   geom_density(LOW_N, mapping=aes(x=TN.TP_molar), color='red') +
   geom_density(LOW_P, mapping=aes(x=TN.TP_molar), color='blue') +
+  geom_point(ratio, mapping = aes(medianNP, 0.025)) +
   facet_wrap(~ECO_REG_NAME, ncol=3)
 
 
@@ -189,7 +190,7 @@ reference_checks <- nla_data_subset |>
   filter(REFERENCE == 'Y') |>
   group_by(ECO_REG_NAME, year) |>
   count()
-# THERE WERE NO REFERENCE LAKES IN 2012!
+
 
 
 # We will combine these 'best' lakes with the selected 'reference' lakes to build our reference condition nutrient thresholds that determine healthy waters.
@@ -306,7 +307,7 @@ nrow(limits |> filter(limitation == "Co-nutrient limitation")) # 1142
 #   filter(is.finite(log10(CHLA_PPB))) |>
 #   mutate(fit = predict(m.1))
 
-
+library(lme4)
 
 lm_dat <- nla_data_subset |>
   select(ECO_REG_NAME, CHLA_PPB, PTL_PPB, NTL_PPM) |>
@@ -363,3 +364,28 @@ ggplot(lm_dat, aes(concentration, CHLA_PPB, color = nutrient, group = nutrient))
 summary(m.1)
 coef(m.1)
 anova(m.1)
+
+
+
+##########################################################
+perc95chla <- nla_data_subset |>
+  group_by(ECO_REG_NAME) |>
+  mutate(perc_95 = quantile(CHLA_PPB, 0.95)) |>
+  ungroup() |>
+  filter(CHLA_PPB >= perc_95) # |>
+  # find median N:P at high chlorophyll
+ # group_by(ECO_REG_NAME) |>
+#  summarise(medNP = median(TN.TP_molar))
+
+ggplot() +
+  geom_point(nla_data_subset, mapping=aes(PTL_PPB, CHLA_PPB)) +
+  geom_smooth(method='lm', perc95chla, mapping=aes(PTL_PPB, CHLA_PPB, color=ECO_REG_NAME, group=ECO_REG_NAME), se=FALSE) +
+  # geom_smooth(method='lm', perc95chla, mapping=aes(PTL_PPB, CHLA_PPB), color = 'red', se=FALSE)  +
+  scale_y_log10() +
+  scale_x_log10()
+
+ggplot() +
+  geom_point(nla_data_subset, mapping=aes(NTL_PPM, CHLA_PPB)) +
+  geom_smooth(method='lm', se=FALSE, perc95chla, mapping=aes(NTL_PPM, CHLA_PPB, color=ECO_REG_NAME, group=ECO_REG_NAME)) +
+  scale_y_log10() +
+  scale_x_log10()
