@@ -418,15 +418,77 @@ nla_order_N <-nla_data_subset |>
   reframe(perc95CHLa = rollapply(CHLA_PPB, width=ten_perc, FUN='quantile', p = 0.95),
           perc50TN = rollapply(NTL_PPB, width=ten_perc, FUN='quantile', p = 0.50))
 
-highyield_P_lm <- lm(perc95CHLa~perc50TP*ECO_REG_NAME, nla_order_P)
+# high yield linear regressions on log transformed data
+highyield_P_lm <- lm(log10(perc95CHLa)~log10(perc50TP)*ECO_REG_NAME, nla_order_P)
 summary(highyield_P_lm)
-anova(highyield_P_lm)
-highyield_N_lm <- lm(perc95CHLa~perc50TN*ECO_REG_NAME, nla_order_N)
+coefp<-coef(highyield_P_lm)
 
-nap_P_lm <- lm(perc95CHLa~perc50TP, nla_order_P |> filter(ECO_REG_NAME == 'Northern Appalachians'))
-summary(nap_P_lm)
-
-lm_
+highyield_N_lm <- lm(log10(perc95CHLa)~log10(perc50TN)*ECO_REG_NAME, nla_order_N)
+summary(highyield_N_lm)
+coefn<-coef(highyield_N_lm)
 
 
-  
+# pull linear regression info into a table
+lm_dat_highyield <- data.frame(ECO_REG_NAME = unique(nla_data_subset$ECO_REG_NAME)) |>
+  # get betas for each ecoregion from Chla-TP model
+  mutate(P_slope = case_when(ECO_REG_NAME=='Northern Appalachians'~coefp[2],
+                             ECO_REG_NAME=='Southern Appalachians'~coefp[2]+coefp[11],
+                             ECO_REG_NAME=='Coastal Plains'~coefp[2]+coefp[12],
+                             ECO_REG_NAME=='Temperate Plains'~coefp[2]+coefp[13],
+                             ECO_REG_NAME=='Upper Midwest'~coefp[2]+coefp[14],
+                             ECO_REG_NAME=='Northern Plains'~coefp[2]+coefp[15],
+                             ECO_REG_NAME=='Southern Plains'~coefp[2]+coefp[16],
+                             ECO_REG_NAME=='Xeric'~coefp[2]+coefp[17],
+                             ECO_REG_NAME=='Western Mountains'~coefp[2]+coefp[18])) |>
+  # get alphas for each ecoregion from Chla-TP model
+  mutate(P_intercept = case_when(ECO_REG_NAME=='Northern Appalachians'~coefp[1],
+                             ECO_REG_NAME=='Southern Appalachians'~coefp[1]+coefp[3],
+                             ECO_REG_NAME=='Coastal Plains'~coefp[1]+coefp[4],
+                             ECO_REG_NAME=='Temperate Plains'~coefp[1]+coefp[5],
+                             ECO_REG_NAME=='Upper Midwest'~coefp[1]+coefp[6],
+                             ECO_REG_NAME=='Northern Plains'~coefp[1]+coefp[7],
+                             ECO_REG_NAME=='Southern Plains'~coefp[1]+coefp[8],
+                             ECO_REG_NAME=='Xeric'~coefp[1]+coefp[9],
+                             ECO_REG_NAME=='Western Mountains'~coefp[1]+coefp[10])) |>
+  # get betas for each ecoregion from Chla-TN model
+  mutate(N_slope = case_when(ECO_REG_NAME=='Northern Appalachians'~coefn[2],
+                             ECO_REG_NAME=='Southern Appalachians'~coefn[2]+coefn[11],
+                             ECO_REG_NAME=='Coastal Plains'~coefn[2]+coefn[12],
+                             ECO_REG_NAME=='Temperate Plains'~coefn[2]+coefn[13],
+                             ECO_REG_NAME=='Upper Midwest'~coefn[2]+coefn[14],
+                             ECO_REG_NAME=='Northern Plains'~coefn[2]+coefn[15],
+                             ECO_REG_NAME=='Southern Plains'~coefn[2]+coefn[16],
+                             ECO_REG_NAME=='Xeric'~coefn[2]+coefn[17],
+                             ECO_REG_NAME=='Western Mountains'~coefn[2]+coefn[18])) |>
+  # get alphas for each ecoregion from Chla-TN model
+  mutate(N_intercept = case_when(ECO_REG_NAME=='Northern Appalachians'~coefn[1],
+                                 ECO_REG_NAME=='Southern Appalachians'~coefn[1]+coefn[3],
+                                 ECO_REG_NAME=='Coastal Plains'~coefn[1]+coefn[4],
+                                 ECO_REG_NAME=='Temperate Plains'~coefn[1]+coefn[5],
+                                 ECO_REG_NAME=='Upper Midwest'~coefn[1]+coefn[6],
+                                 ECO_REG_NAME=='Northern Plains'~coefn[1]+coefn[7],
+                                 ECO_REG_NAME=='Southern Plains'~coefn[1]+coefn[8],
+                                 ECO_REG_NAME=='Xeric'~coefn[1]+coefn[9],
+                                 ECO_REG_NAME=='Western Mountains'~coefn[1]+coefn[10]))
+
+
+# calculate high yield Chla from each real observation of TN and TP using the high yield regressions
+HighYield_Chla <- nla_data_subset |> 
+  left_join(lm_dat_highyield) |>
+  mutate(log10chla_HY_P = P_slope*log10(PTL_PPB) + P_intercept,
+         log10chla_HY_N = N_slope*log10(NTL_PPM*1000) + N_intercept) |>
+  # then calculate fraction yield Chla - as observed Chla/high yield chla
+  mutate(fractionyieldP = log10(CHLA_PPB)/log10chla_HY_P,
+         fractionyieldN = log10(CHLA_PPB)/log10chla_HY_N) 
+
+
+ggplot(HighYield_Chla, aes(log10chla_HY_P, log10chla_HY_N)) +
+  geom_point() +
+  geom_abline(slope=1, intercept=0) +
+  facet_wrap(~ECO_REG_NAME,scales='free')
+
+
+
+
+
+
