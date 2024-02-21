@@ -368,24 +368,65 @@ anova(m.1)
 
 
 ##########################################################
-perc95chla <- nla_data_subset |>
+# perc95chla <- nla_data_subset |>
+#   group_by(ECO_REG_NAME) |>
+#   mutate(perc_95 = quantile(CHLA_PPB, 0.95)) |>
+#   ungroup() |>
+#   filter(CHLA_PPB >= perc_95) # |>
+#   # find median N:P at high chlorophyll
+#  # group_by(ECO_REG_NAME) |>
+# #  summarise(medNP = median(TN.TP_molar))
+# 
+# ggplot() +
+#   geom_point(nla_data_subset, mapping=aes(PTL_PPB, CHLA_PPB)) +
+#   geom_smooth(method='lm', perc95chla, mapping=aes(PTL_PPB, CHLA_PPB, color=ECO_REG_NAME, group=ECO_REG_NAME), se=FALSE) +
+#   # geom_smooth(method='lm', perc95chla, mapping=aes(PTL_PPB, CHLA_PPB), color = 'red', se=FALSE)  +
+#   scale_y_log10() +
+#   scale_x_log10()
+# 
+# ggplot() +
+#   geom_point(nla_data_subset, mapping=aes(NTL_PPM, CHLA_PPB)) +
+#   geom_smooth(method='lm', se=FALSE, perc95chla, mapping=aes(NTL_PPM, CHLA_PPB, color=ECO_REG_NAME, group=ECO_REG_NAME)) +
+#   scale_y_log10() +
+#   scale_x_log10()
+
+
+
+library(zoo)
+# following methods from Moon et al.
+# they used ~10% of data moving sample subset - this will be different for each ecoregion in our tdata
+ten_perc <- nla_data_subset |> count(ECO_REG_NAME) |> mutate(ten_perc = round(0.1*n)) 
+
+
+nla_order_P <-nla_data_subset |>
+  # arrange low to high P
+  arrange(ECO_REG_NAME, PTL_PPB) |>
+  left_join(ten_perc) |>
+# pull 95th percentile CHLA and 50th percentile TN and TP from moving 10% 
   group_by(ECO_REG_NAME) |>
-  mutate(perc_95 = quantile(CHLA_PPB, 0.95)) |>
-  ungroup() |>
-  filter(CHLA_PPB >= perc_95) # |>
-  # find median N:P at high chlorophyll
- # group_by(ECO_REG_NAME) |>
-#  summarise(medNP = median(TN.TP_molar))
+  reframe(perc95CHLa = rollapply(CHLA_PPB, width=ten_perc, FUN='quantile', p = 0.95),
+          perc50TP = rollapply(PTL_PPB, width=ten_perc, FUN='quantile', p = 0.50))
 
-ggplot() +
-  geom_point(nla_data_subset, mapping=aes(PTL_PPB, CHLA_PPB)) +
-  geom_smooth(method='lm', perc95chla, mapping=aes(PTL_PPB, CHLA_PPB, color=ECO_REG_NAME, group=ECO_REG_NAME), se=FALSE) +
-  # geom_smooth(method='lm', perc95chla, mapping=aes(PTL_PPB, CHLA_PPB), color = 'red', se=FALSE)  +
-  scale_y_log10() +
-  scale_x_log10()
 
-ggplot() +
-  geom_point(nla_data_subset, mapping=aes(NTL_PPM, CHLA_PPB)) +
-  geom_smooth(method='lm', se=FALSE, perc95chla, mapping=aes(NTL_PPM, CHLA_PPB, color=ECO_REG_NAME, group=ECO_REG_NAME)) +
-  scale_y_log10() +
-  scale_x_log10()
+nla_order_N <-nla_data_subset |>
+  mutate(NTL_PPB = NTL_PPM*1000) |>
+  # arrange low to high N
+  arrange(ECO_REG_NAME, NTL_PPB) |>
+  left_join(ten_perc) |>
+  # pull 95th percentile CHLA and 50th percentile TN and TP from moving 10% 
+  group_by(ECO_REG_NAME) |>
+  reframe(perc95CHLa = rollapply(CHLA_PPB, width=ten_perc, FUN='quantile', p = 0.95),
+          perc50TN = rollapply(NTL_PPB, width=ten_perc, FUN='quantile', p = 0.50))
+
+highyield_P_lm <- lm(perc95CHLa~perc50TP*ECO_REG_NAME, nla_order_P)
+summary(highyield_P_lm)
+anova(highyield_P_lm)
+highyield_N_lm <- lm(perc95CHLa~perc50TN*ECO_REG_NAME, nla_order_N)
+
+nap_P_lm <- lm(perc95CHLa~perc50TP, nla_order_P |> filter(ECO_REG_NAME == 'Northern Appalachians'))
+summary(nap_P_lm)
+
+lm_
+
+
+  
