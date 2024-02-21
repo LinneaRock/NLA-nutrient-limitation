@@ -8,7 +8,8 @@ nla_data_subset <- all_NLA |>
   rename(DIN.TP_molar = DIN.TP,
          TN.TP_molar = tn.tp) |>
   filter(AREA_HA >= 4) |> # removes 382 observations 
-  distinct()
+  distinct() |>
+  mutate(NTL_PPB = NTL_PPM*1000)
 
 
 
@@ -487,6 +488,10 @@ ggplot(HighYield_Chla, aes(log10chla_HY_P, log10chla_HY_N)) +
   geom_abline(slope=1, intercept=0) +
   facet_wrap(~ECO_REG_NAME,scales='free')
 
+
+# find the N:P ratio that is associated with 1:1 high yield chla line
+lm_dat_highyield <- lm_dat_highyield |>
+  mutate(NP_reg_tippt = (10^(((5-N_intercept)/N_slope)/((5-P_intercept)/P_slope)))*2.211306) # unlog it (10^) and make it molar ratio * 2.211306
 
 
 
