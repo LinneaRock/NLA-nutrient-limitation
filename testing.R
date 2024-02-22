@@ -410,7 +410,7 @@ nla_order_P <-nla_data_subset |>
 
 
 nla_order_N <-nla_data_subset |>
-  mutate(NTL_PPB = NTL_PPM*1000) |>
+ # mutate(NTL_PPB = NTL_PPM*1000) |>
   # arrange low to high N
   arrange(ECO_REG_NAME, NTL_PPB) |>
   left_join(ten_perc) |>
@@ -477,10 +477,16 @@ lm_dat_highyield <- data.frame(ECO_REG_NAME = unique(nla_data_subset$ECO_REG_NAM
 HighYield_Chla <- nla_data_subset |> 
   left_join(lm_dat_highyield) |>
   mutate(log10chla_HY_P = P_slope*log10(PTL_PPB) + P_intercept,
-         log10chla_HY_N = N_slope*log10(NTL_PPM*1000) + N_intercept) |>
+         log10chla_HY_N = N_slope*log10(NTL_PPB) + N_intercept) |>
   # then calculate fraction yield Chla - as observed Chla/high yield chla
   mutate(fractionyieldP = log10(CHLA_PPB)/log10chla_HY_P,
-         fractionyieldN = log10(CHLA_PPB)/log10chla_HY_N) 
+         fractionyieldN = log10(CHLA_PPB)/log10chla_HY_N) |>
+  # at what concentration of TN is highyield N equal to high yield P?
+  mutate(theoretical_N = 10^((log10chla_HY_P-N_intercept)/N_slope)) |> # 10^ unlogs it :)
+  mutate(tippingPoint_NP_N = (theoretical_N/PTL_PPB)*2.11306) |> # mutliply by 2.11306 to convert to molar ratio
+  # Now complete that same thing to find concentrations of P and then the tipping point - theoretically, they should be the same tipping point?
+  mutate(theoretical_P = 10^((log10chla_HY_N-P_intercept)/P_slope)) |>
+  mutate(tippingPoint_NP_P = (NTL_PPB/theoretical_P)*2.11306)
 
 
 ggplot(HighYield_Chla, aes(log10chla_HY_P, log10chla_HY_N)) +
@@ -488,10 +494,15 @@ ggplot(HighYield_Chla, aes(log10chla_HY_P, log10chla_HY_N)) +
   geom_abline(slope=1, intercept=0) +
   facet_wrap(~ECO_REG_NAME,scales='free')
 
+ggplot(HighYield_Chla, aes(fractionyieldP, fractionyieldN)) +
+  geom_point() +
+  geom_abline(slope=1, intercept=0) +
+  facet_wrap(~ECO_REG_NAME,scales='free')
+
 
 # find the N:P ratio that is associated with 1:1 high yield chla line
-lm_dat_highyield <- lm_dat_highyield |>
-  mutate(NP_reg_tippt = (10^(((5-N_intercept)/N_slope)/((100-P_intercept)/P_slope)))*2.211306) # unlog it (10^) and make it molar ratio * 2.211306
+# lm_dat_highyield <- lm_dat_highyield |>
+#   mutate(NP_reg_tippt = (10^(((5-N_intercept)/N_slope)/((100-P_intercept)/P_slope)))*2.211306) # unlog it (10^) and make it molar ratio * 2.211306
 
 
 
