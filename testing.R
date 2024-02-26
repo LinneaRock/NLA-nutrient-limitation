@@ -394,8 +394,8 @@ anova(m.1)
 
 
 library(zoo)
-# following methods from Moon et al.
-# they used ~10% of data moving sample subset - this will be different for each ecoregion in our tdata
+# following methods are adapted from from Moon et al. 2021
+# they used ~10% of data moving sample subset - this will be different for each ecoregion in our data
 ten_perc <- nla_data_subset |> count(ECO_REG_NAME) |> mutate(ten_perc = round(0.1*n)) 
 
 
@@ -479,14 +479,14 @@ HighYield_Chla <- nla_data_subset |>
   mutate(log10chla_HY_P = P_slope*log10(PTL_PPB) + P_intercept,
          log10chla_HY_N = N_slope*log10(NTL_PPB) + N_intercept) |>
   # then calculate fraction yield Chla - as observed Chla/high yield chla
-  mutate(fractionyieldP = log10(CHLA_PPB)/log10chla_HY_P,
-         fractionyieldN = log10(CHLA_PPB)/log10chla_HY_N) |>
+  mutate(log_fractionyieldP = log10(CHLA_PPB)/log10chla_HY_P,
+         log_fractionyieldN = log10(CHLA_PPB)/log10chla_HY_N) #|>
   # at what concentration of TN is highyield N equal to high yield P?
-  mutate(theoretical_N = 10^((log10chla_HY_P-N_intercept)/N_slope)) |> # 10^ unlogs it :)
-  mutate(tippingPoint_NP_N = (theoretical_N/PTL_PPB)*2.11306) |> # mutliply by 2.11306 to convert to molar ratio
-  # Now complete that same thing to find concentrations of P and then the tipping point - theoretically, they should be the same tipping point?
-  mutate(theoretical_P = 10^((log10chla_HY_N-P_intercept)/P_slope)) |>
-  mutate(tippingPoint_NP_P = (NTL_PPB/theoretical_P)*2.11306)
+  # mutate(theoretical_N = 10^((log10chla_HY_P-N_intercept)/N_slope)) |> # 10^ unlogs it :)
+  # mutate(tippingPoint_NP_N = (theoretical_N/PTL_PPB)*2.11306) |> # mutliply by 2.11306 to convert to molar ratio
+  # # Now complete that same thing to find concentrations of P and then the tipping point - theoretically, they should be the same tipping point?
+  # mutate(theoretical_P = 10^((log10chla_HY_N-P_intercept)/P_slope)) |>
+  # mutate(tippingPoint_NP_P = (NTL_PPB/theoretical_P)*2.11306)
 
 
 ggplot(HighYield_Chla, aes(log10chla_HY_P, log10chla_HY_N)) +
@@ -494,17 +494,75 @@ ggplot(HighYield_Chla, aes(log10chla_HY_P, log10chla_HY_N)) +
   geom_abline(slope=1, intercept=0) +
   facet_wrap(~ECO_REG_NAME,scales='free')
 
-ggplot(HighYield_Chla, aes(fractionyieldP, fractionyieldN)) +
+ggplot(HighYield_Chla, aes(log_fractionyieldP, log_fractionyieldN)) +
   geom_point() +
   geom_abline(slope=1, intercept=0) +
   facet_wrap(~ECO_REG_NAME,scales='free')
 
 
-# find the N:P ratio that is associated with 1:1 high yield chla line
-# lm_dat_highyield <- lm_dat_highyield |>
-#   mutate(NP_reg_tippt = (10^(((5-N_intercept)/N_slope)/((100-P_intercept)/P_slope)))*2.211306) # unlog it (10^) and make it molar ratio * 2.211306
+# add high and low TP values in ug/L that will be regressed to find high yield CHLas
+lm_dat_highyield_pred <- lm_dat_highyield |>
+  mutate(TP_low_ugL = 1,
+         TP_high_ugL = 5000) |>
+  pivot_longer(6:7, names_to = 'TP_cat', values_to = 'TP_ugL') |>
+# When TP is 1 or 5000 ug/L, what is high yield CHLA in ug/L?
+  mutate(HY_CHLA_atTP = 10^(log10(TP_ugL)*P_slope + P_intercept)) |>
+# NOW -- what are the TN concentrations ug/L at each of these high yields
+  mutate(TN_atHYchla_ugL = 10^((log10(HY_CHLA_atTP)-N_intercept)/N_slope)) |>
+# get N:P by mass here
+  mutate(tippingPt_NP = TN_atHYchla_ugL/TP_ugL)
+
+# New regressions to find N:P tipping point line based on TP concentration
+tippint_point_calc <- lm(log10(tippingPt_NP)~log10(TP_ugL)*ECO_REG_NAME, lm_dat_highyield_pred)
+summary(tippint_point_calc)
+coeftip<-coef(tippint_point_calc)
 
 
 
+# pull linear regression info into a new table -- remember these are logged!!
+tipping_point_regressions <- data.frame(ECO_REG_NAME = unique(nla_data_subset$ECO_REG_NAME)) |>
+  # get betas for each ecoregion from N:P vs TP model
+  mutate(tip_slope = case_when(ECO_REG_NAME=='Northern Appalachians'~coeftip[2],
+                             ECO_REG_NAME=='Southern Appalachians'~coeftip[2]+coeftip[11],
+                             ECO_REG_NAME=='Coastal Plains'~coeftip[2]+coeftip[12],
+                             ECO_REG_NAME=='Temperate Plains'~coeftip[2]+coeftip[13],
+                             ECO_REG_NAME=='Upper Midwest'~coeftip[2]+coeftip[14],
+                             ECO_REG_NAME=='Northern Plains'~coeftip[2]+coeftip[15],
+                             ECO_REG_NAME=='Southern Plains'~coeftip[2]+coeftip[16],
+                             ECO_REG_NAME=='Xeric'~coeftip[2]+coeftip[17],
+                             ECO_REG_NAME=='Western Mountains'~coeftip[2]+coeftip[18])) |>
+  # get alphas for each ecoregion from N:P vs TP model
+  mutate(tip_intercept = case_when(ECO_REG_NAME=='Northern Appalachians'~coeftip[1],
+                                 ECO_REG_NAME=='Southern Appalachians'~coeftip[1]+coeftip[3],
+                                 ECO_REG_NAME=='Coastal Plains'~coeftip[1]+coeftip[4],
+                                 ECO_REG_NAME=='Temperate Plains'~coeftip[1]+coeftip[5],
+                                 ECO_REG_NAME=='Upper Midwest'~coeftip[1]+coeftip[6],
+                                 ECO_REG_NAME=='Northern Plains'~coeftip[1]+coeftip[7],
+                                 ECO_REG_NAME=='Southern Plains'~coeftip[1]+coeftip[8],
+                                 ECO_REG_NAME=='Xeric'~coeftip[1]+coeftip[9],
+                                 ECO_REG_NAME=='Western Mountains'~coeftip[1]+coeftip[10])) 
+
+# double check that coefs are in the right places
+tipping_point_regressions_check <- tipping_point_regressions |>
+  mutate(NP_1 = 10^(log10(1)*tip_slope + tip_intercept),
+         NP_5000 = 10^(log10(5000)*tip_slope + tip_intercept)) # looks good
 
 
+# determine limitations using rules from Moon et al., 2021
+limits<- nla_data_subset |>
+  left_join(tipping_point_regressions) |>
+  mutate(tipping_pt_NP_molar = (10^(log10(PTL_PPB)*tip_slope+tip_intercept))*2.11306) |> # unlog to get N:P by mass and multiply by 2.11306 to get molar
+  # divide observed N:P by tipping point
+  mutate(NP_deviation = TN.TP_molar/tipping_pt_NP_molar) |>
+  # calculate limitations!
+  mutate(limitation = case_when(NP_deviation > 2 ~ 'P-limitation',
+                                NP_deviation < 0.5 ~ 'N-limitation', 
+                                between(NP_deviation,0.5,2) ~ 'Co-limitation'))
+
+nrow(limits |> filter(limitation == "P-limitation")) # 436
+nrow(limits |> filter(limitation == "N-limitation")) # 350
+nrow(limits |> filter(limitation == "Co-limitation")) # 2484
+  
+nrow(limits |> filter(limitation == "P-limitation"))/nrow(limits) *100 # 13.3%
+nrow(limits |> filter(limitation == "N-limitation"))/nrow(limits) *100 # 10.7%
+nrow(limits |> filter(limitation == "Co-limitation"))/nrow(limits) *100 # 76%
