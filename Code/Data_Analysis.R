@@ -13,6 +13,7 @@ library(zoo)
 library(patchwork)
 library(ggpubr)
 library(readxl)
+library(purrr)
 
 
 #### Load and subset dataframe ####
@@ -227,14 +228,15 @@ ggplot(correlations_data, aes(concentration, CHLA_PPB)) +
         axis.title.x.top = element_blank(),      # as above, don't show axis titles for
         axis.title.y.right = element_blank())    # secondary axis either)
 
-ggsave("Figures/F1_linregs_pub.png", height = 4.5, width = 6.5, units = "in", dpi = 1200) 
+ggsave("Figures/linregs.png", height = 4.5, width = 6.5, units = "in", dpi = 1200) 
 
 # NOTE: I also ran these for just 2007 and just 2017 data. -- results on lines 87-89 of this script
 
 # create a map of the better predictor in each ecoregion
 #read in the ecoregion shapefiles
 regions.sf <- read_sf("Data/aggr_ecoregions_2015/Aggr_Ecoregions_2015.shp") |>
-  mutate(WSA9_NAME = ifelse(WSA9_NAME == "Temporate Plains", "Temperate Plains", WSA9_NAME))
+  mutate(WSA9_NAME = ifelse(WSA9_NAME == "Temporate Plains", "Temperate Plains", WSA9_NAME)) |>
+  rename(ECO_REG_NAME = WSA9_NAME)
 
 
 #determine better predictor in each
@@ -244,11 +246,10 @@ compare_r_values <- lm_ecoreg_df |>
   mutate(best_predictor = ifelse(
     AIC_PTL_PPB < AIC_NTL_PPB & r.squared_PTL_PPB > r.squared_NTL_PPB, "TP", "TN"
   )) |>
-  rename(WSA9_NAME = Ecoregion)
+  rename(ECO_REG_NAME=Ecoregion)
 
 # combine shapefiles with better predictor information
 regions.sf1 <- left_join(regions.sf, compare_r_values)
-
 
 
 # create the map
@@ -260,14 +261,37 @@ ggplot(data = regions.sf1) +
   scale_fill_manual("", values=c("red4", "#336a98")) +
   theme(plot.caption.position = "plot",
         plot.caption = element_text(hjust = 0, family = "serif")) +
-  theme(legend.position = c(0.1, 0.2)) 
-
+  theme(legend.position = c(0.1, 0.2))
 ggsave("Figures/Map_NP.png", height = 4.5, width = 6.5, units = "in", dpi = 1200) 
 
 
+# faceted unlabelled map to add to lin regs plot (doing in PP because my laptop can't handle the purrr method to add these)
+
+ggplot() +
+  geom_sf(regions.sf |> select(-ECO_REG_NAME), mapping=aes(),fill='white', color='grey30') +
+  geom_sf(regions.sf1, mapping=aes(fill=best_predictor),color='black') +
+  theme_minimal() +
+  labs(x = "", y = "") +
+  scale_fill_manual("", values=c("red4", "#336a98")) +
+  theme(plot.caption.position = "plot",
+        plot.caption = element_text(hjust = 0, family = "serif"),
+        legend.position = 'none',
+        axis.title.x=element_blank(),
+        axis.text.x=element_blank(),
+        axis.ticks.x=element_blank(),
+        axis.title.y=element_blank(),
+        axis.text.y=element_blank(),
+        axis.ticks.y=element_blank(),
+        panel.grid.major = element_blank(), 
+        panel.grid.minor = element_blank()) +
+  facet_wrap(~ECO_REG_NAME)
+
+ggsave("Figures/maps_4_linregs.png", height = 4.5, width = 6.5, units = "in", dpi = 1200) 
 
 
-## Create map with just ecoregions ####
+
+
+## S1. Create map with just ecoregions ####
 muted <- c("#CC6677", "#332288", "#DDCC77", "#117733", "#88CCEE", "#882255", "#44AA99", "#999933", "#AA4499" ) # ecoreg color scheme
 
 
@@ -681,7 +705,7 @@ lim_change0717_allSITES$Subpopulation = factor(lim_change0717_allSITES$Subpopula
 lim_changes_fullset <- rbind(lim_change0717 |> mutate(sample_set = "Resampled lakes"), lim_change0717_allSITES |> mutate(sample_set = "All surveyed lakes"))
 
 # compare confidence interval between all surveyed lakes and resampled lakes
-t.test((lim_changes_fullset |> filter(sample_set == "Resampled lakes"))$MarginofError.P, (lim_changes_fullset |> filter(sample_set != "Resampled lakes"))$MarginofError.P) # p = 0.001772
+t.test((lim_changes_fullset |> filter(sample_set == "Resampled lakes"))$MarginofError.P, (lim_changes_fullset |> filter(sample_set != "Resampled lakes"))$MarginofError.P) # p = 0.01456
 ggplot(lim_changes_fullset, aes(sample_set, MarginofError.P)) +
   geom_boxplot()
 # error is larger in resampled lakes
@@ -701,7 +725,7 @@ comparison_lim <- lim_changes_fullset |>
   select(-4,-3) |>
   unique() |>
   mutate(p.value = '*')  
-# all were not statistically different!
+# None were statistically different!
 
 # add significance to dataset
 lim_changes_fullset <- left_join(lim_changes_fullset, comparison_lim) |>
@@ -774,14 +798,14 @@ lim_natplot/nat_plot_limchange +
               design = layout) +
   plot_annotation(tag_levels = 'a', tag_suffix = ')') 
 
-ggsave("Figures/national_limitations.png", height = 4.5, width = 6.5, units = "in", dpi = 1200) 
+ggsave("Figures/F3_national_limitations.png", height = 4.5, width = 6.5, units = "in", dpi = 1200) 
 
 lim_regplot/ecoreg_plot_limchange +
   plot_layout(guides = "collect",
               design = layout) +
   plot_annotation(tag_levels = 'a', tag_suffix = ')') 
 
-ggsave("Figures/ecoregions_limitations.png", height = 8, width = 8, units = "in", dpi = 1200) 
+ggsave("Figures/S2_ecoregions_limitations.png", height = 8, width = 8, units = "in", dpi = 1200) 
 
 
 
@@ -860,7 +884,7 @@ ggplot(percent_TS1, aes(year, Estimate.P, fill = Category)) +
         legend.position = c(0.75, 0.175)) +
   guides(fill = guide_legend(ncol=2))
 
-ggsave("Figures/TSbars_ecoreg_pub.png", height = 4.5, width = 6.5, units = "in", dpi = 1200)
+ggsave("Figures/S3_TSbars_ecoreg_pub.png", height = 4.5, width = 6.5, units = "in", dpi = 1200)
 
 
 #### 6. Trophic state change analysis within limitation status at the national level ####
@@ -929,7 +953,7 @@ TS_changes_fullset$Category = factor(TS_changes_fullset$Category,
 
 
 # compare confidence interval between all surveyed lakes and resampled lakes
-t.test((TS_changes_fullset |> filter(sample_set == "Resampled lakes"))$MarginofError.P, (TS_changes_fullset |> filter(sample_set != "Resampled lakes"))$MarginofError.P) # p = 0.0001986
+t.test((TS_changes_fullset |> filter(sample_set == "Resampled lakes"))$MarginofError.P, (TS_changes_fullset |> filter(sample_set != "Resampled lakes"))$MarginofError.P) # p = 0.09637 - error is the same for trophic state
 ggplot(TS_changes_fullset, aes(sample_set, MarginofError.P)) +
   geom_boxplot()
 
@@ -987,7 +1011,7 @@ ggplot(TS_changes_fullset) +
   guides(color=FALSE,
          fill= FALSE)
 
-ggsave("Figures/TSchanges_07-17.png", height = 4.5, width = 6.5, units = "in", dpi = 1200) 
+ggsave("Figures/F4_TSchanges_07-17.png", height = 4.5, width = 6.5, units = "in", dpi = 1200) 
 
 
 
@@ -1047,7 +1071,7 @@ TS_changes_fullseteco$Category = factor(TS_changes_fullseteco$Category,
 
 
 # compare confidence interval between all surveyed lakes and resampled lakes
-t.test((TS_changes_fullseteco |> filter(sample_set == "Resampled lakes"))$MarginofError.P, (TS_changes_fullseteco |> filter(sample_set != "Resampled lakes"))$MarginofError.P) # p =  0.002067
+t.test((TS_changes_fullseteco |> filter(sample_set == "Resampled lakes"))$MarginofError.P, (TS_changes_fullseteco |> filter(sample_set != "Resampled lakes"))$MarginofError.P) # p =  0.004014 - errors are different
 ggplot(TS_changes_fullseteco, aes(sample_set, MarginofError.P)) +
   geom_boxplot()
 
@@ -1140,5 +1164,5 @@ ggplot(nat_limTS) +
         plot.caption = element_text(hjust = 0, family = "serif"),
         legend.position = 'none') +
   labs(x = '', y = '% lakes from all surveys')
-ggsave("Figures/trophicstates_bylim.png", height = 4.5, width = 6.5, units = "in", dpi = 1200) 
+ggsave("Figures/F5_trophicstates_bylim.png", height = 4.5, width = 6.5, units = "in", dpi = 1200) 
 
