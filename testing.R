@@ -71,9 +71,7 @@ ggplot(UM_dat, aes(TN.TP_molar, CHLA_PPB)) +
 # has same outcome as individuals ####
 
 test_dat <- nla_data_subset |>
-  filter(is.finite(log10(CHLA_PPB))) |>
-  mutate(NTL_PPB = NTL_PPM * 1000) 
-
+  filter(is.finite(log10(CHLA_PPB))) 
 m1 <- lm(log10(CHLA_PPB) ~ ECO_REG_NAME * log10(NTL_PPB) * log10(PTL_PPB), data = test_dat)
 summary(m1)
 anova(m1)
@@ -103,9 +101,6 @@ ggplot(test_dat, aes(concentration, CHLA_PPB, color = nutrient, group = nutrient
 
 
 
-library(sjPlot)
-plot_model(m1, type='pred', terms=c('ECO_REG_NAME', 'NTL_PPB', 'PTL_PPB'))
-plot_model(m1, type='int')
 
 
 

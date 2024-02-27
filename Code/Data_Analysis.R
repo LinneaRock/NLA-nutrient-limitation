@@ -13,7 +13,6 @@ library(zoo)
 library(patchwork)
 library(ggpubr)
 library(readxl)
-library(purrr)
 
 
 #### Load and subset dataframe ####
