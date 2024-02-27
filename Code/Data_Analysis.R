@@ -487,7 +487,7 @@ ggsave("Figures/limitedlakes_dist.png", height = 4.5, width = 6.5, units = "in",
 #### 3. Spatial, temporal distribution of limitations ####
 # Percent lakes in each ecoregion 
 # prep the data
-limits_survey_prep <- limits|> # total 2675 lakes for this analysis 
+limits_survey_prep <- limits|> # total 2768 lakes for this analysis 
   filter(VISIT_NO == 1) |># for this analysis, we are using just the first visit from each lake
   filter(WGT_NLA > 0) # the sp survey package is not designed to use the reference lakes, so those are ignored when using this package for analyses.
 
@@ -811,10 +811,10 @@ ggsave("Figures/S2_ecoregions_limitations.png", height = 8, width = 8, units = "
 
 #### 5. Spatial, temporal distribution of trophic state ####
 # how many observations of each trophic state
-nrow(limits |> filter(TROPHIC_STATE == "Oligo.")) # 511
-nrow(limits |> filter(TROPHIC_STATE == "Meso.")) # 1012
-nrow(limits |> filter(TROPHIC_STATE == "Eutro.")) # 954
-nrow(limits |> filter(TROPHIC_STATE == "Hyper.")) # 695
+nrow(limits |> filter(TROPHIC_STATE == "Oligo.")) # 520
+nrow(limits |> filter(TROPHIC_STATE == "Meso.")) # 1047
+nrow(limits |> filter(TROPHIC_STATE == "Eutro.")) # 990
+nrow(limits |> filter(TROPHIC_STATE == "Hyper.")) # 713
 # Percent lakes in each ecoregion 
 # use categorical analysis from spsurvey package
 years <- c("2007",'2012', "2017")
