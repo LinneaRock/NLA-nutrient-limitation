@@ -390,6 +390,13 @@ HighYield_Chla <- nla_data_subset |>
   # then calculate fraction yield Chla - as observed Chla/high yield chla
   mutate(log_fractionyieldP = log10(CHLA_PPB)/log10chla_HY_P,
          log_fractionyieldN = log10(CHLA_PPB)/log10chla_HY_N) 
+median_fracyields <- HighYield_Chla |>
+  mutate(fracyieldTN = 10^log_fractionyieldN,
+         fracyieldTP = 10^log_fractionyieldP) |>
+  group_by(ECO_REG_NAME) |>
+  summarise(med_fracyield_N = median(fracyieldTN),
+            med_fracyield_P = median(fracyieldTP)) |>
+  ungroup()
 
 
 ggplot(HighYield_Chla, aes(log10chla_HY_P, log10chla_HY_N)) +
@@ -461,6 +468,11 @@ limits<- nla_data_subset |>
   mutate(limitation = case_when(NP_deviation > 2 ~ 'P-limitation',
                                 NP_deviation < 0.5 ~ 'N-limitation', 
                                 between(NP_deviation,0.5,2) ~ 'Co-limitation'))
+
+median_NP_tippoints <- limits |>
+  group_by(ECO_REG_NAME) |>
+  summarise(mediantippoint = median(tipping_pt_NP_molar),
+            median_deviation = median(NP_deviation))
 
 nrow(limits |> filter(limitation == "P-limitation")) # 436
 nrow(limits |> filter(limitation == "N-limitation")) # 350
@@ -575,9 +587,15 @@ lim_natplot <- ggplot(percent_lim1 |>
   theme(panel.grid.major.x = element_blank()) +
   geom_vline(xintercept = c(1.5, 2.5)) +
   labs(x = '',
-       y = '% U.S. lakes',
-       title = 'National') +
-  theme(legend.title = element_blank())
+       y = '% U.S. lakes') +
+  theme(legend.title = element_blank(),
+        legend.position='bottom',
+        legend.margin = margin(t = 0.1,  # Top margin
+                             r = 0,  # Right margin
+                             b = 0,  # Bottom margin
+                             l = 0), # Left margin
+        legend.box.margin=margin(-10,-10,-10,-10),
+        legend.box.spacing = unit(0, "pt")) 
 
 lim_regplot <- ggplot(percent_lim1 |>
                         filter(Subpopulation != "National"), aes(year, Estimate.P, fill = Category, shape=Category)) +
@@ -591,7 +609,14 @@ lim_regplot <- ggplot(percent_lim1 |>
   geom_vline(xintercept = c(1.5, 2.5)) +
   labs(x = '',
        y = '% lakes in ecoregion') +
-  theme(legend.title = element_blank())  +
+  theme(legend.title = element_blank(),
+        legend.position='bottom',
+        legend.margin = margin(t = 0.1,  # Top margin
+                               r = 0,  # Right margin
+                               b = 0,  # Bottom margin
+                               l = 0), # Left margin
+        legend.box.margin=margin(-10,-10,-10,-10),
+        legend.box.spacing = unit(0, "pt"))  +
   facet_wrap(~Subpopulation, ncol = 3)
 
 
@@ -756,7 +781,17 @@ ecoreg_plot_limchange <- lim_changes_fullset |>
         plot.caption.position = "plot",
         plot.caption = element_text(hjust = 0, family = "serif"),
         legend.title = element_blank(),
-        axis.text.x = element_blank())
+        axis.text.x = element_blank(),
+        legend.position='bottom',
+        legend.margin = margin(t = 0,  # Top margin
+                               r = 0,  # Right margin
+                               b = 0,  # Bottom margin
+                               l = 0), # Left margin
+        legend.box.margin=margin(-10,-10,-10,-10),
+        legend.box.spacing = unit(0, "pt")) +
+  guides(color='none',
+         shape='none',
+         fill = 'none')
 
 
 #national plot
@@ -783,28 +818,32 @@ nat_plot_limchange <- lim_changes_fullset %>%
   scale_color_manual("", values = c("grey60", "red4", "#336a98")) +
   scale_fill_manual("", values = c("grey60", "red4", "#336a98")) +
   scale_shape_manual('',values = c(21,22,23)) +
-  theme(legend.title = element_blank())
+  theme(legend.title = element_blank(),
+        legend.position = c(0.75, 0.75)) +
+  guides(color='none',
+         shape='none',
+         fill = 'none')
 
 
 layout <- "
+AAAA
 AAAA
 BBBB
 BBBB
 "
 
 lim_natplot/nat_plot_limchange +
-  plot_layout(guides = "collect",
-              design = layout) +
+  plot_layout(design = layout) +
   plot_annotation(tag_levels = 'a', tag_suffix = ')') 
 
-ggsave("Figures/F3_national_limitations.png", height = 4.5, width = 6.5, units = "in", dpi = 1200) 
+ggsave("Figures/F3_national_limitations.png", height = 5.5, width = 6.5, units = "in", dpi = 1200) 
 
 lim_regplot/ecoreg_plot_limchange +
-  plot_layout(guides = "collect",
+  plot_layout(
               design = layout) +
   plot_annotation(tag_levels = 'a', tag_suffix = ')') 
 
-ggsave("Figures/S2_ecoregions_limitations.png", height = 8, width = 8, units = "in", dpi = 1200) 
+ggsave("Figures/S2_ecoregions_limitations.png", height = 8, width = 6.5, units = "in", dpi = 1200) 
 
 
 
@@ -1006,7 +1045,8 @@ ggplot(TS_changes_fullset) +
         strip.text.x = element_text(size = 7.5),
         plot.caption.position = "plot",
         plot.caption = element_text(hjust = 0, family = "serif"),
-        legend.title = element_blank()) +
+        legend.title = element_blank(),
+        legend.position = 'top') +
   guides(color=FALSE,
          fill= FALSE)
 
