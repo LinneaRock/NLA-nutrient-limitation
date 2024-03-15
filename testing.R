@@ -72,15 +72,20 @@ ggplot(UM_dat, aes(TN.TP_molar, CHLA_PPB)) +
 
 test_dat <- nla_data_subset |>
   filter(is.finite(log10(CHLA_PPB))) 
-m1 <- lm(log10(CHLA_PPB) ~ ECO_REG_NAME * log10(NTL_PPB) * log10(PTL_PPB), data = test_dat)
+m1 <- aov(log10(CHLA_PPB) ~ log10(NTL_PPB) * log10(PTL_PPB) * ECO_REG_NAME, data = test_dat)
 summary(m1)
 anova(m1)
 coef(m1)
+
+# TukeyHSD(m1, which = 'ECO_REG_NAME') # doesn't do what we need
+# library(emmeans)  
+# emtrends(m1, `log10(CHLA_PPB)` ~ `log10(NTL_PPB)` * `log10(PTL_PPB)`, var = 'ECO_REG_NAME')
 
 
 coefs <- coef(m1)
 coefs <- 10^coefs
 print(coefs)
+
 
 test_dat$fit <- 10^predict(m1)
 
@@ -96,7 +101,46 @@ ggplot(test_dat, aes(concentration, CHLA_PPB, color = nutrient, group = nutrient
   scale_y_log10() +
   scale_x_log10()
 
+####
 
+test_dat <- nla_data_subset |>
+  filter(is.finite(log10(CHLA_PPB))) |>
+  pivot_longer(c(NTL_PPB, PTL_PPB), names_to = 'nutrient', values_to = 'concentration_PPB') |>
+  mutate(CHLA_PPB = log10(CHLA_PPB),
+         concentration_PPB = log10(concentration_PPB),
+         ECO_REG_NAME = as.character(ECO_REG_NAME),
+         nutrient=ifelse(nutrient=='NTL_PPB', 1, 0))
+m2 <- aov(CHLA_PPB ~ ECO_REG_NAME * concentration_PPB * nutrient, data = test_dat)
+summary(m2)
+anova(m2)
+coef(m2)
+
+library(emmeans)  
+obj<- emtrends(m2, pairwise ~ concentration_PPB * ECO_REG_NAME, var = 'nutrient')
+
+
+plot(m2)
+#TukeyHSD(m2, which=c('ECO_REG_NAME' * 'nutrient'))
+
+
+coefs <- coef(m2)
+coefs <- 10^coefs
+print(coefs)
+
+
+test_dat$fit <- 10^predict(m2)
+
+# test_dat <- test_dat |>
+#   pivot_longer(cols = c(PTL_PPB, NTL_PPB), names_to = "nutrient", values_to = "concentration") |>
+#   select(-NTL_PPM)
+
+options(scipen = 999)
+ggplot(test_dat, aes(concentration_PPB, CHLA_PPB, color = nutrient, group = nutrient)) +
+  geom_point() +
+  geom_smooth(method='lm', aes(y=fit), color='black') +
+  facet_wrap(.~ECO_REG_NAME, ncol=3) +
+  scale_y_log10() +
+  scale_x_log10()
 
 
 
