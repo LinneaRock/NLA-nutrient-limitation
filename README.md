@@ -1,5 +1,7 @@
 # Nutrient limitation patterns of United States lakes
 
+[![DOI](https://zenodo.org/badge/465427641.svg)](https://zenodo.org/doi/10.5281/zenodo.12014772)
+
 Authors: Linnea A. Rock and Sarah M. Collins
 
 ## Folders: 
